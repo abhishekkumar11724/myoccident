@@ -1,10 +1,28 @@
+import Head from "next/head";
 import Navbar from "../components/Navbar";
+import { coding } from "@/public/assets";
+import LeftSide from "@/components/LeftSide";
+import RightSide from "@/components/RightSide";
 export default function Home() {
     return (
-        <main className="w-full h-screen font-bodyFont bg-bodyColor text-textLight overflow-x-hidden overflow-y-scroll">
-            <Navbar />
-        </main>
-
+        <>
+            <Head>
+                <title>Abhishek Kumar</title>
+                <link rel="icon" href="./assets/images/coding.png" />
+            </Head>
+            <main className="w-full h-screen font-bodyFont bg-bodyColor text-textLight overflow-x-hidden overflow-y-scroll">
+                <Navbar />
+                <div className="w-full h-[88vh] xl:flex items-center gap-20 justify-between">
+                    <div className="hidden xl:inline-flex w-32 h-full fixed left-0 bottom-0">
+                        <LeftSide />
+                    </div>
+                    <div className="">middle</div>
+                    <div>
+                        <RightSide />
+                    </div>
+                </div>
+            </main>
+        </>
         // <main className="flex min-h-screen flex-col items-center justify-between p-24">
         //   <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
         //     <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
