@@ -16,27 +16,28 @@ const About = () => {
                         Hello my name is Abhishek Kumar and I enjoy creating
                         things that live on the internet. My interest in web
                         development started back in 2020 when I decided to try
-                        editing custom Tumblr themes - turns out hacking
-                        together a custom reblog button taught me a lot about
-                        HTML & CSS!
+                        making custom effects for my collage project - turns out
+                         cracking cool effects of different sites taught me a
+                          lot about HTML & CSS!
                     </p>
                     <p>
-                        Fast-forward to today, and I had the privilage of
-                        working at an start-up,
-                        <span className="text-textGreen">
+                        Fast-forward to today, and I had been working on making 
+                        products as a local freelancer,
+                        <span className="text-textGreen font-bold">
                             {" "}
-                            a huge corporation, and a student-let design studio.
-                        </span>
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                        Placeat, non.
-                        <span className="text-textGreen">
-                            Lorem, ipsum dolor sit amet consectetur adipisicing.
+                            , and a student-let product creation team. 
+                        </span> {" "}
+                        currently working with colleagues to make a flutter app 
+                        for a early stage startup.
+                        <span className="text-textGreen font-bold">
+                            GamesON, an app for the sports enthusiasts.
                         </span>
                     </p>
                     <p>
-                        Lorem ipsum dolor sit amet consectetur, adipisicing
-                        elit. Necessitatibus magnam labore laborum nemo numquam
-                        dolorem vel culpa illo possimus nobis!
+                       I am also very fantasied by the 
+                       <span className="text-textGreen font-bold">world of 
+                        BlockChain and WEB 3.0 </span>, and had been working on 
+                        things that are not very refined yet!
                     </p>
                     <p>
                         Here are a few technologies I have been working with
@@ -47,7 +48,7 @@ const About = () => {
                             <span className="text-textGreen">
                                 <AiFillThunderbolt />
                             </span>
-                            <span>JavaScript (ES6+)</span>
+                            <span>Next.js</span>
                         </li>
                         <li className="flex items-center gap-2">
                             <span className="text-textGreen">
@@ -59,13 +60,13 @@ const About = () => {
                             <span className="text-textGreen">
                                 <AiFillThunderbolt />
                             </span>
-                            <span>TypeScript</span>
+                            <span>JavaScript (ES6+)</span>
                         </li>
                         <li className="flex items-center gap-2">
                             <span className="text-textGreen">
                                 <AiFillThunderbolt />
                             </span>
-                            <span>Next.js</span>
+                            <span>Web3.js </span>
                         </li>
                         <li className="flex items-center gap-2">
                             <span className="text-textGreen">
@@ -77,7 +78,7 @@ const About = () => {
                             <span className="text-textGreen">
                                 <AiFillThunderbolt />
                             </span>
-                            <span>MongoDB</span>
+                            <span>EtherJS</span>
                         </li>
                         <li className="flex items-center gap-2">
                             <span className="text-textGreen">
@@ -89,7 +90,7 @@ const About = () => {
                             <span className="text-textGreen">
                                 <AiFillThunderbolt />
                             </span>
-                            <span>Python</span>
+                            <span>C/C++</span>
                         </li>
                     </ul>
                 </div>

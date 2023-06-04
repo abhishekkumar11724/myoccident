@@ -36,7 +36,7 @@ const Projects = () => {
                             <h3 className="text-2xl font-bold">
                                 Amazon clone 2.0
                             </h3>
-                            <p className="bg-[#112240] text-sm md-text-base p-2 md:p-6 rounded-md">
+                            <p className="bg-[#BFBFBF] text-sm md-text-base p-2 md:p-6 rounded-md">
                                 An Amazon clone website for visualizing
                                 personalized Amazon website. View your products,
                                 Add your account with
@@ -101,7 +101,7 @@ const Projects = () => {
                             <h3 className="text-2xl font-bold">
                                 Amazon clone 2.0
                             </h3>
-                            <p className="bg-[#112240] text-sm md-text-base p-2 md:p-6 rounded-md xl:-mr-16">
+                            <p className="bg-[#BFBFBF] text-sm md-text-base p-2 md:p-6 rounded-md xl:-mr-16">
                                 An Amazon clone website for visualizing
                                 personalized Amazon website. View your products,
                                 Add your account with
@@ -166,7 +166,7 @@ const Projects = () => {
                             <h3 className="text-2xl font-bold">
                                 Amazon clone 2.0
                             </h3>
-                            <p className="bg-[#112240] text-sm md-text-base p-2 md:p-6 rounded-md">
+                            <p className="bg-[#BFBFBF] text-sm md-text-base p-2 md:p-6 rounded-md">
                                 An Amazon clone website for visualizing
                                 personalized Amazon website. View your products,
                                 Add your account with

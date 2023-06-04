@@ -32,11 +32,11 @@ module.exports = {
                 navbarShadow: "0 10px 30px -10px rgba(2,12, 27, 0.7)",
             },
             colors: {
-                bodyColor: "#0a192f",
-                textGreen: "#64ffda",
-                textLight: "#ccd6f6",
-                textDark: "#8892b0",
-                hoverColor: "rgba(100, 255, 218, 0.1)",
+                bodyColor: "#F2F2F2",
+                textGreen: "#0D0D0D",
+                textLight: "#404040",
+                textDark: "#404040",
+                hoverColor: "rgba(43, 42, 42, 0.6)",
             },
 
             backgroundImage: {
@@ -46,5 +46,5 @@ module.exports = {
             },
         },
     },
-    plugins: [],
+    plugins: [require("tailwind-scrollbar")],
 };

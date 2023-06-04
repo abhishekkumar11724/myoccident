@@ -18,6 +18,8 @@ import profilePhoto from "./images/profilePhoto.png";
 import img_1 from "./images/midjourny_1.jpg";
 import img_2 from "./images/youtube .Sheri sk (124).jpg";
 import img_3 from "./images/youtube .Sheri sk (94).jpg";
+import myphoto from "./images/myphoto.png";
+
 export {
     tagType,
     createCampaign,
@@ -38,5 +40,6 @@ export {
     img_1,
     img_2,
     img_3,
+    myphoto,
     // resume,
 };

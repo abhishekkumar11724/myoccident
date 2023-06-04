@@ -37,14 +37,6 @@ const Experience = () => {
         setWorkAmazon(false);
     };
 
-    const handleGoogle = () => {
-        setWorkReactBD(false);
-        setWorkApple(false);
-        setWorkTesla(false);
-        setWorkMicrosoft(false);
-        setWorkAmazon(false);
-    };
-
     const handleTesla = () => {
         setWorkReactBD(false);
         setWorkApple(false);
@@ -74,7 +66,7 @@ const Experience = () => {
                             workReactBD
                                 ? "border-l-textGreen text-textGreen"
                                 : "border-l-hoverColor text-textDark"
-                        } border-l-2  bg-transparent hover:bg-[#112240] py-3 px-8 text-sm cursor-pointer duration-300 font-medium`}
+                        } border-l-2  bg-transparent hover:bg-[#737373] py-3 px-8 text-sm cursor-pointer duration-300 font-medium`}
                     >
                         ReactBD
                     </li>
@@ -84,7 +76,7 @@ const Experience = () => {
                             workApple
                                 ? "border-l-textGreen text-textGreen"
                                 : "border-l-hoverColor text-textDark"
-                        } border-l-2  bg-transparent hover:bg-[#112240] py-3 px-8 text-sm cursor-pointer duration-300 font-medium`}
+                        } border-l-2  bg-transparent hover:bg-[#737373] py-3 px-8 text-sm cursor-pointer duration-300 font-medium`}
                     >
                         Apple
                     </li>
@@ -94,7 +86,7 @@ const Experience = () => {
                             workMicrosoft
                                 ? "border-l-textGreen text-textGreen"
                                 : "border-l-hoverColor text-textDark"
-                        } border-l-2  bg-transparent hover:bg-[#112240] py-3 px-8 text-sm cursor-pointer duration-300 font-medium`}
+                        } border-l-2  bg-transparent hover:bg-[#737373] py-3 px-8 text-sm cursor-pointer duration-300 font-medium`}
                     >
                         Microsoft
                     </li>
@@ -104,7 +96,7 @@ const Experience = () => {
                             workAmazon
                                 ? "border-l-textGreen text-textGreen"
                                 : "border-l-hoverColor text-textDark"
-                        } border-l-2  bg-transparent hover:bg-[#112240] py-3 px-8 text-sm cursor-pointer duration-300 font-medium`}
+                        } border-l-2  bg-transparent hover:bg-[#737373] py-3 px-8 text-sm cursor-pointer duration-300 font-medium`}
                     >
                         Amazon
                     </li>
@@ -114,7 +106,7 @@ const Experience = () => {
                             workTesla
                                 ? "border-l-textGreen text-textGreen"
                                 : "border-l-hoverColor text-textDark"
-                        } border-l-2  bg-transparent hover:bg-[#112240] py-3 px-8 text-sm cursor-pointer duration-300 font-medium`}
+                        } border-l-2  bg-transparent hover:bg-[#737373] py-3 px-8 text-sm cursor-pointer duration-300 font-medium`}
                     >
                         Tesla
                     </li>
