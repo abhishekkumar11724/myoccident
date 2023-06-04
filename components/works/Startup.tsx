@@ -10,9 +10,9 @@ const ReactBD = () => {
             className="w-full"
         >
             <h3 className="flex gap-1 font-medium text-xl font-titleFont">
-                Engineer{" "}
+                Product Developer{" "}
                 <span className="text-textGreen tracking-wider">
-                    @Microsoft
+                    @GamesON 
                 </span>
             </h3>
             <p className="text-sm mt-1 font-medium text-textDark">
@@ -23,25 +23,25 @@ const ReactBD = () => {
                     <span className="text-textGreen mt-1">
                         <TiArrowForward />
                     </span>
-                    Write modern, performant, maintainable code for a diverse
-                    array of client and internal projects
+                    writing a modern flutter app for a early stage
+                    startup, with few of my colleagues. A Startup dedicated 
+                    towards sports Industry.
                 </li>
                 <li className="text-base flex gap-2 text-textDark">
                     <span className="text-textGreen mt-1">
                         <TiArrowForward />
                     </span>
                     work with a variety of different languages, platforms,
-                    frameworks, and content management systems such as
-                    JavaScript, TypeScript, Gatsby, React, Craft, WordPress,
-                    Prismic, and Netlify
+                    frameworks, such as
+                    Flutter, Dart, Firebase, etc.
                 </li>
-                <li className="text-base flex gap-2 text-textDark">
+                {/* <li className="text-base flex gap-2 text-textDark">
                     <span className="text-textGreen mt-1">
                         <TiArrowForward />
                     </span>
                     communicate with multi-disciplinary teams of engineers,
                     designers, producers, and clients on daily basis
-                </li>
+                </li> */}
             </ul>
         </motion.div>
     );

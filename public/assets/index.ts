@@ -14,7 +14,7 @@ import loader from "./images/loader.svg";
 import coding from "./images/coding.png";
 import thirdweb from "./images/thirdweb.png";
 import profilePhoto from "./images/profilePhoto.png";
-// import resume from "./images/resume_18march.pdf"
+// import resume from "./images/resume_4thJun.pdf"
 import img_1 from "./images/midjourny_1.jpg";
 import img_2 from "./images/youtube .Sheri sk (124).jpg";
 import img_3 from "./images/youtube .Sheri sk (94).jpg";

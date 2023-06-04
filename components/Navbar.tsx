@@ -121,7 +121,7 @@ const Navbar = () => {
                             </motion.li>
                         </Link>
                     </ul>
-                    <a href="./assets/resume_18march.pdf" target="_blank">
+                    <a href="./assets/resume_4thJun.pdf" target="_blank">
                         <motion.button
                             className="px-4 py-2 rounded-md text-textGreen text-[13px] border border-textGreen hover:bg-hoverColor duration-300"
                             initial={{ opacity: 0 }}
@@ -263,7 +263,7 @@ const Navbar = () => {
                                     </Link>
                                 </ul>
                                 <a
-                                    href="/assets/resume_18march.pdf"
+                                    href="/assets/resume_4thJun.pdf"
                                     target="_blank"
                                 >
                                     <motion.button

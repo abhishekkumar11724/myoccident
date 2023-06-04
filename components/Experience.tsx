@@ -1,55 +1,55 @@
 import React, { useState } from "react";
 import SectionTitle from "./SectionTitle";
-import ReactBD from "./works/ReactBD";
-import Apple from "./works/Apple";
-import Amazon from "./works/Amazon";
-import Microsoft from "./works/Microsoft";
-import Tesla from "./works/Tesla";
+// import ReactBD from "./works/ReactBD";
+// import Apple from "./works/Apple";
+import Freelancer from "./works/Freelancer";
+import Startup from "./works/Startup";
+// import CollageProject from "./works/collageProject";
 
 const Experience = () => {
-    const [workReactBD, setWorkReactBD] = useState(true);
-    const [workAmazon, setWorkAmazon] = useState(false);
+    // const [workReactBD, setWorkReactBD] = useState(true);
+    const [workFreelancer, setWorkFreelancer] = useState(false);
     const [workTesla, setWorkTesla] = useState(false);
-    const [workMicrosoft, setWorkMicrosoft] = useState(false);
-    const [workApple, setWorkApple] = useState(false);
+    const [workStartup, setWorkStartup] = useState(true);
+    // const [workApple, setWorkApple] = useState(false);
 
     const handleReactBD = () => {
-        setWorkReactBD(true);
-        setWorkApple(false);
+        // setWorkReactBD(true);
+        // setWorkApple(false);
         setWorkTesla(false);
-        setWorkMicrosoft(false);
-        setWorkAmazon(false);
+        setWorkStartup(false);
+        setWorkFreelancer(false);
     };
 
-    const handleAmazon = () => {
-        setWorkReactBD(false);
-        setWorkApple(false);
+    const handleFreelancer = () => {
+        // setWorkReactBD(false);
+        // setWorkApple(false);
         setWorkTesla(false);
-        setWorkMicrosoft(false);
-        setWorkAmazon(true);
+        setWorkStartup(false);
+        setWorkFreelancer(true);
     };
 
     const handleApple = () => {
-        setWorkReactBD(false);
-        setWorkApple(true);
+        // setWorkReactBD(false);
+        // setWorkApple(true);
         setWorkTesla(false);
-        setWorkMicrosoft(false);
-        setWorkAmazon(false);
+        setWorkStartup(false);
+        setWorkFreelancer(false);
     };
 
     const handleTesla = () => {
-        setWorkReactBD(false);
-        setWorkApple(false);
+        // setWorkReactBD(false);
+        // setWorkApple(false);
         setWorkTesla(true);
-        setWorkMicrosoft(false);
-        setWorkAmazon(false);
+        setWorkStartup(false);
+        setWorkFreelancer(false);
     };
-    const handleMicrosoft = () => {
-        setWorkReactBD(false);
-        setWorkApple(false);
+    const handleStartup = () => {
+        // setWorkReactBD(false);
+        // setWorkApple(false);
         setWorkTesla(false);
-        setWorkMicrosoft(true);
-        setWorkAmazon(false);
+        setWorkStartup(true);
+        setWorkFreelancer(false);
     };
 
     return (
@@ -60,7 +60,7 @@ const Experience = () => {
             <SectionTitle title="where I have Worked" titleNo="02." />
             <div className="w-full mt-10 flex flex-col md:flex-row gap-16">
                 <ul className="md:w-32 flex flex-col ">
-                    <li
+                    {/* <li
                         onClick={handleReactBD}
                         className={`${
                             workReactBD
@@ -69,8 +69,8 @@ const Experience = () => {
                         } border-l-2  bg-transparent hover:bg-[#737373] py-3 px-8 text-sm cursor-pointer duration-300 font-medium`}
                     >
                         ReactBD
-                    </li>
-                    <li
+                    </li> */}
+                    {/* <li
                         onClick={handleApple}
                         className={`${
                             workApple
@@ -79,28 +79,28 @@ const Experience = () => {
                         } border-l-2  bg-transparent hover:bg-[#737373] py-3 px-8 text-sm cursor-pointer duration-300 font-medium`}
                     >
                         Apple
-                    </li>
+                    </li> */}
                     <li
-                        onClick={handleMicrosoft}
+                        onClick={handleStartup}
                         className={`${
-                            workMicrosoft
+                            workStartup
                                 ? "border-l-textGreen text-textGreen"
                                 : "border-l-hoverColor text-textDark"
                         } border-l-2  bg-transparent hover:bg-[#737373] py-3 px-8 text-sm cursor-pointer duration-300 font-medium`}
                     >
-                        Microsoft
+                        Startup
                     </li>
                     <li
-                        onClick={handleAmazon}
+                        onClick={handleFreelancer}
                         className={`${
-                            workAmazon
+                            workFreelancer
                                 ? "border-l-textGreen text-textGreen"
                                 : "border-l-hoverColor text-textDark"
                         } border-l-2  bg-transparent hover:bg-[#737373] py-3 px-8 text-sm cursor-pointer duration-300 font-medium`}
                     >
-                        Amazon
+                        Freelancer
                     </li>
-                    <li
+                    {/* <li
                         onClick={handleTesla}
                         className={`${
                             workTesla
@@ -109,13 +109,13 @@ const Experience = () => {
                         } border-l-2  bg-transparent hover:bg-[#737373] py-3 px-8 text-sm cursor-pointer duration-300 font-medium`}
                     >
                         Tesla
-                    </li>
+                    </li> */}
                 </ul>
-                {workAmazon && <Amazon />}
-                {workApple && <Apple />}
-                {workReactBD && <ReactBD />}
-                {workMicrosoft && <Microsoft />}
-                {workTesla && <Tesla />}
+                {workFreelancer && <Freelancer />}
+                {/* {workApple && <Apple />}
+                {workReactBD && <ReactBD />} */}
+                {workStartup && <Startup />}
+                {/* {workTesla && <CollageProject />} */}
             </div>
         </section>
     );
