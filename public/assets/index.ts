@@ -1,6 +1,6 @@
 import createCampaign from "./images/create-campaign.svg";
 import dashboard from "./images/dashboard.svg";
-import logo from "./images/logo.svg";
+import logo from "./images/logo.png";
 import logout from "./images/logout.svg";
 import payment from "./images/payment.svg";
 import profile from "./images/profile.svg";
@@ -15,9 +15,9 @@ import coding from "./images/coding.png";
 import thirdweb from "./images/thirdweb.png";
 import profilePhoto from "./images/profilePhoto.png";
 // import resume from "./images/resume_4thJun.pdf"
-import img_1 from "./images/midjourny_1.jpg";
-import img_2 from "./images/youtube .Sheri sk (124).jpg";
-import img_3 from "./images/youtube .Sheri sk (94).jpg";
+import img_1 from "./images/crowd-funding.png";
+import img_2 from "./images/vision_trades.png";
+import img_3 from "./images/gpt3.png";
 import myphoto from "./images/myphoto.png";
 
 export {

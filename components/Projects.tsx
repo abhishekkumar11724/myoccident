@@ -18,7 +18,7 @@ const Projects = () => {
                     <div className="flex flex-col xl:flex-row gap-6">
                         <a
                             className="w-full xl:w-1/2 h-auto relative group"
-                            href="https://google.com"
+                            href="https://crowd-funding-minor.netlify.app/"
                             target="_blank"
                         >
                             <div>
@@ -31,46 +31,48 @@ const Projects = () => {
                         </a>
                         <div className="w-full xl:w-1/2 flex flex-col gap-6 lgl:justify-between items-end text-right xl:-ml-16 z-10">
                             <p className="font-titleFont text-textGreen text-sm tracking-wide">
-                                Featured Projects
+                                Featured Project
                             </p>
                             <h3 className="text-2xl font-bold">
-                                Amazon clone 2.0
+                                Crowd Funding Project
                             </h3>
                             <p className="bg-[#BFBFBF] text-sm md-text-base p-2 md:p-6 rounded-md">
-                                An Amazon clone website for visualizing
-                                personalized Amazon website. View your products,
-                                Add your account with
-                                <span className="text-textGreen">o-auth</span>
+                            A blockchain-based
+                            crowdfunding project allows individuals and organizations to raise funds
+                            using a decentralized platform. Investors send cryptocurrency to a smart
+                            contract on the blockchain, providing transparency, security, and reduced
+                            costs.
+                                {/* <span className="text-textGreen">o-auth</span>
                                 and then make the purchase using and then make
                                 the purchase using
-                                <span className="text-textGreen">stripe</span>
+                                <span className="text-textGreen">stripe</span> */}
                             </p>
                             <ul className="text-xs md:text-sm font-titleFont tracking-wide flex gap-2 md:gap-5 justify-between text-textDark">
                                 <li>Nextjs</li>
-                                <li>Typescript</li>
-                                <li>Next-auth</li>
-                                <li>Stripe</li>
-                                <li>Vercel Development</li>
+                                <li>Solidity</li>
+                                <li>etherJS</li>
+                                <li>Redux</li>
+                                <li>Web3JS</li>
                             </ul>
                             <div className="text-2xl flex gap-4">
                                 <a
                                     className="hover:text-textGreen duration-300"
                                     target="_blank"
-                                    href="https://www.github.com/abhishek"
+                                    href="http://github.com/abhishekkumar11724/crowd-funding-minor"
                                 >
                                     <TbBrandGithub />
                                 </a>
-                                <a
+                                {/* <a
                                     className="hover:text-textGreen duration-300"
                                     target="_blank"
                                     href="https://www.github.com/abhishek"
                                 >
                                     <AiOutlineYoutube />
-                                </a>
+                                </a> */}
                                 <a
                                     className="hover:text-textGreen duration-300"
                                     target="_blank"
-                                    href="https://www.github.com/abhishek"
+                                    href="https://crowd-funding-minor.netlify.app/"
                                 >
                                     <RxOpenInNewWindow />
                                 </a>
@@ -83,7 +85,7 @@ const Projects = () => {
                     <div className="flex flex-col xl:flex-row-reverse gap-6">
                         <a
                             className="w-full xl:w-1/2 h-auto relative group"
-                            href="https://google.com"
+                            href="https://github.com/abhishekkumar11724/vision-trades-template-site"
                             target="_blank"
                         >
                             <div>
@@ -96,46 +98,44 @@ const Projects = () => {
                         </a>
                         <div className="w-full xl:w-1/2 flex flex-col gap-6 lgl:justify-between items-end text-right  z-10">
                             <p className="font-titleFont text-textGreen text-sm tracking-wide">
-                                Featured Projects
+                                Featured Project
                             </p>
                             <h3 className="text-2xl font-bold">
-                                Amazon clone 2.0
+                                Vision Trades
                             </h3>
                             <p className="bg-[#BFBFBF] text-sm md-text-base p-2 md:p-6 rounded-md xl:-mr-16">
-                                An Amazon clone website for visualizing
-                                personalized Amazon website. View your products,
-                                Add your account with
-                                <span className="text-textGreen">o-auth</span>
-                                and then make the purchase using and then make
-                                the purchase using
-                                <span className="text-textGreen">stripe</span>
+                                <span className="text-textGreen font-bold">ReactJS Template Site</span>
+                                , illustrating the Skills of the developer.
+                                A Site that is well thought of and designed & developed 
+                                 keeping every aspect of user likeliness.                                
+                                
                             </p>
                             <ul className="text-xs md:text-sm font-titleFont tracking-wide flex gap-2 md:gap-5 justify-between text-textDark">
-                                <li>Nextjs</li>
-                                <li>Typescript</li>
-                                <li>Next-auth</li>
-                                <li>Stripe</li>
-                                <li>Vercel Development</li>
+                                <li>Reactjs</li>
+                                <li>Vite</li>
+                                <li>TailwindCSS</li>
+                                {/* <li>Stripe</li>
+                                <li>Vercel Development</li> */}
                             </ul>
                             <div className="text-2xl flex gap-4">
                                 <a
                                     className="hover:text-textGreen duration-300"
                                     target="_blank"
-                                    href="https://www.github.com/abhishek"
+                                    href="https://abhishekkumar11724.github.io/vision-trades-template-site/"
                                 >
                                     <TbBrandGithub />
                                 </a>
-                                <a
+                                {/* <a
                                     className="hover:text-textGreen duration-300"
                                     target="_blank"
                                     href="https://www.github.com/abhishek"
                                 >
                                     <AiOutlineYoutube />
-                                </a>
+                                </a> */}
                                 <a
                                     className="hover:text-textGreen duration-300"
                                     target="_blank"
-                                    href="https://www.github.com/abhishek"
+                                    href="https://github.com/abhishekkumar11724/vision-trades-template-site"
                                 >
                                     <RxOpenInNewWindow />
                                 </a>
@@ -148,7 +148,7 @@ const Projects = () => {
                     <div className="flex flex-col xl:flex-row gap-6">
                         <a
                             className="w-full xl:w-1/2 h-auto relative group"
-                            href="https://google.com"
+                            href="https://gpt3-template-site.vercel.app/"
                             target="_blank"
                         >
                             <div>
@@ -161,46 +161,43 @@ const Projects = () => {
                         </a>
                         <div className="w-full xl:w-1/2 flex flex-col gap-6 lgl:justify-between items-end text-right xl:-ml-16 z-10">
                             <p className="font-titleFont text-textGreen text-sm tracking-wide">
-                                Featured Projects
+                                Featured Project
                             </p>
                             <h3 className="text-2xl font-bold">
-                                Amazon clone 2.0
+                                Chat GPT-3
                             </h3>
                             <p className="bg-[#BFBFBF] text-sm md-text-base p-2 md:p-6 rounded-md">
-                                An Amazon clone website for visualizing
-                                personalized Amazon website. View your products,
-                                Add your account with
-                                <span className="text-textGreen">o-auth</span>
-                                and then make the purchase using and then make
-                                the purchase using
-                                <span className="text-textGreen">stripe</span>
+                                <span className="text-textGreen font-bold">NextJS template site</span>
+                                incorporating modern and flawless design, depicting 
+                                what if, Chat-GPT-3&apos;s was redesigned.
+                                
                             </p>
                             <ul className="text-xs md:text-sm font-titleFont tracking-wide flex gap-2 md:gap-5 justify-between text-textDark">
                                 <li>Nextjs</li>
                                 <li>Typescript</li>
-                                <li>Next-auth</li>
-                                <li>Stripe</li>
-                                <li>Vercel Development</li>
+                                <li>ReactJS</li>
+                                <li>CSS</li>
+                                {/* <li>Vercel Development</li> */}
                             </ul>
                             <div className="text-2xl flex gap-4">
                                 <a
                                     className="hover:text-textGreen duration-300"
                                     target="_blank"
-                                    href="https://www.github.com/abhishek"
+                                    href="https://gpt3-template-site.vercel.app/"
                                 >
                                     <TbBrandGithub />
                                 </a>
-                                <a
+                                {/* <a
                                     className="hover:text-textGreen duration-300"
                                     target="_blank"
                                     href="https://www.github.com/abhishek"
                                 >
                                     <AiOutlineYoutube />
-                                </a>
+                                </a> */}
                                 <a
                                     className="hover:text-textGreen duration-300"
                                     target="_blank"
-                                    href="https://www.github.com/abhishek"
+                                    href="https://github.com/abhishekkumar11724/gpt3-template-site"
                                 >
                                     <RxOpenInNewWindow />
                                 </a>
