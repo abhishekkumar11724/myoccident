@@ -1,0 +1,23 @@
+---
+/** A little airship: ribbed brass envelope, fins, hung gondola and propeller. Pure SVG, drifts via CSS in the hero. */
+interface Props { class?: string }
+const { class: cls = '' } = Astro.props;
+const ribs = [58, 92, 126, 160, 194, 228, 262, 296, 330];
+---
+<svg viewBox="0 -14 420 184" class={`airship ${cls}`.trim()} aria-hidden="true" focusable="false">
+  <g class="airship-body">
+    <path d="M338 36L384 4L402 4L398 54Z" fill="#7a4a24" stroke="#2f1b0a" stroke-width="1.6" stroke-linejoin="round" />
+    <path d="M338 104L384 136L402 136L398 86Z" fill="#7a4a24" stroke="#2f1b0a" stroke-width="1.6" stroke-linejoin="round" />
+    <path d="M14 70C14 30 100 10 200 10C292 10 350 32 396 66L396 74C350 108 292 130 200 130C100 130 14 110 14 70Z" fill="url(#g-airship)" stroke="#2f1b0a" stroke-width="2" stroke-linejoin="round" />
+    {ribs.map((x) => <path d={`M${x} ${14 + Math.abs(x - 190) * 0.05}Q${x + 14} 70 ${x} ${126 - Math.abs(x - 190) * 0.05}`} fill="none" stroke="#4b2d12" stroke-width="1.8" opacity=".6" />)}
+    <path d="M18 70Q210 80 394 70" fill="none" stroke="#4b2d12" stroke-width="2" opacity=".55" />
+    <path d="M40 38C90 18 190 14 290 20" fill="none" stroke="#fff3c4" stroke-width="3" stroke-linecap="round" opacity=".42" />
+    {ribs.filter((_, i) => i % 2 === 0).map((x) => <circle cx={x + 6} cy="70" r="2.4" fill="#f3d58f" stroke="#4b2d12" stroke-width=".8" />)}
+    <path d="M150 128L146 136M250 128L254 136M170 129L168 138M230 129L232 138" stroke="#2f1b0a" stroke-width="1.8" />
+    <rect x="132" y="136" width="136" height="24" rx="9" fill="url(#g-copper)" stroke="#2f1b0a" stroke-width="2" />
+    {[152, 176, 200, 224, 248].map((x) => <circle cx={x} cy="148" r="5" fill="#ffd27a" stroke="#2f1b0a" stroke-width="1.4" />)}
+    <path d="M268 146H284" stroke="#2f1b0a" stroke-width="3" stroke-linecap="round" />
+    <g class="airship-prop"><ellipse cx="290" cy="146" rx="3" ry="15" fill="#e3bf6b" stroke="#2f1b0a" stroke-width="1.4" /></g>
+    <path d="M200 10V-2" stroke="#2f1b0a" stroke-width="2" /><path d="M200 -2L220 4L200 8Z" fill="#8c2a1f" stroke="#2f1b0a" stroke-width="1.2" />
+  </g>
+</svg>

@@ -1,0 +1,25 @@
+---
+/** Brass clock dial. Hands are driven by client.ts (IST); the markup is the static fallback (10:08:35). */
+import { ticks, polar } from '../gears';
+interface Props { mini?: boolean; class?: string; label?: string }
+const { mini = false, class: cls = '', label = 'GURUGRAM' } = Astro.props;
+const minuteTicks = ticks(80, 0, 360 - 6, 60, 0, 4, 4).map((t, i) => ({ ...t, major: i % 5 === 0 }));
+const ROMAN = ['XII', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
+---
+<svg viewBox="-100 -100 200 200" class={`clock ${mini ? 'clock--mini' : ''} ${cls}`.trim()} aria-hidden="true" focusable="false">
+  <circle r="98" fill="url(#g-brass-v)" stroke="#3a280e" stroke-width="1.5" />
+  <circle r="90.5" fill="#35230c" />
+  <circle r="87" fill="url(#g-face)" />
+  <circle r="87" fill="none" stroke="#7c5a1c" stroke-width="1" opacity=".5" />
+  {minuteTicks.map((t) => <line x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="#2a1c10" stroke-width={t.major ? 2.6 : 1} stroke-linecap="round" />)}
+  {!mini && ROMAN.map((r, i) => { const [x, y] = polar(0, 0, 61, i * 30); return <text x={x} y={y} class="clock-num">{r}</text>; })}
+  {!mini && <circle r="43" fill="none" stroke="#2a1c10" stroke-width=".6" opacity=".35" />}
+  {!mini && <text x="0" y="-22" class="clock-brand">{label}</text>}
+  {!mini && <text x="0" y="29" class="clock-brand clock-brand--sm">IST</text>}
+  <g class="hand hand-h" style="--r:304deg"><path d="M-3.2 9L-2.4 -2L-1.6 -28L0 -40L1.6 -28L2.4 -2L3.2 9Z" fill="#2a1c10" /><circle cy="-32" r="4.6" fill="none" stroke="#2a1c10" stroke-width="2" /></g>
+  <g class="hand hand-m" style="--r:48deg"><path d="M-2.4 10L-1.8 -2L-1 -56L0 -70L1 -56L1.8 -2L2.4 10Z" fill="#2a1c10" /><circle cy="-50" r="3.4" fill="none" stroke="#2a1c10" stroke-width="1.6" /></g>
+  <g class="hand hand-s" style="--r:210deg"><line y1="18" y2="-74" stroke="#8c2a1f" stroke-width="1.4" stroke-linecap="round" /><circle cy="14" r="3.6" fill="#8c2a1f" /></g>
+  <circle r="5.6" fill="url(#g-brass)" stroke="#3a280e" stroke-width=".8" />
+  <circle r="1.8" fill="#2a1c10" />
+  <path d="M-72 -52A90 90 0 0 1 22 -86C-10 -74 -52 -52 -72 -52Z" fill="url(#g-glass)" opacity=".7" />
+</svg>

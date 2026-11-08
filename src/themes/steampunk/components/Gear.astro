@@ -1,0 +1,13 @@
+---
+/** One procedurally generated gear. viewBox is -50..50 so it rotates around its centre with plain CSS. */
+import { gearPath } from '../gears';
+interface Props { teeth?: number; windows?: number; tone?: 'brass' | 'copper' | 'iron' | 'verd' | 'ink'; class?: string; bore?: number; rim?: boolean }
+const { teeth = 16, windows = 5, tone = 'brass', class: cls = '', rim = true, bore = 48 * 0.11 } = Astro.props;
+const { d, rRoot } = gearPath(teeth, 48, { windows, bore });
+const fill = tone === 'ink' ? 'none' : `url(#g-${tone})`;
+---
+<svg viewBox="-50 -50 100 100" class={`gear gear--${tone} ${cls}`.trim()} aria-hidden="true" focusable="false">
+  <path d={d} fill={fill} fill-rule="evenodd" class="gear-body" />
+  {rim && <circle r={rRoot * 0.86} fill="none" class="gear-ring" />}
+  <circle r={rRoot * 0.3} fill="none" class="gear-ring" />
+</svg>

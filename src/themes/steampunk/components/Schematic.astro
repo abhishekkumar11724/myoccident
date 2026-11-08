@@ -1,0 +1,67 @@
+---
+/** Tiny blueprint line-drawings, one per case study. Shapes only (no numbers): they are decoration, the facts are the text. */
+interface Props { kind: string; class?: string }
+const { kind, class: cls = '' } = Astro.props;
+const arrow = (x1: number, y: number, x2: number) => `M${x1} ${y}H${x2}M${x2 - 5} ${y - 3.5}L${x2} ${y}L${x2 - 5} ${y + 3.5}`;
+---
+<svg viewBox="0 0 260 110" class={`schematic ${cls}`.trim()} aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  {kind === 'nl-to-workflow-compiler' && (<>
+    <rect x="10" y="22" width="40" height="58" /><path d="M18 34H42M18 44H42M18 54H36M18 64H42" />
+    <path d={arrow(56, 51, 82)} />
+    <circle cx="110" cy="51" r="19" stroke-dasharray="4 3.2" stroke-width="5" /><circle cx="110" cy="51" r="11" /><circle cx="110" cy="51" r="2.5" />
+    <path d={arrow(138, 51, 160)} />
+    <circle cx="178" cy="28" r="7" /><circle cx="178" cy="76" r="7" /><circle cx="214" cy="51" r="7" /><circle cx="248" cy="51" r="5" stroke-dasharray="2 2" />
+    <path d="M178 35L178 69M184 31L208 47M184 73L208 56M221 51H243" />
+  </>)}
+  {kind === 'workflow-engine' && (<>
+    <circle cx="18" cy="55" r="8" /><path d="M26 55H48L66 30H84M48 55L66 80H84M48 55H84" />
+    <rect x="84" y="20" width="44" height="20" rx="3" /><rect x="84" y="45" width="44" height="20" rx="3" /><rect x="84" y="70" width="44" height="20" rx="3" />
+    <path d="M128 30H152L170 55M128 55H170M128 80H152L170 55" /><path d="M170 55H196" />
+    <rect x="196" y="40" width="30" height="30" rx="3" /><path d="M206 48V62M216 48V62" stroke-width="3" />
+    <path d="M226 55H244" /><circle cx="248" cy="55" r="8" /><circle cx="248" cy="55" r="3" />
+  </>)}
+  {kind === 'mcp-agent-platform' && (<>
+    <rect x="8" y="22" width="40" height="58" /><path d="M16 34H40M16 44H40M16 54H32M16 64H40" />
+    <path d={arrow(54, 51, 82)} />
+    <circle cx="112" cy="51" r="22" /><circle cx="112" cy="51" r="12" stroke-dasharray="3 2.6" stroke-width="3" /><circle cx="112" cy="51" r="3" />
+    <path d="M134 51H156M134 44L158 22M134 58L158 80M134 40L158 8" />
+    <rect x="156" y="2" width="34" height="14" rx="2" /><rect x="158" y="17" width="34" height="14" rx="2" /><rect x="158" y="44" width="34" height="14" rx="2" /><rect x="158" y="72" width="34" height="14" rx="2" /><rect x="156" y="92" width="34" height="14" rx="2" />
+    <path d="M192 24H226M192 51H226M192 79H226" /><circle cx="236" cy="24" r="7" /><circle cx="236" cy="51" r="7" /><circle cx="236" cy="79" r="7" />
+  </>)}
+  {kind === 'agents-retrieval' && (<>
+    <rect x="6" y="6" width="50" height="26" rx="2" /><path d="M14 26V18M22 26V12M30 26V20M38 26V14" /><rect x="6" y="42" width="50" height="26" rx="2" /><path d="M12 62L24 52L34 58L50 48" /><rect x="6" y="78" width="50" height="26" rx="2" /><circle cx="22" cy="91" r="8" /><path d="M34 86H50M34 96H46" />
+    <path d="M56 19H78L100 55M56 55H100M56 91H78L100 55" />
+    <circle cx="116" cy="55" r="16" /><circle cx="116" cy="55" r="7" stroke-dasharray="2 2" /><path d="M132 55H168" />
+    <path d="M168 55L176 55" /><rect x="176" y="30" width="76" height="50" rx="3" /><path d="M186 44H242M186 55H242M186 66H224" />
+  </>)}
+  {kind === 'reliability-observability' && (<>
+    <path d="M8 8V100H132M122 96L132 100L122 104" />
+    <path d="M16 20H110M24 34H126M34 48H96M16 62H70M40 76H120M16 90H52" stroke-width="5" />
+    <path d={arrow(142, 55, 166)} />
+    <path d="M178 8V100H252M242 96L252 100L242 104" />
+    <path d="M186 20H212M192 34H226M198 48H214M186 62H202M200 76H230M186 90H196" stroke-width="5" />
+    <path d="M186 104H232" stroke-dasharray="3 3" /><path d="M186 100V108M232 100V108" />
+  </>)}
+  {kind === 'evals-memory' && (<>
+    <circle cx="26" cy="38" r="15" /><circle cx="26" cy="38" r="6" /><path d="M41 38H62" />
+    <rect x="62" y="22" width="52" height="32" rx="3" /><path d="M70 32H106M70 40H106M70 47H92" />
+    <path d={arrow(114, 38, 140)} /><circle cx="160" cy="38" r="18" /><path d="M151 38L158 46L171 30" stroke-width="2.4" />
+    <path d="M160 56V74H26V54" /><path d="M20 62L26 54L32 62" />
+    <ellipse cx="206" cy="84" rx="18" ry="6" /><path d="M188 84V98C188 104 224 104 224 98V84" /><ellipse cx="246" cy="64" rx="10" ry="4" /><path d="M236 64V74C236 78 256 78 256 74V64" />
+    <path d="M194 79L238 68" stroke-dasharray="3 3" />
+  </>)}
+  {kind === 'event-driven-webhooks' && (<>
+    <ellipse cx="30" cy="30" rx="18" ry="7" /><path d="M12 30V76C12 84 48 84 48 76V30" /><path d="M12 46C12 54 48 54 48 46M12 62C12 70 48 70 48 62" />
+    <path d={arrow(54, 53, 82)} />
+    <rect x="82" y="38" width="26" height="30" rx="2" /><rect x="112" y="38" width="26" height="30" rx="2" /><rect x="142" y="38" width="26" height="30" rx="2" /><path d="M90 53H100M120 53H130M150 53H160" />
+    <path d="M168 53H184L200 28H226M184 53H226M184 53L200 80H226" />
+    <path d="M222 23L228 28L222 33M222 48L228 53L222 58M222 75L228 80L222 85" /><circle cx="242" cy="28" r="7" /><circle cx="242" cy="53" r="7" /><circle cx="242" cy="80" r="7" />
+  </>)}
+  {kind === 'webmine' && (<>
+    <path d="M40 8L66 23V53L40 68L14 53V23Z" /><path d="M30 24L50 52M52 24L38 44" stroke-width="2.4" />
+    <path d={arrow(72, 38, 100)} />
+    <rect x="104" y="12" width="64" height="76" rx="3" /><path d="M104 26H168M112 38H160M112 48H160M112 58H148M112 68H156" /><circle cx="112" cy="19" r="2" /><circle cx="120" cy="19" r="2" />
+    <path d={arrow(172, 50, 196)} /><circle cx="224" cy="50" r="22" /><path d="M212 50L221 60L238 40" stroke-width="2.6" />
+    <path d="M40 78V98H104" stroke-dasharray="3 3" />
+  </>)}
+</svg>

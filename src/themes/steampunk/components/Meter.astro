@@ -1,0 +1,26 @@
+---
+/** Half-dial decorative "signal" meter (no real data, carries no claim). */
+import { sector, polar, ticks } from '../gears';
+interface Props { class?: string }
+const { class: cls = '' } = Astro.props;
+const FROM = -75, TO = 75;
+const tk = ticks(84, FROM, TO, 4, 5, 11, 5);
+const labels = ['lo', '', 'mid', '', 'hi'];
+---
+<svg viewBox="-110 -112 220 148" class={`meter ${cls}`.trim()} aria-hidden="true" focusable="false" data-gauge>
+  <rect x="-108" y="-110" width="216" height="144" rx="10" fill="url(#g-brass-v)" stroke="#3a280e" stroke-width="1.5" />
+  <rect x="-100" y="-102" width="200" height="128" rx="6" fill="#2b1c0b" />
+  <rect x="-97" y="-99" width="194" height="122" rx="4" fill="url(#g-face)" />
+  <path d={sector(0, 18, 66, 74, FROM, 0)} fill="#3f9d8a" />
+  <path d={sector(0, 18, 66, 74, 0, 37)} fill="#d79a2f" />
+  <path d={sector(0, 18, 66, 74, 37, TO)} fill="#a8321f" />
+  <g transform="translate(0 18)">
+    {tk.map((t) => <line x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="#2a1c10" stroke-width={t.major ? 2.4 : 1} stroke-linecap="round" />)}
+    {labels.map((l, i) => { const [x, y] = polar(0, 0, 54, FROM + ((TO - FROM) * i) / 4); return <text x={x} y={y} class="meter-num">{l}</text>; })}
+    <text x="0" y="-22" class="gauge-brand">SIGNAL</text>
+    <g class="needle" style="--rot:0deg"><path d="M-2.6 12L0 -72L2.6 12Z" fill="#7a1f14" stroke="#3b0f09" stroke-width=".6" /></g>
+    <circle r="7" fill="url(#g-brass)" stroke="#3a280e" stroke-width=".9" />
+    <circle r="2.2" fill="#2a1c10" />
+  </g>
+  <path d="M-92 -96H40C10 -80 -50 -50 -92 -30Z" fill="url(#g-glass)" opacity=".6" />
+</svg>

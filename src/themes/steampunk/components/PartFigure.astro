@@ -1,0 +1,81 @@
+---
+/**
+ * Patent-style line figure for one skill group: a small machine (per `kind`) plus `n` numbered callouts with leader lines.
+ * The numbered parts list beside it is real text; this drawing is decoration (aria-hidden).
+ */
+import { gearPath, polar, mulberry, hashStr, n2 } from '../gears';
+interface Props { kind: string; n: number; seed: string }
+const { kind, n, seed } = Astro.props;
+const rnd = mulberry(hashStr(seed));
+
+const gear = (cx: number, cy: number, r: number, teeth: number, windows = 5) => gearPath(teeth, r, { cx, cy, windows, bore: r * 0.1 }).d;
+const place = (cx: number, cy: number, r1: number, r2: number, deg: number): [number, number] => polar(cx, cy, r1 + r2 - 6, deg);
+
+// ---- callout anchors around the drawing (ordered so that early items spread out)
+const anchors: [number, number][] = [[24, 22], [276, 22], [150, 12], [276, 130], [24, 150], [220, 186], [80, 186], [276, 80], [24, 86], [150, 190], [60, 14], [240, 12]];
+const shown = Math.min(n, anchors.length);
+const callouts = anchors.slice(0, shown).map(([x, y], i) => {
+  const k = 0.3 + rnd() * 0.12;
+  const tx = 150 + (x - 150) * k + (rnd() - 0.5) * 14, ty = 100 + (y - 100) * k + (rnd() - 0.5) * 10;
+  const dx = tx - x, dy = ty - y, len = Math.hypot(dx, dy) || 1;
+  const sx = x + (dx / len) * 11, sy = y + (dy / len) * 11;
+  const bend = (rnd() - 0.5) * 10;
+  const mx = (sx + tx) / 2 - (dy / len) * bend, my = (sy + ty) / 2 + (dx / len) * bend;
+  return { i: i + 1, x, y, d: `M${n2(sx)} ${n2(sy)}Q${n2(mx)} ${n2(my)} ${n2(tx)} ${n2(ty)}`, tx: n2(tx), ty: n2(ty) };
+});
+const [g2x, g2y] = place(100, 108, 52, 34, 62);
+const [g3x, g3y] = place(g2x, g2y, 34, 24, 100);
+---
+<svg viewBox="0 0 300 200" class="partfig" aria-hidden="true" focusable="false" stroke-linecap="round" stroke-linejoin="round">
+  <g class="pf-draw">
+    {kind === 'gear-train' && (<>
+      <path d={gear(100, 108, 52, 18, 5)} fill-rule="evenodd" class="solid" /><path d={gear(100, 108, 52, 18, 5)} fill-rule="evenodd" fill="url(#p-hatch)" stroke="none" opacity=".35" />
+      <path d={gear(g2x, g2y, 34, 12, 4)} fill-rule="evenodd" class="solid" />
+      <path d={gear(g3x, g3y, 24, 9, 3)} fill-rule="evenodd" class="solid" />
+      <circle cx="100" cy="108" r="6" class="solid" /><circle cx={g2x} cy={g2y} r="4.5" class="solid" /><circle cx={g3x} cy={g3y} r="4" class="solid" />
+      <path d="M40 176H220M54 176V164M210 176V150" /><path d="M54 164H66M198 150H210" />
+    </>)}
+    {kind === 'governor' && (<>
+      <path d="M150 28V176" stroke-width="3" /><rect x="138" y="22" width="24" height="12" rx="2" class="solid" />
+      <path d="M150 40L100 86M150 40L200 86" /><circle cx="97" cy="96" r="15" class="solid" /><circle cx="203" cy="96" r="15" class="solid" />
+      <path d="M97 96L97 96M112 100L146 128M188 100L154 128" /><path d="M150 40L116 70M150 40L184 70" stroke-dasharray="3 3" />
+      <rect x="136" y="122" width="28" height="16" rx="2" class="solid" /><path d="M150 138V150" />
+      <path d={gear(150, 164, 28, 16, 4)} fill-rule="evenodd" class="solid" />
+      <path d="M60 184H240" /><path d="M122 164H178" opacity="0" />
+      <path d="M150 22V12M142 12H158" />
+    </>)}
+    {kind === 'beam-engine' && (<>
+      <path d="M52 62L246 56L252 66L58 72Z" class="solid" /><path d="M150 64L128 176M150 64L172 176" /><circle cx="150" cy="64" r="7" class="solid" />
+      <rect x="62" y="104" width="46" height="70" rx="3" class="solid" /><path d="M62 118H108M62 160H108" /><path d="M85 104V68" stroke-width="3" /><circle cx="56" cy="68" r="4" />
+      <path d="M246 62L228 128" stroke-width="3" />
+      <circle cx="224" cy="138" r="38" class="solid" opacity=".0" /><circle cx="224" cy="138" r="38" /><circle cx="224" cy="138" r="30" stroke-width="1" />
+      <path d="M224 138L224 100M224 138L257 157M224 138L191 157M224 138L257 119M224 138L191 119M224 138L224 176" stroke-width="2" /><circle cx="224" cy="138" r="7" class="solid" />
+      <path d="M40 182H260" />
+    </>)}
+    {kind === 'drums' && (<>
+      {[60, 150, 240].map((x, i) => (<>
+        <ellipse cx={x} cy={52 + i * 12} rx="34" ry="10" class="solid" /><path d={`M${x - 34} ${52 + i * 12}V${150 - i * 4}C${x - 34} ${166 - i * 4} ${x + 34} ${166 - i * 4} ${x + 34} ${150 - i * 4}V${52 + i * 12}`} class="solid" />
+        <path d={`M${x - 34} ${80 + i * 8}C${x - 34} ${92 + i * 8} ${x + 34} ${92 + i * 8} ${x + 34} ${80 + i * 8}M${x - 34} ${112 + i * 4}C${x - 34} ${124 + i * 4} ${x + 34} ${124 + i * 4} ${x + 34} ${112 + i * 4}`} />
+      </>))}
+      <path d="M94 100H116M184 108H206" stroke-width="3" /><path d="M60 38V28M150 50V40M240 62V52" />
+    </>)}
+    {kind === 'manifold' && (<>
+      <path d="M14 112H286M14 130H286" stroke-width="1.8" /><path d="M14 112V130M286 112V130" />
+      {[56, 150, 244].map((x) => (<>
+        <path d={`M${x - 12} 112V64M${x + 12} 112V64`} /><rect x={x - 17} y="104" width="34" height="8" class="solid" /><rect x={x - 17} y="64" width="34" height="8" class="solid" />
+        <path d={`M${x} 64V44`} stroke-width="3" /><circle cx={x} cy="34" r="16" class="solid" /><path d={`M${x - 16} 34H${x + 16}M${x} 18V50`} stroke-width="1.6" />
+        <path d={`M${x - 12} 130V176M${x + 12} 130V176`} /><rect x={x - 17} y="130" width="34" height="8" class="solid" />
+      </>))}
+      <circle cx="102" cy="171" r="14" class="solid" /><path d="M102 171L110 163" stroke-width="2" /><path d="M40 186H260" />
+    </>)}
+    {kind === 'balance' && (<>
+      <path d="M150 176V54M118 176H182" stroke-width="3" /><path d="M126 176L138 164H162L174 176" class="solid" />
+      <path d="M52 62L248 62" stroke-width="3" /><circle cx="150" cy="54" r="9" class="solid" /><circle cx="52" cy="62" r="4" /><circle cx="248" cy="62" r="4" />
+      <path d="M52 62L26 128M52 62L78 128M248 62L222 124M248 62L274 124" stroke-width="1" /><path d="M20 128C28 146 76 146 84 128Z" class="solid" /><path d="M216 124C224 142 272 142 280 124Z" class="solid" />
+      <path d="M212 40L232 14" opacity="0" /><path d="M150 54V38" />
+    </>)}
+  </g>
+  <g class="pf-callouts">
+    {callouts.map((c) => (<g><path d={c.d} class="lead" /><circle cx={c.tx} cy={c.ty} r="2" class="dot" /><circle cx={c.x} cy={c.y} r="9.5" class="bubble" /><text x={c.x} y={c.y} class="bubble-num">{c.i}</text></g>))}
+  </g>
+</svg>

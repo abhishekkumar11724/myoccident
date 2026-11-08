@@ -1,0 +1,13 @@
+---
+/** Section header: a roman-numeral cog and a riveted brass nameplate with the title and a one-line subtitle. */
+import Gear from './Gear.astro';
+interface Props { n: string; title: string; sub?: string; id?: string; tone?: 'dark' | 'light' }
+const { n, title, sub, id, tone = 'dark' } = Astro.props;
+---
+<header class={`sechead sechead--${tone}`}>
+  <span class="sechead-cog" aria-hidden="true"><Gear teeth={14} windows={0} bore={0} tone="copper" class="spin" rim={false} /><b class={n.length > 2 ? "is-long" : ""}>{n}</b></span>
+  <div class="sechead-plate">
+    <h2 id={id}>{title}</h2>
+    {sub && <p>{sub}</p>}
+  </div>
+</header>

@@ -1,0 +1,535 @@
+---
+/**
+ * Steampunk theme: an airship chart room. Every surface is a different material (leather, iron, parchment, Pullman green,
+ * cyanotype blueprint, walnut drawers, drafting paper, brass portholes, newsprint, telegram blank).
+ *  - Nav: riveted brass header with telegraph-key buttons, an amber lamp for the active section and a live brass clock.
+ *  - Hero: observation window + big title + a console: brief | porthole portrait | clock and signal meter.
+ *  - Stats: pressure gauges whose needles swing once when scrolled into view.
+ *  - Experience: railway timetable boards with numbered stops on a track. Education: a certificate with a wax seal.
+ *  - Case studies: blueprint sheets with title blocks and dimension-line results. Projects: brass-handled drawers.
+ *  - Skills: patent plates with figure + numbered parts list. Beyond code: portholes, riveted plates and cabinet cards.
+ *  - Writing: a gazette. Contact: a telegram blank and a telegraph panel.
+ * Every data-pf-* hook from docs/THEME_GUIDE.md is kept; all facts come from @/content/profile.
+ */
+import { profile } from '@/content/profile';
+import { photoGroups, heroPhotos, photos } from '@/lib/photos';
+import type { Photo } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import meta from './meta';
+import { gearPath, mulberry, polar } from './gears';
+import Defs from './components/Defs.astro';
+import Gear from './components/Gear.astro';
+import Clock from './components/Clock.astro';
+import Gauge from './components/Gauge.astro';
+import Meter from './components/Meter.astro';
+import Airship from './components/Airship.astro';
+import SecHead from './components/SecHead.astro';
+import Schematic from './components/Schematic.astro';
+import PartFigure from './components/PartFigure.astro';
+import './theme.css';
+
+const STYLE = 'steampunk';
+const all = photos(STYLE);
+const heroList = heroPhotos(STYLE);
+const hero = all.find((p) => p.id === 'portraits/01-selfie-maroon') ?? heroList[0] ?? all[0];
+const aboutPhoto = all.find((p) => p.id === 'portraits/03-red-kurta-seated') ?? heroList.find((p) => p.id !== hero?.id) ?? all.find((p) => p.id !== hero?.id);
+const groups = photoGroups(STYLE);
+
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+const nav = [
+  ['about', 'About'],
+  ['experience', 'Experience'],
+  ['case-studies', 'Case studies'],
+  ['projects', 'Projects'],
+  ['skills', 'Skills'],
+  ['beyond-code', 'Beyond code'],
+  ['writing', 'Writing'],
+  ['contact', 'Contact'],
+] as const;
+
+// gauge needle positions: percentages are literal, the rest are a fixed decorative spread
+const DECOR = [0.86, 0.62, 0.78, 0.5, 0.68, 0.9];
+const stats = profile.stats.map((s, i) => {
+  const m = /(\d+)%/.exec(s.value);
+  return { ...s, frac: m ? Math.min(1, Number(m[1]) / 100) : DECOR[i % DECOR.length] };
+});
+
+const featured = profile.caseStudies.filter((c) => c.featured);
+const more = profile.caseStudies.filter((c) => !c.featured);
+const totalSheets = profile.caseStudies.length;
+const sheetNo = (id: string) => String(profile.caseStudies.findIndex((c) => c.id === id) + 1).padStart(2, '0');
+const figKinds = ['gear-train', 'governor', 'beam-engine', 'drums', 'manifold', 'balance'];
+
+type Frame = 'port' | 'plate' | 'card';
+const frameOf = (p: Photo, i: number): Frame => {
+  const group = p.tags.includes('group');
+  if (p.orientation === 'portrait') return !group && i % 3 === 1 ? 'port' : 'card';
+  if (p.orientation === 'landscape') return !group && i % 4 === 2 ? 'port' : 'plate';
+  return 'port';
+};
+
+// procedural city skyline for the observation window
+const rnd = mulberry(1887);
+let sx = 0;
+let sky = '';
+while (sx < 1200) {
+  const w = 18 + Math.floor(rnd() * 34);
+  const h = 14 + Math.floor(rnd() * 34);
+  sky += `M${sx} 60V${60 - h}H${sx + w}V60Z`;
+  if (rnd() > 0.55) { const cx = sx + 5 + Math.floor(rnd() * Math.max(2, w - 14)); sky += `M${cx} ${60 - h}V${60 - h - 10 - Math.floor(rnd() * 8)}h5V${60 - h}Z`; }
+  if (rnd() > 0.93) { sky += `M${sx + 2} ${60 - h}Q${sx + w / 2} ${60 - h - 20} ${sx + w - 2} ${60 - h}Z`; }
+  sx += w + (rnd() > 0.7 ? 4 : 0);
+}
+// clock tower
+sky += 'M640 60V6h14V60ZM636 6L647 -6L658 6Z';
+
+// wax seal for the education certificate
+const seal = gearPath(22, 46, { tooth: 3.4, bore: 0 }).d;
+const year = new Date().getFullYear();
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style={STYLE} themeColor="#2b1a10" />
+    <meta name="robots" content="index,follow" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+  </head>
+  <body class="sp">
+    <Defs />
+    <a class="skip" href="#main">Skip to content</a>
+
+    <!-- ============================================================ HEADER / NAV -->
+    <header class="top" data-top>
+      <div class="top-in">
+        <a class="brand" href="#hero" aria-label={`${profile.name} - back to the top`}>
+          <span class="brand-cog" aria-hidden="true"><Gear teeth={16} windows={0} bore={0} tone="brass" class="spin" rim={false} /><b>AK</b></span>
+          <span class="brand-name">{profile.name}</span>
+        </a>
+        <nav class="keys" id="primary-nav" aria-label="Sections">
+          {nav.map(([id, label], i) => (
+            <a class="key" href={`#${id}`} data-nav={id}>
+              <span class="key-lamp" aria-hidden="true"></span>
+              <span class="key-num" aria-hidden="true">{ROMAN[i]}</span>
+              <span class="key-label">{label}</span>
+            </a>
+          ))}
+        </nav>
+        <div class="top-clock" aria-hidden="true"><Clock mini /></div>
+        <button class="valve" type="button" aria-expanded="false" aria-controls="primary-nav" data-valve>
+          <svg viewBox="-50 -50 100 100" aria-hidden="true" focusable="false"><circle r="40" fill="none" stroke="currentColor" stroke-width="9" /><path d="M-40 0H40M0 -40V40M-28 -28L28 28M28 -28L-28 28" stroke="currentColor" stroke-width="7" stroke-linecap="round" /><circle r="9" fill="currentColor" /></svg>
+          <span class="valve-label">Menu</span>
+        </button>
+      </div>
+    </header>
+
+    <main id="main">
+      <div class="pipe" aria-hidden="true"></div>
+
+      <!-- ============================================================ HERO -->
+      <section class="hero" id="hero" data-pf-section="hero" aria-labelledby="hero-title">
+        <div class="hero-bg" aria-hidden="true">
+          <div class="hero-cog hero-cog--a" data-turn="0.045"><Gear teeth={30} windows={6} tone="iron" /></div>
+          <div class="hero-cog hero-cog--b" data-turn="-0.07"><Gear teeth={20} windows={5} tone="copper" /></div>
+        </div>
+        <div class="wrap">
+          <div class="sky" aria-hidden="true">
+            <div class="sky-sun"></div>
+            <div class="cloud cloud--1"></div><div class="cloud cloud--2"></div><div class="cloud cloud--3"></div>
+            <div class="sky-ship"><div class="sky-ship-in"><Airship /></div></div>
+            <svg class="sky-city" viewBox="0 0 1200 60" preserveAspectRatio="xMidYMax slice" focusable="false"><path d={sky} fill="#1a0f08" /></svg>
+            <i class="mullion" style="left:25%"></i><i class="mullion" style="left:50%"></i><i class="mullion" style="left:75%"></i>
+            <span class="sky-glass"></span>
+          </div>
+
+          <div class="hero-title">
+            <p class="kicker">{meta.flavor.kicker}</p>
+            <h1 id="hero-title">{profile.name}</h1>
+            <p class="hero-role"><span>{profile.role}</span></p>
+          </div>
+
+          <div class="console">
+            <article class="brief plate plate--parch fil-frame">
+              <p class="label">Engineer's brief</p>
+              <p class="brief-lead">{profile.tagline}</p>
+              <dl class="brief-facts">
+                <div><dt>Focus</dt><dd>{profile.focus}</dd></div>
+                <div><dt>Station</dt><dd>{profile.location}</dd></div>
+              </dl>
+              <p class="brief-actions">
+                <a class="btn btn--brass" href={withBase(profile.resume.href)} data-pf-resume download>{profile.resume.label}</a>
+                <a class="btn btn--verd" href="#contact">Send a telegram</a>
+              </p>
+            </article>
+
+            <figure class="portal">
+              <Gear teeth={34} windows={8} tone="brass" class="portal-gear portal-gear--a spin" />
+              <Gear teeth={14} windows={4} tone="copper" class="portal-gear portal-gear--b spin spin--rev" />
+              <div class="porthole">
+                {hero && <img src={hero.img.src} width={hero.img.width} height={hero.img.height} alt={hero.alt} fetchpriority="high" decoding="async" style={`object-position:${hero.focus}`} />}
+                <span class="porthole-glare" aria-hidden="true"></span>
+                <svg class="porthole-ring" viewBox="-100 -100 200 200" aria-hidden="true" focusable="false">
+                  <path d="M100 0A100 100 0 1 1 -100 0A100 100 0 1 1 100 0ZM80 0A80 80 0 1 0 -80 0A80 80 0 1 0 80 0Z" fill="url(#g-brass-v)" fill-rule="evenodd" stroke="#3a280e" stroke-width="1.5" />
+                  <circle r="80" fill="none" stroke="#1c1108" stroke-width="5" opacity=".75" />
+                  <circle r="87" fill="none" stroke="#fff2b8" stroke-width=".8" opacity=".6" />
+                  {Array.from({ length: 12 }, (_, i) => { const [x, y] = polar(0, 0, 90, i * 30); return (<g transform={`translate(${x} ${y}) rotate(${i * 30 + 15})`}><polygon points="-5.2,-3 0,-6 5.2,-3 5.2,3 0,6 -5.2,3" fill="url(#g-brass)" stroke="#2e200a" stroke-width="1" /><circle r="1.8" fill="#2e200a" /></g>); })}
+                </svg>
+              </div>
+              {hero?.caption && <figcaption class="tag-cap">{hero.caption}</figcaption>}
+            </figure>
+
+            <aside class="dials plate plate--iron" aria-label="Local time and signal gauge">
+              <div class="dial-row">
+                <Clock class="dial-clock" />
+                <div class="dial-text">
+                  <p class="label">Gurugram time</p>
+                  <p class="readout" data-clock-digital>--:--</p>
+                  <p class="dial-sub"><span data-clock-day>Indian Standard Time</span></p>
+                  <p class="dial-sub">Your clock <b data-clock-local>--:--</b></p>
+                </div>
+              </div>
+              <div class="dial-row">
+                <Meter class="dial-meter" />
+                <div class="dial-text">
+                  <p class="label">Signal gauge</p>
+                  <p class="reply">The line is open - write in</p>
+                  <p class="dial-sub">Email, phone or the telegram below.</p>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="rail plate plate--iron" role="group" aria-label="Key figures">
+            <p class="rail-title label">Instrument panel</p>
+            <div class="rail-gauges">
+              {stats.map((s, i) => <Gauge value={s.value} label={s.label} frac={s.frac} delay={i * 140} tone={i % 3 === 1 ? 'copper' : i % 3 === 2 ? 'verd' : 'brass'} />)}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="trim" aria-hidden="true"></div>
+
+      <!-- ============================================================ ABOUT -->
+      <section class="sec sec--wood" id="about" data-pf-section="about" aria-labelledby="about-h">
+        <div class="wrap">
+          <SecHead n="I" id="about-h" title="About" sub="From the engineer's field notes" />
+          <div class="sheet plate plate--parch fil-frame">
+            <div class="about-grid">
+              {aboutPhoto && (
+                <figure class="cabinet-card">
+                  <div class="cabinet-img"><img src={aboutPhoto.img.src} width={aboutPhoto.img.width} height={aboutPhoto.img.height} alt={aboutPhoto.alt} loading="lazy" decoding="async" style={`object-position:${aboutPhoto.focus}`} /></div>
+                  <figcaption><span>{profile.name}</span><em>{aboutPhoto.caption}</em></figcaption>
+                </figure>
+              )}
+              <div class="about-text">
+                <p class="about-lead">{profile.summary}</p>
+                {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+                <h3 class="label label--ink">Pastimes of the engineer</h3>
+                <ul class="tags" aria-label="Interests">{profile.interests.map((i) => <li class="tag">{i}</li>)}</ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="trim" aria-hidden="true"></div>
+
+      <!-- ============================================================ EXPERIENCE -->
+      <section class="sec sec--green" id="experience" data-pf-section="experience" aria-labelledby="exp-h">
+        <div class="wrap">
+          <SecHead n="II" id="exp-h" title="Experience" sub="Timetable of services, newest departure first" />
+          <div class="jobs">
+            {profile.experience.map((e) => (
+              <article class="job">
+                <header class="board plate">
+                  <dl class="board-grid">
+                    <div class="cell cell--station"><dt>Station</dt><dd><h3>{e.company}</h3></dd></div>
+                    <div class="cell cell--role"><dt>Service</dt><dd>{e.title}</dd></div>
+                    <div class="cell"><dt>Departed</dt><dd>{e.start}</dd></div>
+                    <div class="cell"><dt>Arrived</dt><dd>{e.end === 'Present' ? <><i class="lamp" aria-hidden="true"></i>Present</> : e.end}</dd></div>
+                    <div class="cell"><dt>Platform</dt><dd>{e.place}</dd></div>
+                  </dl>
+                </header>
+                <p class="job-blurb">{e.blurb}</p>
+                <ol class="stops">
+                  {e.bullets.map((b, i) => (
+                    <li class="stop">
+                      <span class="stop-no" aria-hidden="true">{i + 1}</span>
+                      <h4 class="stop-head">{b.head}</h4>
+                      <p class="stop-text">{b.text}</p>
+                    </li>
+                  ))}
+                </ol>
+              </article>
+            ))}
+          </div>
+
+          <div class="certs">
+            {profile.education.map((e) => (
+              <article class="cert plate plate--parch fil-frame" data-pf-education>
+                <svg class="seal" viewBox="-50 -50 100 100" aria-hidden="true" focusable="false">
+                  <path d={seal} fill="#8c2a1f" stroke="#4a120b" stroke-width="1.2" /><circle r="36" fill="none" stroke="#e8b9a8" stroke-width="1.4" opacity=".7" /><circle r="30" fill="none" stroke="#4a120b" stroke-width="1" opacity=".5" />
+                  <text x="0" y="1" class="seal-text">{e.short.split(' ')[0]}</text>
+                </svg>
+                <p class="label label--ink">Diploma of the institute</p>
+                <h3 class="cert-school">{e.school}</h3>
+                <p class="cert-degree">{e.degree}</p>
+                <p class="cert-dates">{e.start} - {e.end}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div class="trim" aria-hidden="true"></div>
+
+      <!-- ============================================================ CASE STUDIES -->
+      <section class="sec sec--blue" id="case-studies" data-pf-section="case-studies" aria-labelledby="cs-h">
+        <div class="wrap">
+          <SecHead n="III" id="cs-h" title="Case studies" sub="Drawing sheets, cyanotype prints from the resume" />
+          <div class="bp-grid">
+            {featured.map((c) => (
+              <article class="bp" data-pf-case={c.id}>
+                <header class="bp-head">
+                  <p class="bp-no">Sheet {sheetNo(c.id)} <span>of {String(totalSheets).padStart(2, '0')}</span></p>
+                  <h3>{c.title}</h3>
+                  <p class="bp-kicker">{c.kicker}</p>
+                </header>
+                <div class="bp-body">
+                  <ol class="bp-notes">
+                    <li><b>Problem.</b> {c.problem}</li>
+                    <li><b>Approach.</b> {c.approach}</li>
+                  </ol>
+                  <Schematic kind={c.id} class="bp-schem" />
+                </div>
+                <ul class="dims" aria-label="Results">
+                  {c.impact.map((x) => <li class="dim"><span>{x}</span></li>)}
+                </ul>
+                <footer class="titleblock">
+                  <dl>
+                    <div><dt>Org</dt><dd>{c.org}</dd></div>
+                    <div><dt>Period</dt><dd>{c.period}</dd></div>
+                    <div><dt>Role</dt><dd>{c.role}</dd></div>
+                  </dl>
+                  <ul class="refs" aria-label="Topics">{c.tags.map((t) => <li>{t}</li>)}</ul>
+                </footer>
+              </article>
+            ))}
+          </div>
+          {more.length > 0 && (
+            <>
+              <h3 class="appendix">Appendix sheets</h3>
+              <div class="bp-grid bp-grid--small">
+                {more.map((c) => (
+                  <article class="bp bp--small" data-pf-case={c.id}>
+                    <header class="bp-head">
+                      <p class="bp-no">Sheet {sheetNo(c.id)} <span>of {String(totalSheets).padStart(2, '0')}</span></p>
+                      <h3>{c.title}</h3>
+                      <p class="bp-kicker">{c.kicker}</p>
+                    </header>
+                    <div class="bp-body">
+                      <ol class="bp-notes">
+                        <li><b>Problem.</b> {c.problem}</li>
+                        <li><b>Approach.</b> {c.approach}</li>
+                      </ol>
+                      <Schematic kind={c.id} class="bp-schem" />
+                    </div>
+                    <ul class="dims" aria-label="Results">{c.impact.map((x) => <li class="dim"><span>{x}</span></li>)}</ul>
+                    <footer class="titleblock">
+                      <dl>
+                        <div><dt>Org</dt><dd>{c.org}</dd></div>
+                        <div><dt>Period</dt><dd>{c.period}</dd></div>
+                        <div><dt>Role</dt><dd>{c.role}</dd></div>
+                      </dl>
+                      <ul class="refs" aria-label="Topics">{c.tags.map((t) => <li>{t}</li>)}</ul>
+                    </footer>
+                  </article>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      <div class="trim" aria-hidden="true"></div>
+
+      <!-- ============================================================ PROJECTS -->
+      <section class="sec sec--wood" id="projects" data-pf-section="projects" aria-labelledby="pr-h">
+        <div class="wrap">
+          <SecHead n="IV" id="pr-h" title="Projects" sub="The cabinet of curiosities - every drawer opens onto GitHub" />
+          <div class="drawers">
+            {profile.projects.map((p) => (
+              <article class="drawer" data-pf-project={p.name}>
+                <div class="drawer-face">
+                  <div class="label-holder"><div class="label-card"><h3>{p.title}</h3><span class="label-year">{p.year}</span></div></div>
+                  <p class="drawer-blurb">{p.blurb}</p>
+                  <ul class="stamps" aria-label="Built with">{p.stack.map((s) => <li>{s}</li>)}</ul>
+                  <p class="drawer-links">
+                    <a class="btn btn--brass btn--sm" href={p.repo} rel="noopener" aria-label={`Source on GitHub: ${p.title}`}>Source</a>
+                    {p.live && <a class="btn btn--verd btn--sm" href={p.live} rel="noopener" aria-label={`Live site: ${p.title}`}>Live site</a>}
+                  </p>
+                  <span class="pull" aria-hidden="true"></span>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div class="trim" aria-hidden="true"></div>
+
+      <!-- ============================================================ SKILLS -->
+      <section class="sec sec--paper" id="skills" data-pf-section="skills" aria-labelledby="sk-h">
+        <div class="wrap">
+          <SecHead n="V" id="sk-h" title="Skills" sub="Specification and parts list, per the engineer's drawings" tone="light" />
+          <div class="patents">
+            {profile.skills.map((g, i) => {
+              const fam = ((g as { familiar?: readonly string[] }).familiar ?? []) as readonly string[];
+              const parts = [...g.items.map((t) => ({ t, fam: false })), ...fam.map((t) => ({ t, fam: true }))];
+              return (
+                <article class="patent">
+                  <header class="patent-head"><p class="fig">Fig. {i + 1}</p><h3>{g.group}</h3></header>
+                  <PartFigure kind={figKinds[i % figKinds.length]} n={parts.length} seed={g.group} />
+                  <ol class="parts">
+                    {parts.map((pt, j) => <li class={pt.fam ? 'part part--fam' : 'part'}><span class="part-no" aria-hidden="true">{j + 1}</span><span class="part-t">{pt.t}{pt.fam && <em> (familiar)</em>}</span></li>)}
+                  </ol>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <div class="trim" aria-hidden="true"></div>
+
+      <!-- ============================================================ BEYOND CODE -->
+      <section class="sec sec--leather" id="beyond-code" data-pf-section="beyond-code" aria-labelledby="bc-h">
+        <div class="wrap">
+          <SecHead n="VI" id="bc-h" title="Beyond code" sub="The album of the voyage - trips, rides, books and friends" />
+          <p class="sec-intro">Every plate below was re-printed as an engraved sepia albumen. Select one to view it larger, then develop it in colour.</p>
+          {groups.map((g, gi) => (
+            <div class="album">
+              <header class="album-head">
+                <p class="album-no">Plate {ROMAN[gi]}</p>
+                <h3>{g.title}</h3>
+                <p class="album-blurb">{g.blurb}</p>
+              </header>
+              <ul class="shelf">
+                {g.photos.map((p, i) => {
+                  const f = frameOf(p, i);
+                  return (
+                    <li class={`frame frame--${f}`}>
+                      <a class="frame-link" href={p.img.src} data-viewer data-orig={p.original.src} data-alt={p.alt} data-cap={p.caption ?? ''}>
+                        <span class="frame-img"><img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} /></span>
+                        {f === 'card' && <span class="frame-card-cap">{p.caption ?? ''}</span>}
+                      </a>
+                      {f !== 'card' && p.caption && <span class="frame-cap">{p.caption}</span>}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div class="trim" aria-hidden="true"></div>
+
+      <!-- ============================================================ WRITING -->
+      <section class="sec sec--news" id="writing" data-pf-section="writing" aria-labelledby="wr-h">
+        <div class="wrap">
+          <SecHead n="VII" id="wr-h" title="Writing" sub="Dispatches from the press room" tone="light" />
+          <article class="gazette">
+            <header class="masthead">
+              <p class="masthead-top"><span>Forthcoming editions</span><span>Printed on request</span></p>
+              <h3>The Engineer's Gazette</h3>
+              <p class="masthead-sub">{profile.writing.status}</p>
+            </header>
+            {profile.writing.posts.length > 0 ? (
+              <ul class="columns">
+                {profile.writing.posts.map((post) => <li><h4><a href={post.href}>{post.title}</a></h4><p class="dateline">{post.date}</p><p>{post.summary}</p></li>)}
+              </ul>
+            ) : (
+              <>
+                <p class="gazette-note">Planned for the first editions:</p>
+                <ul class="columns">
+                  {profile.writing.planned.map((t) => (
+                    <li>
+                      <span class="press-stamp" aria-hidden="true">In press</span>
+                      <h4>{t}</h4>
+                      <span class="ghost" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </article>
+        </div>
+      </section>
+
+      <div class="trim" aria-hidden="true"></div>
+
+      <!-- ============================================================ CONTACT -->
+      <section class="sec sec--wood sec--contact" id="contact" data-pf-section="contact" aria-labelledby="ct-h">
+        <div class="wrap">
+          <SecHead n="VIII" id="ct-h" title="Contact" sub="The telegraph office is open" />
+          <div class="office">
+            <div class="telegraph plate plate--iron">
+              <p class="office-lead">Open to interesting problems in GenAI agents, workflow systems and backend infrastructure.</p>
+              <ul class="tkeys">
+                <li><span class="tkey-label">Email</span><Protected kind="email" class="tkey-link" /></li>
+                <li><span class="tkey-label">Phone</span><Protected kind="phone" class="tkey-link" /></li>
+                <li><span class="tkey-label">LinkedIn</span><a class="tkey-link" href={profile.contact.linkedin} rel="noopener me" data-pf-linkedin>linkedin.com/in/abhishek-kumar-ld</a></li>
+                <li><span class="tkey-label">GitHub</span><a class="tkey-link" href={profile.contact.github} rel="noopener me" data-pf-github>github.com/{profile.handle}</a></li>
+              </ul>
+              <p class="office-actions"><a class="btn btn--brass" href={withBase(profile.resume.href)} data-pf-resume download>{profile.resume.label}</a></p>
+              <div class="office-meter">
+                <Meter class="dial-meter" />
+                <div class="dial-text"><p class="label">Signal gauge</p><p class="reply">The line is open - write in</p></div>
+              </div>
+            </div>
+            <div class="telegram">
+              <div class="tg-head">
+                <p class="tg-brand">Telegram</p>
+                <p class="tg-meta"><span>To: {profile.name}</span><span>Received at: {profile.location}</span></p>
+              </div>
+              <ContactForm class="tg-form" submitLabel="Send telegram" labels={{ name: 'From (your name)', email: 'Reply to (your email)', message: 'Message' }} />
+              <p class="tg-foot" aria-hidden="true">STOP</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="trim" aria-hidden="true"></div>
+      <div class="wrap foot-in">
+        <div class="makers plate plate--brass">
+          <p class="makers-name">{profile.name}, Engineer</p>
+          <p>{meta.flavor.footer}</p>
+          <p class="makers-small">&copy; {year} {profile.name} &middot; Built with Astro &middot; A different art style every day: <a href={withBase('gallery/')}>see the gallery</a> &middot; <a href="#hero">Return to the bridge</a></p>
+        </div>
+      </div>
+    </footer>
+
+    <dialog class="viewer" data-viewer-dlg aria-label="Photograph viewer">
+      <form method="dialog" class="viewer-x"><button aria-label="Close viewer">&times;</button></form>
+      <figure class="viewer-fig">
+        <div class="viewer-frame"><img alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" /></div>
+        <figcaption class="viewer-cap"></figcaption>
+      </figure>
+      <div class="viewer-ctl">
+        <button type="button" class="btn btn--brass btn--sm" data-v-prev>Previous</button>
+        <button type="button" class="btn btn--verd btn--sm" data-v-tog aria-pressed="false">Develop in colour</button>
+        <button type="button" class="btn btn--brass btn--sm" data-v-next>Next</button>
+      </div>
+    </dialog>
+
+    <UtilityBar style={STYLE} />
+    <script>import './client.ts';</script>
+  </body>
+</html>

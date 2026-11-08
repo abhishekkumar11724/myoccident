@@ -1,0 +1,32 @@
+---
+/**
+ * Pressure gauge. `frac` (0..1) is the needle's final position along a 240 degree sweep; the number itself is real
+ * HTML text (the readout), so the dial is purely decorative. client.ts adds `.is-live` when it scrolls into view.
+ */
+import { ticks, sector, polar } from '../gears';
+interface Props { value: string; label: string; frac: number; delay?: number; tone?: 'brass' | 'copper' | 'verd' }
+const { value, label, frac, delay = 0, tone = 'brass' } = Astro.props;
+const FROM = -120, TO = 120;
+const tk = ticks(78, FROM, TO, 6, 4, 11, 5);
+const rot = FROM + (TO - FROM) * frac;
+const redFrom = FROM + (TO - FROM) * 0.78;
+---
+<figure class="gauge" style={`--rot:${rot}deg;--delay:${delay}ms`} data-gauge>
+  <div class="gauge-dial">
+    <svg viewBox="-100 -100 200 200" aria-hidden="true" focusable="false">
+      <circle r="98" fill={`url(#g-${tone === 'brass' ? 'brass-v' : tone})`} stroke="#3a280e" stroke-width="1.5" />
+      <circle r="90" fill="#2b1c0b" />
+      <circle r="86" fill="url(#g-face)" />
+      <path d={sector(0, 0, 66, 72, redFrom, TO)} fill="#a8321f" opacity=".92" />
+      <path d={sector(0, 0, 66, 72, FROM, FROM + 22)} fill="#3f9d8a" opacity=".85" />
+      {tk.map((t) => <line x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke="#2a1c10" stroke-width={t.major ? 2.6 : 1.1} stroke-linecap="round" />)}
+      <text x="0" y="-30" class="gauge-brand">A. K. &amp; CO.</text>
+      <g class="needle"><path d="M-3.2 14L0 -64L3.2 14Z" fill="#7a1f14" stroke="#3b0f09" stroke-width=".6" /><circle cy="12" r="5" fill="#7a1f14" /></g>
+      <circle r="8.5" fill="url(#g-brass)" stroke="#3a280e" stroke-width=".9" />
+      <circle r="2.6" fill="#2a1c10" />
+      <path d="M-70 -50A88 88 0 0 1 20 -84C-14 -72 -50 -50 -70 -50Z" fill="url(#g-glass)" opacity=".75" />
+    </svg>
+    <p class="gauge-readout"><strong>{value}</strong></p>
+  </div>
+  <figcaption class="gauge-plaque">{label}</figcaption>
+</figure>
