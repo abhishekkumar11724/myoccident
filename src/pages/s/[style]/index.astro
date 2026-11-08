@@ -1,9 +1,0 @@
----
-import { builtIds, loadPage } from '@/themes/registry';
-export function getStaticPaths() {
-  return builtIds.map((style) => ({ params: { style } }));
-}
-const { style } = Astro.params;
-const { default: Page } = await loadPage(style!);
----
-<Page />

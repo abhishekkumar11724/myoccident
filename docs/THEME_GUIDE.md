@@ -25,6 +25,7 @@ Only touch these paths (all others are shared; if you need a change there, say s
 | `src/themes/<id>/meta.ts` | Palette, fonts, "About this style" panel text, flavour lines, **credits** (typed `ThemeMeta`) |
 | `src/themes/<id>/recipe.mjs` | The photo treatment (section 5) |
 | `src/themes/<id>/assets/**` | Fonts (woff2), svg, textures, any downloaded image - referenced with relative `url(./assets/..)` or `import x from './assets/x.svg?url'` so Vite bundles them |
+| `src/pages/s/<id>/index.astro` | Route file - created by the scaffolder, **do not edit**. It statically imports your Page.astro, which is what keeps your CSS from leaking into other themes |
 | `public/previews/<id>.jpg` | Gallery thumbnail - produced by `npm run check -- <id> --previews` |
 
 Start with `npm run new:theme -- <id>` (scaffolds all of the above from the baseline).
@@ -59,7 +60,7 @@ Reference, don't copy: describe other sites/artworks; never copy their code, cop
 
 ```bash
 npm run new:theme -- <id>                         # scaffold (once)
-PF_ONLY=<id> npx astro dev --port <YOUR_PORT> &   # isolated dev server (PF_ONLY keeps other themes out of your build)
+PF_ONLY=<id> npx astro dev --port <YOUR_PORT> --ignore-lock &   # isolated dev server (PF_ONLY hides other themes and ignores their file changes; --ignore-lock lets several agents run servers)
 npm run images -- --style <id>                    # (re)build YOUR photo variants after editing recipe.mjs (cached; --force to redo)
 npm run check -- <id> --port <YOUR_PORT>          # automated acceptance (must end with 0 failed)
 npm run check -- <id> --port <YOUR_PORT> --previews   # last step: also writes public/previews/<id>.jpg
@@ -68,7 +69,7 @@ Open the screenshots the checker writes to `/tmp/pf-shots/<id>/` (`desktop-fold.
 `mobile-fold.png`, `mobile-seg-N.jpg`) with the Read tool and **look at them**. Iterate until it genuinely looks great:
 check hierarchy, alignment, legibility, photo crops, empty/awkward gaps, mobile. Passing the checker is necessary, not sufficient.
 Also resize-test mentally at 320px, 768px and 1920px widths. Stop your dev server when finished (`kill` the pid you started).
-Use ports given in your brief only. If the dev server shows stale/odd errors, restart it.
+Use ports given in your brief only. If the dev server shows stale/odd errors, restart it. Your theme's CSS is bundled per page, so global selectors (`html`, `body`, `:root`, `*`) in theme.css only affect your own page - still keep the checker's selectors and the UtilityBar intact.
 
 ## 4. Data & shared building blocks
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/**  npm run new:theme -- <id>   -> scaffolds src/themes/<id>/ (Page.astro, theme.css, meta.ts, recipe.mjs, client.ts, assets/) and research/<id>.md */
+/**  npm run new:theme -- <id>   -> scaffolds src/themes/<id>/ (Page.astro, theme.css, meta.ts, recipe.mjs, client.ts, assets/), src/pages/s/<id>/index.astro and research/<id>.md */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,6 +26,10 @@ fs.writeFileSync(path.join(dir, 'theme.css'), `/* ${m[1]} - theme styles. Fonts/
 fs.writeFileSync(path.join(dir, 'client.ts'), `// Optional client-side behaviour for ${m[1]} (import it from Page.astro with <script>import './client.ts'</script>).\n// Respect reduced motion: if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;\nexport {};\n`);
 fs.writeFileSync(path.join(dir, 'meta.ts'), `import type { ThemeMeta } from '../registry';\n\nconst meta: ThemeMeta = {\n  id: '${id}',\n  palette: { bg: '#ffffff', fg: '#111111', accent: '#ff0000' },\n  fonts: [],\n  about: {\n    origin: 'TODO: 2-4 sentences on where ${m[1]} comes from.',\n    traits: ['TODO'],\n    inThisSite: 'TODO: how this site interprets the style.',\n    furtherReading: [],\n  },\n  flavor: { kicker: 'TODO', tagline: 'TODO', footer: 'TODO' },\n  credits: [],\n};\nexport default meta;\n`);
 fs.writeFileSync(path.join(dir, 'recipe.mjs'), `/** Photo treatment for ${m[1]}. Runs at build time on EVERY file in /photos (see docs/THEME_GUIDE.md, scripts/fx/index.mjs). */\nexport default {\n  maxSize: 1400, thumb: 520, quality: 82, format: 'webp',\n  treatments: {\n    default: (fx, ctx) => fx, // TODO: e.g. fx.kuwahara(4).posterize(5).duotone('#102040', '#f0e0c0')\n  },\n  // pick: (ctx) => (ctx.tags?.includes('night') ? 'night' : 'default'),\n};\n`);
+// One static route per theme (a shared dynamic route would bundle every theme's CSS into every page).
+const routeDir = path.join(ROOT, 'src/pages/s', id);
+fs.mkdirSync(routeDir, { recursive: true });
+fs.writeFileSync(path.join(routeDir, 'index.astro'), `---\n// Route for the ${m[1]} theme. Do not edit; the theme lives in src/themes/${id}/.\nimport Page from '@/themes/${id}/Page.astro';\n---\n<Page />\n`);
 const note = path.join(ROOT, 'research', `${id}.md`);
 if (!fs.existsSync(note)) fs.writeFileSync(note, `# ${m[1]} (${m[2]})\n\n_TODO - follow the outline in docs/THEME_GUIDE.md section 2._\n`);
 console.log(`scaffolded src/themes/${id}/ and research/${id}.md\nnext: PF_ONLY=${id} npx astro dev --port <PORT>`);

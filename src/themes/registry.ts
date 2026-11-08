@@ -1,16 +1,18 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { THEMES, type ThemeInfo } from './order';
 
-// Which themes actually exist on disk (a Page.astro). Optional env PF_ONLY=id1,id2 narrows this for fast,
-// isolated dev/build of just the theme(s) you are working on.
-const pages = import.meta.glob('./*/Page.astro');
-const only = (typeof process !== 'undefined' ? process.env.PF_ONLY : '')?.split(',').map((s) => s.trim()).filter(Boolean) ?? [];
+// Which themes actually exist on disk (a Page.astro + its own route file). Uses the filesystem, NOT import.meta.glob:
+// globbing Page.astro files would pull every theme's CSS into every page's bundle.
+// Optional env PF_ONLY=id1,id2 narrows this for fast, isolated dev of just the theme(s) you are working on.
+const themesDir = path.resolve(process.cwd(), 'src/themes');
+const only = (process.env.PF_ONLY ?? '').split(',').map((s) => s.trim()).filter(Boolean);
 
 export const builtIds: string[] = THEMES.map((t) => t.id)
-  .filter((id) => `./${id}/Page.astro` in pages)
+  .filter((id) => fs.existsSync(path.join(themesDir, id, 'Page.astro')) && fs.existsSync(path.resolve(process.cwd(), `src/pages/s/${id}/index.astro`)))
   .filter((id) => !only.length || only.includes(id));
 
 export const builtThemes: ThemeInfo[] = THEMES.filter((t) => builtIds.includes(t.id));
-export const loadPage = (id: string) => pages[`./${id}/Page.astro`]() as Promise<{ default: any }>;
 
 export interface StyleCredit { name: string; kind: 'font' | 'image' | 'icon' | 'texture' | 'svg' | 'code' | 'reference'; license: string; url?: string; note?: string }
 export interface ThemeMeta {
