@@ -1,0 +1,393 @@
+---
+/**
+ * LIQUID CHROME theme: black-blue void, mirror-metal type, a WebGL mercury blob.
+ * Signature move: oversized wide type + a name-only case-study index whose hover/focus unfolds a preview plate.
+ */
+import './theme.css';
+import { profile } from '@/content/profile';
+import { photoGroups, heroPhotos, photos } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import meta from './meta';
+
+const STYLE = 'liquid-chrome';
+const heroSet = heroPhotos(STYLE);
+const hero = heroSet[1] ?? heroSet[0] ?? photos(STYLE)[0];
+const aboutPhoto = heroSet[0] ?? photos(STYLE)[1];
+const groups = photoGroups(STYLE);
+const pad = (n: number) => String(n + 1).padStart(2, '0');
+const yearOf = (s: string) => (s.match(/\d{4}/) ?? [s])[0];
+
+const nav: [string, string][] = [
+  ['about', 'About'], ['experience', 'Experience'], ['case-studies', 'Case studies'], ['projects', 'Projects'],
+  ['skills', 'Skills'], ['beyond-code', 'Beyond code'], ['writing', 'Writing'], ['contact', 'Contact'],
+];
+const SECTION = {
+  about: { lab: 'Signal', sub: 'A short read on who is standing behind the mirror.' },
+  experience: { lab: 'Work history', sub: 'Where the metal got worked, newest first.' },
+  cases: { lab: 'Selected work', sub: 'Pick a name. The plate unfolds the problem, the approach and the numbers.' },
+  projects: { lab: 'On GitHub', sub: 'Side builds and open code, pressed onto discs.' },
+  skills: { lab: 'Spec sheet', sub: 'The full component list. Things I am still learning are dashed.' },
+  beyond: { lab: 'Off the clock', sub: 'Still in frame. Tap any frame to enlarge it.' },
+  writing: { lab: 'Transmissions', sub: profile.writing.status },
+  contact: { lab: 'Open channel', sub: 'Open to interesting problems in GenAI agents, workflow systems and backend infrastructure.' },
+};
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style={STYLE} themeColor="#03040a" />
+    <meta name="robots" content="index,follow" />
+    <script is:inline>document.documentElement.classList.add('js')</script>
+  </head>
+  <body>
+    <!-- shared SVG defs: goo filter for melting buttons, 4-point spark, cyber-sigil ornament -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+      <defs>
+        <filter id="lc-goo" x="-12%" y="-50%" width="124%" height="260%" color-interpolation-filters="sRGB">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="5" result="b" />
+          <feColorMatrix in="b" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9" />
+        </filter>
+        <linearGradient id="lc-sg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="600" y2="0">
+          <stop offset="0" stop-color="#6aa9ff" stop-opacity="0" />
+          <stop offset=".22" stop-color="#6aa9ff" stop-opacity=".9" />
+          <stop offset=".5" stop-color="#ffffff" />
+          <stop offset=".78" stop-color="#6aa9ff" stop-opacity=".9" />
+          <stop offset="1" stop-color="#6aa9ff" stop-opacity="0" />
+        </linearGradient>
+        <symbol id="lc-spark" viewBox="0 0 24 24"><path d="M12 0C12.9 7 17 11.1 24 12 17 12.9 12.9 17 12 24 11.1 17 7 12.9 0 12 7 11.1 11.1 7 12 0Z" /></symbol>
+        <symbol id="lc-sigil" viewBox="0 0 600 80">
+          <g fill="url(#lc-sg)">
+            <g id="lc-half">
+              <path d="M296 40Q200 41 124 29Q70 20 14 36Q70 34 124 42Q200 49 296 40Z" />
+              <path d="M262 36Q232 12 178 3Q214 22 246 41Z" />
+              <path d="M262 44Q232 68 178 77Q214 58 246 39Z" />
+              <path d="M118 31Q96 14 66 10Q88 22 104 36Z" />
+              <path d="M118 41Q96 60 66 66Q88 52 104 38Z" />
+            </g>
+            <use href="#lc-half" transform="matrix(-1 0 0 1 600 0)" />
+            <path d="M300 10L308 40 300 70 292 40Z" />
+          </g>
+        </symbol>
+      </defs>
+    </svg>
+
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="lc-nav" id="lc-nav">
+      <a class="mark" href="#hero" aria-label={`${profile.name}, back to top`}>AK</a>
+      <nav class="lc-links" id="lc-links" aria-label="Sections">
+        {nav.map(([id, label]) => <a href={`#${id}`} data-nav={id}>{label}</a>)}
+      </nav>
+      <button class="menu-btn" type="button" aria-expanded="false" aria-controls="lc-links">Menu</button>
+    </header>
+
+    <main id="main">
+      <!-- ================================================= HERO -->
+      <section class="hero" id="hero" data-pf-section="hero">
+        <div class="hero-stage">
+          <div class="hero-glow" aria-hidden="true"><div class="flare"></div><div class="flare b"></div></div>
+          <div class="blob-wrap" aria-hidden="true">
+            <div class="blob-fallback"></div>
+            <canvas data-lc-blob data-balls="6" data-seed="1"></canvas>
+          </div>
+
+          <div class="hero-copy">
+            <p class="kick mono"><svg class="spark" aria-hidden="true"><use href="#lc-spark" /></svg>{meta.flavor.kicker}</p>
+            <h1 class="name"><span class="chrome sheen">Abhishek</span> <span class="chrome sheen">Kumar</span></h1>
+            <p class="role">{profile.role}<i>/</i>{profile.focus}</p>
+            <p class="lead">{profile.tagline}</p>
+            <div class="cta">
+              <a class="btn" href={withBase(profile.resume.href)} data-pf-resume download>
+                <span class="btn-goo" aria-hidden="true"><i></i><i></i><i></i></span>{profile.resume.label}
+              </a>
+              <a class="btn ghost" href="#contact">Get in touch</a>
+              <a class="btn ghost" href="#case-studies">See the work</a>
+            </div>
+          </div>
+
+          {hero && (
+            <figure class="bezel-hero">
+              <div class="pod"><img src={hero.img.src} width={hero.img.width} height={hero.img.height} alt={hero.alt} style={`object-position:${hero.focus}`} fetchpriority="high" decoding="async" /></div>
+              {hero.caption && <figcaption class="mono">{hero.caption}</figcaption>}
+            </figure>
+          )}
+        </div>
+
+        <ul class="readout" aria-label="Key numbers">
+          {profile.stats.map((s) => (
+            <li><strong class="chrome lite">{s.value}</strong><span class="mono">{s.label}</span></li>
+          ))}
+        </ul>
+      </section>
+
+      <div class="sigil-row" aria-hidden="true"><svg class="sigil" viewBox="0 0 600 80"><use href="#lc-sigil" /></svg></div>
+
+      <!-- ================================================= ABOUT -->
+      <section class="sec" id="about" data-pf-section="about">
+        <div class="wrap">
+          <header class="sh">
+            <p class="lab mono"><b>01</b>{SECTION.about.lab}</p>
+            <h2><span class="chrome">About</span></h2>
+          </header>
+          <div class="about-grid">
+            <div>
+              <p class="about-lede">{profile.summary}</p>
+              {profile.aboutPersonal.map((p) => <p class="about-p">{p}</p>)}
+              <ul class="chips" aria-label="Interests">
+                {profile.interests.map((i) => <li class="chip"><svg class="spark" aria-hidden="true"><use href="#lc-spark" /></svg>{i}</li>)}
+              </ul>
+            </div>
+            {aboutPhoto && (
+              <figure class="about-fig">
+                <div class="frame"><img src={aboutPhoto.img.src} width={aboutPhoto.img.width} height={aboutPhoto.img.height} alt={aboutPhoto.alt} loading="lazy" decoding="async" /></div>
+                {aboutPhoto.caption && <figcaption class="mono">{aboutPhoto.caption}</figcaption>}
+              </figure>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================= EXPERIENCE -->
+      <section class="sec" id="experience" data-pf-section="experience">
+        <div class="wrap">
+          <header class="sh">
+            <p class="lab mono"><b>02</b>{SECTION.experience.lab}</p>
+            <h2><span class="chrome">Experience</span></h2>
+            <p class="sub">{SECTION.experience.sub}</p>
+          </header>
+          <div class="jobs">
+            {profile.experience.map((e) => (
+              <article class="job">
+                <div class="job-rail">
+                  <span class="yr chrome" aria-hidden="true">{yearOf(e.start)}</span>
+                  <p class="when mono">{e.start} - {e.end}</p>
+                  <p class="where mono">{e.place}</p>
+                </div>
+                <div class="plate">
+                  <div class="plate-h">
+                    <h3><span class="chrome lite">{e.company}</span><small>{e.title}</small></h3>
+                    <p>{e.blurb}</p>
+                  </div>
+                  <ul class="beats">
+                    {e.bullets.map((b) => (
+                      <li><strong><svg class="spark" aria-hidden="true"><use href="#lc-spark" /></svg>{b.head}</strong><p>{b.text}</p></li>
+                    ))}
+                  </ul>
+                </div>
+              </article>
+            ))}
+          </div>
+          <div class="edu" id="education">
+            {profile.education.map((e) => (
+              <div class="plate" data-pf-education>
+                <div class="plate-h">
+                  <p class="mono" style="color:var(--steel-l);margin-bottom:.5rem">Education</p>
+                  <h3><span class="chrome lite">{e.short}</span><small>{e.degree}</small></h3>
+                  <p>{e.school} <span class="mono" style="display:block;margin-top:.5rem;color:var(--dim)">{e.start} - {e.end}</span></p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================= CASE STUDIES -->
+      <section class="sec" id="case-studies" data-pf-section="case-studies">
+        <div class="wrap">
+          <header class="sh">
+            <p class="lab mono"><b>03</b>{SECTION.cases.lab}</p>
+            <h2><span class="chrome">Case studies</span></h2>
+            <p class="sub">{SECTION.cases.sub}</p>
+          </header>
+          <div class="idx" data-lc-index>
+            <ol class="idx-list" aria-label="Case study index">
+              {profile.caseStudies.map((c, i) => (
+                <li>
+                  <a class="idx-row" href={`#cs-${c.id}`} data-i={i} aria-current={i === 0 ? 'true' : undefined}>
+                    <span class="n mono">{pad(i)}</span>
+                    <span class="t">{c.title}</span>
+                    <span class="o mono">{c.org} - {c.period}</span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+            <div class="stage">
+              {profile.caseStudies.map((c, i) => (
+                <article class={`cs glass${i === 0 ? ' on' : ''}`} id={`cs-${c.id}`} data-pf-case={c.id} data-i={i}>
+                  <p class="cs-meta mono">{c.org} - {c.period} - {c.role}</p>
+                  <h3 class="cs-title"><span class="chrome lite">{c.title}</span></h3>
+                  <p class="cs-kick">{c.kicker}</p>
+                  <div><h4 class="mono">Problem</h4><p>{c.problem}</p></div>
+                  <div><h4 class="mono">Approach</h4><p>{c.approach}</p></div>
+                  <div>
+                    <h4 class="mono">Impact</h4>
+                    <ul class="cs-impact">
+                      {c.impact.map((m) => <li><svg class="spark" aria-hidden="true"><use href="#lc-spark" /></svg><span>{m}</span></li>)}
+                    </ul>
+                  </div>
+                  <ul class="cs-tags" aria-label="Tags">{c.tags.map((t) => <li><span>{t}</span></li>)}</ul>
+                </article>
+              ))}
+            </div>
+          </div>
+          <p class="cs-hint mono">Hover, focus or tap a name to swap the plate</p>
+        </div>
+      </section>
+
+      <!-- ================================================= PROJECTS -->
+      <section class="sec" id="projects" data-pf-section="projects">
+        <div class="wrap">
+          <header class="sh">
+            <p class="lab mono"><b>04</b>{SECTION.projects.lab}</p>
+            <h2><span class="chrome">Projects</span></h2>
+            <p class="sub">{SECTION.projects.sub}</p>
+          </header>
+          <div class="discs">
+            {profile.projects.map((p) => (
+              <article class="disc-card glass" data-pf-project={p.name}>
+                <div class="disc-top">
+                  <div class="disc" aria-hidden="true"></div>
+                  <p class="disc-yr mono">{p.year}</p>
+                </div>
+                <h3>{p.title}</h3>
+                <p class="b">{p.blurb}</p>
+                <ul class="stack" aria-label="Stack">{p.stack.map((s) => <li>{s}</li>)}</ul>
+                <p class="links">
+                  <a href={p.repo} rel="noopener" aria-label={`${p.title}: source on GitHub`}>Source</a>
+                  {p.live && <a href={p.live} rel="noopener" aria-label={`${p.title}: live site`}>Live</a>}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================= SKILLS -->
+      <section class="sec" id="skills" data-pf-section="skills">
+        <div class="wrap">
+          <header class="sh">
+            <p class="lab mono"><b>05</b>{SECTION.skills.lab}</p>
+            <h2><span class="chrome">Skills</span></h2>
+            <p class="sub">{SECTION.skills.sub}</p>
+          </header>
+          <dl class="spec">
+            {profile.skills.map((g, i) => (
+              <div class="spec-row">
+                <dt><span class="mono">{pad(i)}</span><b>{g.group}</b></dt>
+                <dd>
+                  {g.items.map((s) => <span class="chip">{s}</span>)}
+                  {((g as any).familiar ?? []).map((f: string) => <span class="chip fam">{f} (familiar)</span>)}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
+      <!-- ================================================= BEYOND CODE -->
+      <section class="sec" id="beyond-code" data-pf-section="beyond-code">
+        <div class="wrap">
+          <header class="sh">
+            <p class="lab mono"><b>06</b>{SECTION.beyond.lab}</p>
+            <h2><span class="chrome">Beyond code</span></h2>
+            <p class="sub">{SECTION.beyond.sub}</p>
+          </header>
+          <div>
+            {groups.map((g) => (
+              <div class="grp">
+                <div class="grp-info">
+                  <p class="mono">{g.photos.length} {g.photos.length === 1 ? 'frame' : 'frames'}</p>
+                  <h3><span class="chrome lite">{g.title}</span></h3>
+                  <p>{g.blurb}</p>
+                </div>
+                <div class="reel" style={`--cols:${Math.min(3, Math.max(1, g.photos.length))}`}>
+                  {g.photos.map((p) => (
+                    <figure class="shot">
+                      <button type="button" data-lb data-full={p.img.src} data-orig={p.original.src} data-alt={p.alt} data-cap={p.caption ?? ''} aria-label={`Enlarge photo: ${p.alt}`}>
+                        <span class="frame"><img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" /></span>
+                      </button>
+                      {p.caption && <figcaption class="mono">{p.caption}</figcaption>}
+                    </figure>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================= WRITING -->
+      <section class="sec" id="writing" data-pf-section="writing">
+        <div class="wrap">
+          <header class="sh">
+            <p class="lab mono"><b>07</b>{SECTION.writing.lab}</p>
+            <h2><span class="chrome">Writing</span></h2>
+          </header>
+          <p class="status-line"><svg class="spark" aria-hidden="true"><use href="#lc-spark" /></svg>{profile.writing.status}</p>
+          <ol class="queue" aria-label="Planned posts">
+            {profile.writing.planned.map((t) => <li><span class="mono">Queued</span><span>{t}</span></li>)}
+          </ol>
+        </div>
+      </section>
+
+      <!-- ================================================= CONTACT -->
+      <section class="sec" id="contact" data-pf-section="contact">
+        <div class="wrap">
+          <header class="sh">
+            <p class="lab mono"><b>08</b>{SECTION.contact.lab}</p>
+            <h2><span class="chrome">Contact</span></h2>
+          </header>
+          <div class="contact-grid">
+            <div class="contact-blob" aria-hidden="true">
+              <div class="blob-fallback"></div>
+              <canvas data-lc-blob data-balls="3" data-seed="7"></canvas>
+            </div>
+            <div class="contact-in">
+              <p class="contact-intro">{SECTION.contact.sub}</p>
+              <Protected kind="email" class="mail chrome lite" />
+              <ul class="reach">
+                <li><Protected kind="phone" /></li>
+                <li><a href={profile.contact.linkedin} rel="noopener me" data-pf-linkedin>LinkedIn</a></li>
+                <li><a href={profile.contact.github} rel="noopener me" data-pf-github>GitHub</a></li>
+              </ul>
+              <div class="reach-row">
+                <a class="btn" href={withBase(profile.resume.href)} download>
+                  <span class="btn-goo" aria-hidden="true"><i></i><i></i><i></i></span>{profile.resume.label}
+                </a>
+              </div>
+            </div>
+            <div class="form-card glass">
+              <ContactForm submitLabel="Send message" labels={{ name: 'Your name', email: 'Your email', message: 'Message' }} />
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <span class="big" aria-hidden="true">{profile.firstName}</span>
+      <p>{meta.flavor.footer}</p>
+      <p>&copy; {new Date().getFullYear()} {profile.name}. Built with Astro. A different art style every day - see the <a href={withBase('gallery/')}>gallery</a>.</p>
+    </footer>
+
+    <dialog class="lb" id="lc-lb" aria-label="Photo viewer">
+      <div class="frame"></div>
+      <div class="lb-bar">
+        <p class="mono" id="lc-lb-cap"></p>
+        <div class="row">
+          <button type="button" data-lb-prev aria-label="Previous photo">Prev</button>
+          <button type="button" data-lb-next aria-label="Next photo">Next</button>
+          <a id="lc-lb-orig" href="#" target="_blank" rel="noopener">Original</a>
+          <button type="button" data-lb-close>Close</button>
+        </div>
+      </div>
+    </dialog>
+
+    <UtilityBar style={STYLE} />
+    <script>import './client.ts';</script>
+  </body>
+</html>
