@@ -1,0 +1,692 @@
+---
+/**
+ * Neumorphism theme: one continuous surface, everything pushed out of it or pressed into it.
+ * Rule of the house: RAISED = press me, SUNK = this holds something.
+ * Keeps every data-pf-* hook and all content from @/content/profile.
+ */
+import { profile } from '@/content/profile';
+import { photoGroups, photo, photos } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import Icon from './Icon.astro';
+import Dial from './Dial.astro';
+import meta from './meta';
+import './theme.css';
+
+const STYLE = 'neumorphism';
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+/** wrap figures in a sentence so they read in the accent ink (text itself is unchanged) */
+const hi = (s: string) => esc(s).replace(/(~?\d[\d.,]*(?:-\d[\d.,]*)?[+%MK]+|~\d[\d.,]*)/g, '<b class="nm-num">$1</b>');
+
+const hero = photo(STYLE, 'portraits/01-selfie-maroon');
+const aboutPhoto = photo(STYLE, 'portraits/03-red-kurta-seated');
+const groups = photoGroups(STYLE);
+const allPhotos = photos(STYLE);
+const now = profile.experience[0];
+const year = new Date().getFullYear();
+const edu = profile.education[0];
+
+const nav = [
+  { id: 'hero', label: 'Home', full: 'Home', icon: 'home' },
+  { id: 'about', label: 'About', full: 'About', icon: 'user' },
+  { id: 'experience', label: 'Experience', full: 'Experience', icon: 'work' },
+  { id: 'case-studies', label: 'Cases', full: 'Case studies', icon: 'cases' },
+  { id: 'projects', label: 'Projects', full: 'Projects', icon: 'code' },
+  { id: 'skills', label: 'Skills', full: 'Skills', icon: 'sliders' },
+  { id: 'beyond-code', label: 'Beyond', full: 'Beyond code', icon: 'camera' },
+  { id: 'writing', label: 'Writing', full: 'Writing', icon: 'pen' },
+  { id: 'contact', label: 'Contact', full: 'Contact', icon: 'mail' },
+];
+const NUM = Object.fromEntries(nav.map((n, i) => [n.id, String(i).padStart(2, '0')]));
+
+/* ---- hero knob ticks: 55 ticks on a 270 degree sweep ---- */
+const TICKS = Array.from({ length: 55 }, (_, i) => {
+  const a = ((-135 + i * 5) * Math.PI) / 180;
+  const big = i % 6 === 0;
+  const r1 = 196 - (big ? 15 : 8), r2 = 196;
+  return { i, big, x1: 200 + Math.sin(a) * r1, y1: 200 - Math.cos(a) * r1, x2: 200 + Math.sin(a) * r2, y2: 200 - Math.cos(a) * r2 };
+});
+
+/* ---- stats -> dials: only real percentages get an arc ---- */
+const pctOf = (v: string) => (/%$/.test(v) ? Number(v.replace(/[^\d.]/g, '')) : undefined);
+
+/* ---- case-study mocks ---- */
+const CASE_ORDER = ['nl-to-workflow-compiler', 'workflow-engine', 'mcp-agent-platform', 'agents-retrieval', 'evals-memory', 'reliability-observability'];
+const featured = profile.caseStudies.filter((c) => c.featured).sort((a, b) => CASE_ORDER.indexOf(a.id) - CASE_ORDER.indexOf(b.id));
+const earlier = profile.caseStudies.filter((c) => !c.featured);
+const WIDE = new Set(['nl-to-workflow-compiler', 'reliability-observability']);
+
+const NW = 100, NH = 42, GX = 124, GY = 54, PX = 10, PY = 12;
+type GN = { id: string; label: string; kind?: 'trigger' | 'wait' | 'end'; c: number; r: number };
+const SOPS = [
+  {
+    id: 'nondelivery', title: 'Non-delivery',
+    text: [
+      'When a delivery attempt fails, look up the failure reason.',
+      'If the customer was unreachable, notify them and reschedule.',
+      'If the address looks wrong, ask Ops to confirm it.',
+      'Close the ticket once the shipment is rescheduled or returned.',
+    ],
+    nodes: [
+      { id: 'a', label: 'Attempt|failed', kind: 'trigger', c: 0, r: 1 },
+      { id: 'b', label: 'Look up|reason', c: 1, r: 1 },
+      { id: 'c', label: 'Notify|customer', c: 2, r: 0 },
+      { id: 'd', label: 'Confirm|address', c: 2, r: 2 },
+      { id: 'e', label: 'Reschedule|or return', c: 3, r: 1 },
+    ] as GN[],
+    edges: [['a', 'b'], ['b', 'c'], ['b', 'd'], ['c', 'e'], ['d', 'e']],
+  },
+  {
+    id: 'shipment', title: 'Shipment summary',
+    text: [
+      'Take a shipment ID.',
+      'Fetch its scan history and any exceptions at the same time.',
+      'Write a short summary of where it is and what went wrong.',
+      'Send the summary to the Ops team.',
+    ],
+    nodes: [
+      { id: 'a', label: 'Shipment ID', kind: 'trigger', c: 0, r: 1 },
+      { id: 'b', label: 'Fetch scans', c: 1, r: 0 },
+      { id: 'c', label: 'Fetch|exceptions', c: 1, r: 2 },
+      { id: 'd', label: 'Write summary', c: 2, r: 1 },
+      { id: 'e', label: 'Send to Ops', kind: 'end', c: 3, r: 1 },
+    ] as GN[],
+    edges: [['a', 'b'], ['a', 'c'], ['b', 'd'], ['c', 'd'], ['d', 'e']],
+  },
+  {
+    id: 'warehouse', title: 'Warehouse',
+    text: [
+      'Each morning, check the warehouse queue.',
+      'If any bay is backed up, alert the shift lead.',
+      'Wait for an acknowledgement, then carry on.',
+      'Log the outcome.',
+    ],
+    nodes: [
+      { id: 'a', label: 'Morning check', kind: 'trigger', c: 0, r: 1 },
+      { id: 'b', label: 'Check queue', c: 1, r: 1 },
+      { id: 'c', label: 'Alert|shift lead', c: 2, r: 0 },
+      { id: 'd', label: 'Wait for ack', kind: 'wait', c: 2, r: 2 },
+      { id: 'e', label: 'Log outcome', kind: 'end', c: 3, r: 1 },
+    ] as GN[],
+    edges: [['a', 'b'], ['b', 'c'], ['b', 'd'], ['c', 'e'], ['d', 'e']],
+  },
+].map((s) => {
+  const P = (n: GN) => ({ x: PX + n.c * GX, y: PY + n.r * GY });
+  const byId = Object.fromEntries(s.nodes.map((n) => [n.id, n]));
+  return {
+    ...s,
+    laid: s.nodes.map((n, i) => ({ ...n, ...P(n), i })),
+    paths: s.edges.map(([f, t], i) => {
+      const a = P(byId[f]), b = P(byId[t]);
+      const x1 = a.x + NW, y1 = a.y + NH / 2, x2 = b.x, y2 = b.y + NH / 2;
+      return { d: `M${x1} ${y1} C${x1 + 34} ${y1}, ${x2 - 34} ${y2}, ${x2} ${y2}`, i };
+    }),
+  };
+});
+const GW = PX * 2 + 3 * GX + NW, GH = PY * 2 + 2 * GY + NH;
+
+const PIPE = [
+  { n: 1, short: 'Spec', name: 'OpenAPI spec', sub: 'the only input', icon: 'list', desc: 'Start with nothing but an OpenAPI spec.' },
+  { n: 2, short: 'Server', name: 'MCP server', sub: 'generated', icon: 'cloud', desc: 'The platform turns the spec into an MCP server.' },
+  { n: 3, short: 'Tools', name: 'Tools', sub: '1000+', icon: 'braces', desc: 'Every operation becomes a tool: 1000+ so far.' },
+  { n: 4, short: 'Agents', name: 'Agents', sub: '150+', icon: 'agent', desc: 'Agents use those tools: 150+, across Tech, Finance and Ops.' },
+];
+
+/* semicircle gauge: 0..2 s over 180 degrees */
+const GAUGE_TICKS = Array.from({ length: 21 }, (_, i) => {
+  const a = Math.PI - (i / 20) * Math.PI; // left -> right
+  const big = i % 5 === 0;
+  const r1 = 84 - (big ? 9 : 5), r2 = 84;
+  return { big, x1: 120 + Math.cos(a) * r1, y1: 120 - Math.sin(a) * r1, x2: 120 + Math.cos(a) * r2, y2: 120 - Math.sin(a) * r2 };
+});
+
+const projects = [...profile.projects].sort((a, b) => Number(b.year) - Number(a.year));
+const projIcon: Record<string, string> = {
+  'consumer-cart': 'cart', 'crowd-funding-minor': 'heart', rapidfort_api: 'box', STL_simplified: 'braces', 'gstar-network': 'terminal', 'gpt3-template-site': 'window',
+};
+const skillIcon: Record<string, string> = {
+  Languages: 'braces', 'GenAI & LLMs': 'spark', 'Backend & Distributed Systems': 'cloud', Databases: 'db', 'DevOps & Tools': 'box', Practices: 'list',
+};
+const dateOf = (e: { start: string; end: string }) => `${e.start} - ${e.end}`;
+const initials = (s: string) => s.split(/\s+/).map((w) => w[0]).join('').slice(0, 2);
+const topics = ['A role', 'Collaboration', 'A question', 'Just saying hi'];
+const replies = ['Email', 'LinkedIn', 'Phone'];
+const linkedinShown = profile.contact.linkedin.replace(/^https?:\/\/(www\.)?/, '');
+const githubShown = profile.contact.github.replace(/^https?:\/\/(www\.)?/, '');
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style={STYLE} themeColor="#e0e5ec" />
+    <meta name="robots" content="index,follow" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+  </head>
+  <body class="nm">
+    <a class="nm-skip" href="#main">Skip to content</a>
+
+    <!-- ========================================================= top bar: brand | dock | resume -->
+    <header class="nm-top">
+      <div class="nm-bar">
+        <a class="nm-brand" href="#hero" aria-label={`${profile.name}, back to top`}>
+          <span class="nm-knob nm-knob--brand" aria-hidden="true">AK</span>
+          <span class="nm-brand-name">{profile.firstName}<br />Kumar</span>
+        </a>
+        <nav class="nm-dock" aria-label="Sections">
+          <ul class="nm-tray" data-dock>
+            {nav.map((n) => (
+              <li>
+                <a class="nm-dockbtn" href={`#${n.id}`} data-dock-link={n.id} title={n.full}>
+                  <Icon name={n.icon} />
+                  <span class="nm-dock-label">{n.label}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </nav>
+        <a class="nm-btn nm-btn--accent nm-bar-cta" href={withBase(profile.resume.href)} data-pf-resume download>
+          <Icon name="download" /><span>Resume</span>
+        </a>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ========================================================= HERO -->
+      <section class="nm-hero nm-wrap" id="hero" data-pf-section="hero">
+        <div class="nm-hero-copy">
+          <p class="nm-status"><span class="nm-led" aria-hidden="true"></span><span>Now at {now.company}</span><i aria-hidden="true"></i><span>{profile.location}</span></p>
+          <h1 class="nm-h1"><span>{profile.firstName}</span> <span>Kumar</span></h1>
+          <p class="nm-role">{profile.role}</p>
+          <p class="nm-lead">{profile.tagline}</p>
+          <p class="nm-kicker">{meta.flavor.kicker}</p>
+          <div class="nm-cta">
+            <a class="nm-btn nm-btn--accent nm-btn--lg" href={withBase(profile.resume.href)} data-pf-resume download><Icon name="download" /><span>{profile.resume.label}</span></a>
+            <a class="nm-btn nm-btn--lg" href="#contact" data-open-intake><Icon name="chat" /><span>Start a conversation</span></a>
+          </div>
+          <div class="nm-now nm-well">
+            <span class="nm-label">Currently</span>
+            <p><strong>{now.title}</strong>, {now.company} <span class="nm-dim">since {now.start}</span></p>
+            <p class="nm-dim">{now.blurb}</p>
+            <span class="nm-cta-round">
+              <a class="nm-round" href={profile.contact.github} rel="noopener me" aria-label="GitHub profile" title="GitHub"><Icon name="branch" /></a>
+              <a class="nm-round" href={profile.contact.linkedin} rel="noopener me" aria-label="LinkedIn profile" title="LinkedIn"><Icon name="linkedin" /></a>
+            </span>
+          </div>
+        </div>
+
+        <figure class="nm-knob-hero" data-knob>
+          <svg class="nm-knob-ticks" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
+            {TICKS.map((t) => <line class={t.big ? 'nm-t nm-t--big' : 'nm-t'} data-t={t.i} x1={t.x1.toFixed(2)} y1={t.y1.toFixed(2)} x2={t.x2.toFixed(2)} y2={t.y2.toFixed(2)} />)}
+          </svg>
+          <span class="nm-pointer" aria-hidden="true"><i></i></span>
+          <div class="nm-knob-disc">
+            <div class="nm-knob-well">
+              <img src={hero.img.src} width={hero.img.width} height={hero.img.height} alt={hero.alt} fetchpriority="high" decoding="async" style={`object-position:${hero.focus}`} />
+            </div>
+          </div>
+          <figcaption class="nm-lcd">{hero.caption}</figcaption>
+        </figure>
+        <ul class="nm-readouts nm-well" aria-label="Headline numbers">
+          {profile.stats.slice(0, 3).map((s) => <li><b>{s.value}</b><span>{s.label}</span></li>)}
+        </ul>
+      </section>
+
+      <!-- ========================================================= ABOUT -->
+      <section class="nm-sec nm-wrap" id="about" data-pf-section="about">
+        <header class="nm-sec-head">
+          <span class="nm-badge" aria-hidden="true">{NUM.about}</span>
+          <div><h2>About</h2><p class="nm-sub">The person behind the pull requests.</p></div>
+        </header>
+        <div class="nm-about">
+          <figure class="nm-plate nm-about-photo">
+            <div class="nm-well nm-well--photo"><img src={aboutPhoto.img.src} width={aboutPhoto.img.width} height={aboutPhoto.img.height} alt={aboutPhoto.alt} loading="lazy" decoding="async" style={`object-position:${aboutPhoto.focus}`} /></div>
+            <figcaption>{aboutPhoto.caption}</figcaption>
+          </figure>
+          <div class="nm-card nm-about-copy">
+            <p class="nm-big">{profile.summary}</p>
+            {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+            <span class="nm-label">Off the clock</span>
+            <ul class="nm-chips" aria-label="Interests">{profile.interests.map((i) => <li class="nm-chip">{i}</li>)}</ul>
+          </div>
+        </div>
+        <div class="nm-panel nm-dials" aria-labelledby="dials-h">
+          <h3 id="dials-h" class="nm-panel-title"><Icon name="spark" /> By the numbers</h3>
+          <ul class="nm-stats">
+            {profile.stats.map((s) => <li class="nm-stat"><Dial value={s.value} label={s.label} percent={pctOf(s.value)} size="lg" /></li>)}
+          </ul>
+        </div>
+      </section>
+
+      <!-- ========================================================= EXPERIENCE -->
+      <section class="nm-sec nm-wrap" id="experience" data-pf-section="experience">
+        <header class="nm-sec-head">
+          <span class="nm-badge" aria-hidden="true">{NUM.experience}</span>
+          <div><h2>Experience</h2><p class="nm-sub">Where the work happened, newest first.</p></div>
+        </header>
+        <div class="nm-jobs">
+          {profile.experience.map((e, idx) => (
+            <article class={`nm-job nm-card${idx === 0 ? ' nm-job--now' : ''}`}>
+              <div class="nm-job-head">
+                <span class="nm-knob nm-knob--md" aria-hidden="true">{initials(e.company)}</span>
+                <h3>{e.title}</h3>
+                <p class="nm-job-co">{e.company}</p>
+                <ul class="nm-chips nm-chips--tight">
+                  <li class="nm-chip">{idx === 0 && <span class="nm-led nm-led--sm" aria-hidden="true"></span>}{dateOf(e)}</li>
+                  <li class="nm-chip">{e.place}</li>
+                </ul>
+                <p class="nm-job-blurb">{e.blurb}</p>
+              </div>
+              <div class="nm-tray-box">
+                <ol class="nm-bullets">
+                  {e.bullets.map((b, i) => (
+                    <li>
+                      <span class="nm-bullet-n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                      <div><h4>{b.head}</h4><p set:html={hi(b.text)} /></div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </article>
+          ))}
+          <article class="nm-edu nm-card" data-pf-education>
+            <span class="nm-knob nm-knob--md" aria-hidden="true"><Icon name="cap" /></span>
+            <div>
+              <span class="nm-label">Education</span>
+              <h3>{edu.school}</h3>
+              <p>{edu.degree}</p>
+            </div>
+            <span class="nm-chip">{edu.start} - {edu.end}</span>
+          </article>
+        </div>
+      </section>
+
+      <!-- ========================================================= CASE STUDIES -->
+      <section class="nm-sec nm-wrap" id="case-studies" data-pf-section="case-studies">
+        <header class="nm-sec-head">
+          <span class="nm-badge" aria-hidden="true">{NUM['case-studies']}</span>
+          <div><h2>Case studies</h2><p class="nm-sub">Every card holds a working miniature. Press a chip, flip a switch.</p></div>
+        </header>
+
+        <div class="nm-cases">
+          {featured.map((c) => (
+            <article class={`nm-case nm-card${WIDE.has(c.id) ? ' nm-case--wide' : ''}`} data-pf-case={c.id} data-case={c.id}>
+              <div class="nm-case-copy">
+                <ul class="nm-chips nm-chips--tight" aria-label="Context">
+                  <li class="nm-chip">{c.org}</li><li class="nm-chip">{c.period}</li><li class="nm-chip">{c.role}</li>
+                </ul>
+                <h3>{c.title}</h3>
+                <p class="nm-case-kicker">{c.kicker}</p>
+                <dl class="nm-pa">
+                  <div><dt>Problem</dt><dd>{c.problem}</dd></div>
+                  <div><dt>Approach</dt><dd>{c.approach}</dd></div>
+                </dl>
+                <ul class="nm-impact" aria-label="Impact">{c.impact.map((i) => <li><span class="nm-led nm-led--sm" aria-hidden="true"></span><span set:html={hi(i)} /></li>)}</ul>
+                <ul class="nm-tags" aria-label="Tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+              </div>
+
+              {/* ---------------------------------------------------- mock: compiler console */}
+              {c.id === 'nl-to-workflow-compiler' && (
+                <div class="nm-mock nm-console" data-mock data-view="raw" data-sop="nondelivery" data-stage="idle">
+                  <div class="nm-mock-top">
+                    <span class="nm-mock-title"><Icon name="terminal" /> sop-compiler <em>illustrative sketch</em></span>
+                  </div>
+                  <div class="nm-mock-row">
+                    <div class="nm-seg" role="group" aria-label="Example SOP">
+                      {SOPS.map((s, i) => <button type="button" data-group="sop" aria-pressed={i === 0 ? 'true' : 'false'} data-set-key="sop" data-set-val={s.id}>{s.title}</button>)}
+                    </div>
+                  </div>
+                  <div class="nm-screen" aria-live="polite">
+                    {SOPS.map((s) => (
+                      <div class="nm-sop" data-sop-item={s.id}>
+                        <ol class="nm-raw" data-pane="raw">{s.text.map((t) => <li>{t}</li>)}</ol>
+                        <svg class="nm-graph" data-pane="compiled" viewBox={`0 0 ${GW} ${GH}`} role="img" aria-label={`Compiled workflow graph for the ${s.title} SOP: ${s.laid.map((n) => n.label.replace('|', ' ')).join(', ')}`}>
+                          {s.paths.map((p) => <path class="nm-edge" d={p.d} style={`--i:${p.i}`} />)}
+                          {s.laid.map((n) => (
+                            <g class={`nm-node${n.kind ? ' is-' + n.kind : ''}`} style={`--i:${n.i}`} transform={`translate(${n.x} ${n.y})`}>
+                              <rect width={NW} height={NH} rx="12" />
+                              <text text-anchor="middle">{n.label.includes('|') ? n.label.split('|').map((l, k) => <tspan x={NW / 2} y={NH / 2 + (k ? 11 : -2.5)}>{l}</tspan>) : <tspan x={NW / 2} y={NH / 2 + 4.5}>{n.label}</tspan>}</text>
+                            </g>
+                          ))}
+                        </svg>
+                      </div>
+                    ))}
+                  </div>
+                  <div class="nm-mock-row nm-mock-row--foot">
+                    <div class="nm-seg" role="group" aria-label="View">
+                      <button type="button" data-group="view" data-set-key="view" data-set-val="raw" aria-pressed="true">Raw SOP</button>
+                      <button type="button" data-group="view" data-set-key="view" data-set-val="compiled" aria-pressed="false">Compiled workflow</button>
+                    </div>
+                    <button type="button" class="nm-btn nm-btn--accent nm-btn--sm" data-compile><Icon name="play" /><span>Compile</span></button>
+                  </div>
+                  <p class="nm-console-line" data-line>Raw SOP loaded. Press Compile.</p>
+                </div>
+              )}
+
+              {/* ---------------------------------------------------- mock: workflow engine */}
+              {c.id === 'workflow-engine' && (
+                <div class="nm-mock nm-engine" data-mock data-run="on">
+                  <div class="nm-mock-top">
+                    <span class="nm-mock-title"><Icon name="cases" /> workflow-run <em>illustrative sketch</em></span>
+                    <button type="button" class="nm-switch" role="switch" aria-checked="true" data-toggle="run" aria-label="Run">
+                      <span class="nm-switch-label" data-on="Running" data-off="Paused"></span><i aria-hidden="true"></i>
+                    </button>
+                  </div>
+                  <div class="nm-screen nm-screen--flow">
+                    <svg class="nm-flow" viewBox="0 0 420 150" role="img" aria-label="A workflow graph with two parallel branches that can be paused and resumed">
+                      <path id="nm-p1" class="nm-edge on" d="M82 75 C118 75, 114 32, 150 32 L230 32 C266 32, 302 75, 338 75" />
+                      <path id="nm-p2" class="nm-edge on" d="M82 75 C118 75, 114 118, 150 118 L230 118 C266 118, 302 75, 338 75" />
+                      <circle class="nm-pkt" r="5"><animateMotion dur="3.4s" repeatCount="indefinite"><mpath href="#nm-p1" /></animateMotion></circle>
+                      <circle class="nm-pkt" r="5"><animateMotion dur="3.4s" begin="-1.7s" repeatCount="indefinite"><mpath href="#nm-p2" /></animateMotion></circle>
+                      <g class="nm-node is-trigger lit"><rect x="14" y="58" width="68" height="34" rx="11" /><text x="48" y="79.500" text-anchor="middle">Start</text></g>
+                      <g class="nm-node lit"><rect x="150" y="15" width="80" height="34" rx="11" /><text x="190" y="36.500" text-anchor="middle">Branch A</text></g>
+                      <g class="nm-node lit"><rect x="150" y="101" width="80" height="34" rx="11" /><text x="190" y="122.500" text-anchor="middle">Branch B</text></g>
+                      <g class="nm-node is-end lit"><rect x="338" y="58" width="68" height="34" rx="11" /><text x="372" y="79.500" text-anchor="middle">Join</text></g>
+                    </svg>
+                  </div>
+                  <ul class="nm-chips nm-chips--tight" aria-label="Engine features"><li class="nm-chip">10 node types</li><li class="nm-chip">Parallel branches</li><li class="nm-chip">Pause / resume</li></ul>
+                  <div class="nm-meters" role="group" aria-label="Daily request volume, drawn to scale">
+                    <div class="nm-meter"><span>Workflow requests / day</span><div class="nm-track"><i style="--w:100%"></i></div><b>~5M</b></div>
+                    <div class="nm-meter"><span>Agent requests / day</span><div class="nm-track"><i style="--w:40%"></i></div><b>~2M</b></div>
+                  </div>
+                </div>
+              )}
+
+              {/* ---------------------------------------------------- mock: OpenAPI -> MCP pipeline */}
+              {c.id === 'mcp-agent-platform' && (
+                <div class="nm-mock nm-pipe" data-mock data-step="1">
+                  <div class="nm-mock-top"><span class="nm-mock-title"><Icon name="cloud" /> spec-to-agent <em>illustrative sketch</em></span></div>
+                  <ol class="nm-stages">
+                    {PIPE.map((p) => (
+                      <li class={`nm-stage s${p.n}`}>
+                        <span class="nm-stage-dot"><Icon name={p.icon} /></span>
+                        <b>{p.name}</b><small>{p.sub}</small>
+                      </li>
+                    ))}
+                  </ol>
+                  <div class="nm-seg nm-seg--steps" role="group" aria-label="Pipeline step">
+                    {PIPE.map((p) => <button type="button" data-group="step" data-set-key="step" data-set-val={String(p.n)} aria-pressed={p.n === 1 ? 'true' : 'false'}><span class="nm-seg-n" aria-hidden="true">{p.n}</span> {p.short}</button>)}
+                  </div>
+                  <div class="nm-screen nm-screen--line" aria-live="polite">
+                    {PIPE.map((p) => <p data-desc={String(p.n)}>{p.desc}</p>)}
+                  </div>
+                  <ul class="nm-chips nm-chips--tight" aria-label="Stack"><li class="nm-chip">FastAPI</li><li class="nm-chip">LangGraph</li><li class="nm-chip">Redis</li></ul>
+                </div>
+              )}
+
+              {/* ---------------------------------------------------- mock: retrieval */}
+              {c.id === 'agents-retrieval' && (
+                <div class="nm-mock nm-retr" data-mock data-dense="on" data-sparse="off" data-rerank="off">
+                  <div class="nm-mock-top"><span class="nm-mock-title"><Icon name="search" /> search-pipeline <em>illustrative sketch</em></span></div>
+                  <div class="nm-switches" role="group" aria-label="Pipeline stages">
+                    <button type="button" class="nm-switch" role="switch" aria-checked="true" data-toggle="dense"><span class="nm-switch-label">Dense</span><i aria-hidden="true"></i></button>
+                    <button type="button" class="nm-switch" role="switch" aria-checked="false" data-toggle="sparse"><span class="nm-switch-label">Sparse</span><i aria-hidden="true"></i></button>
+                    <button type="button" class="nm-switch" role="switch" aria-checked="false" data-toggle="rerank"><span class="nm-switch-label">Rerank</span><i aria-hidden="true"></i></button>
+                  </div>
+                  <ul class="nm-results" aria-hidden="true">
+                    <li style="--a:62%;--b:58%;--c:90%"><i></i></li>
+                    <li style="--a:51%;--b:66%;--c:74%"><i></i></li>
+                    <li style="--a:44%;--b:49%;--c:58%"><i></i></li>
+                    <li style="--a:36%;--b:41%;--c:40%"><i></i></li>
+                  </ul>
+                  <div class="nm-readout" aria-live="polite">
+                    <span class="nm-readout-state" data-readout="partial">Partial pipeline</span>
+                    <span class="nm-readout-state" data-readout="full"><b>~35%</b> better relevance: hybrid (dense + sparse) with reranking</span>
+                  </div>
+                  <div class="nm-mini-stats"><Dial value="~40%" percent={40} size="sm" /><span>lower Operations MTTR from multi-agent retrieval across dashboards</span></div>
+                </div>
+              )}
+
+              {/* ---------------------------------------------------- mock: p99 gauge */}
+              {c.id === 'reliability-observability' && (
+                <div class="nm-mock nm-gauge" data-mock data-state="before">
+                  <div class="nm-mock-top"><span class="nm-mock-title"><Icon name="spark" /> p99 latency <em>illustrative sketch</em></span></div>
+                  <div class="nm-gauge-face">
+                    <svg viewBox="0 -4 240 148" role="img" aria-label="Gauge: p99 latency dropped from 1.8 seconds to 550 milliseconds">
+                      <path class="nm-g-track" d="M30 120 A90 90 0 0 1 210 120" pathLength="100" />
+                      <path class="nm-g-arc" d="M30 120 A90 90 0 0 1 210 120" pathLength="100" />
+                      {GAUGE_TICKS.map((t) => <line class={t.big ? 'nm-t nm-t--big' : 'nm-t'} x1={t.x1.toFixed(1)} y1={t.y1.toFixed(1)} x2={t.x2.toFixed(1)} y2={t.y2.toFixed(1)} />)}
+                      <text class="nm-g-num" x="30" y="136" text-anchor="middle">0</text>
+                      <text class="nm-g-num" x="120" y="12" text-anchor="middle">1 s</text>
+                      <text class="nm-g-num" x="210" y="136" text-anchor="middle">2 s</text>
+                      <g class="nm-needle"><line x1="120" y1="120" x2="120" y2="52" /><circle cx="120" cy="120" r="9" /></g>
+                    </svg>
+                    <div class="nm-lcd nm-lcd--big" aria-live="polite">
+                      <span class="nm-val" data-v="before">1.8 s</span><span class="nm-val" data-v="after">550 ms</span>
+                    </div>
+                  </div>
+                  <div class="nm-seg" role="group" aria-label="Before or after">
+                    <button type="button" data-group="state" data-set-key="state" data-set-val="before" aria-pressed="true">Before</button>
+                    <button type="button" data-group="state" data-set-key="state" data-set-val="after" aria-pressed="false">After</button>
+                  </div>
+                  <p class="nm-gauge-note" aria-live="polite"><span data-v="before">One Uvicorn process</span><span data-v="after">2-worker Gunicorn with request recycling and hung-worker recovery</span></p>
+                  <ul class="nm-facts" aria-live="polite">
+                    <li><span>Iteration span</span><b data-v="before">1.38 MB</b><b data-v="after">~1 KB</b></li>
+                    <li><span>~1,400-span trace in Langfuse</span><b data-v="before">missing</b><b data-v="after">renders in full</b></li>
+                  </ul>
+                </div>
+              )}
+
+              {/* ---------------------------------------------------- mock: evals + memory */}
+              {c.id === 'evals-memory' && (
+                <div class="nm-mock nm-evals" data-mock data-tab="judge">
+                  <div class="nm-mock-top"><span class="nm-mock-title"><Icon name="agent" /> agent-ops <em>illustrative sketch</em></span></div>
+                  <div class="nm-seg" role="group" aria-label="Panel">
+                    <button type="button" data-group="tab" data-set-key="tab" data-set-val="judge" aria-pressed="true">Live evals</button>
+                    <button type="button" data-group="tab" data-set-key="tab" data-set-val="memory" aria-pressed="false">Agent memory</button>
+                  </div>
+                  <div class="nm-screen nm-screen--pane">
+                    <div data-pane-tab="judge">
+                      <ol class="nm-flowline" aria-label="How an eval runs">
+                        <li>Agent run</li><li>Trace</li><li>LLM judge <small>async</small></li><li>Score <small>Langfuse</small></li>
+                      </ol>
+                      <div class="nm-duo"><div><Dial value="15+" label="scores" size="sm" /></div><div><Dial value="100+" label="agents" size="sm" /></div></div>
+                    </div>
+                    <div data-pane-tab="memory">
+                      <p class="nm-cap">Long-term memory engine</p>
+                      <ol class="nm-flowline" aria-label="Memory stack"><li>Kafka</li><li>Graphiti</li><li>Neo4j</li></ol>
+                      <p class="nm-cap">A/B release on 10K requests</p>
+                      <div class="nm-split" role="img" aria-label="80 percent of the A/B traffic is agents, 20 percent is workflows">
+                        <span style="--w:80%"><b>80%</b> agents</span><span style="--w:20%"><b>20%</b> workflows</span>
+                      </div>
+                      <p class="nm-cap">6 memory frameworks benchmarked first</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </article>
+          ))}
+        </div>
+
+        <h3 class="nm-sub-title">Earlier, at Spyne AI</h3>
+        <div class="nm-cases nm-cases--small">
+          {earlier.map((c) => (
+            <article class="nm-case nm-case--small nm-card" data-case={c.id}>
+              <div class="nm-case-copy">
+                <ul class="nm-chips nm-chips--tight" aria-label="Context"><li class="nm-chip">{c.org}</li><li class="nm-chip">{c.period}</li><li class="nm-chip">{c.role}</li></ul>
+                <h3>{c.title}</h3>
+                <p class="nm-case-kicker">{c.kicker}</p>
+                <dl class="nm-pa">
+                  <div><dt>Problem</dt><dd>{c.problem}</dd></div>
+                  <div><dt>Approach</dt><dd>{c.approach}</dd></div>
+                </dl>
+                <ul class="nm-tags" aria-label="Tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+              </div>
+              <div class="nm-mini-impact">
+                {c.id === 'event-driven-webhooks' ? <Dial value="100%" percent={100} size="md" /> : <Dial value="30-40%" size="md" />}
+                <ul>{c.impact.map((i) => <li set:html={hi(i)} />)}</ul>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <!-- ========================================================= PROJECTS -->
+      <section class="nm-sec nm-wrap" id="projects" data-pf-section="projects">
+        <header class="nm-sec-head">
+          <span class="nm-badge" aria-hidden="true">{NUM.projects}</span>
+          <div><h2>Projects</h2><p class="nm-sub">Public repos, shipped end to end.</p></div>
+        </header>
+        <div class="nm-projects">
+          {projects.map((p) => (
+            <article class="nm-proj nm-card" data-pf-project={p.name}>
+              <div class="nm-proj-top">
+                <span class="nm-knob nm-knob--md" aria-hidden="true"><Icon name={projIcon[p.name] ?? 'code'} /></span>
+                <span class="nm-chip">{p.year}</span>
+              </div>
+              <h3>{p.title}</h3>
+              <p>{p.blurb}</p>
+              <ul class="nm-tags" aria-label="Stack">{p.stack.map((s) => <li>{s}</li>)}</ul>
+              <p class="nm-proj-links">
+                <a class="nm-btn nm-btn--sm" href={p.repo} rel="noopener"><Icon name="branch" /><span>Source</span></a>
+                {p.live && <a class="nm-btn nm-btn--sm nm-btn--ghost" href={p.live} rel="noopener"><span>Live site</span><Icon name="arrow" /></a>}
+              </p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <!-- ========================================================= SKILLS -->
+      <section class="nm-sec nm-wrap" id="skills" data-pf-section="skills">
+        <header class="nm-sec-head">
+          <span class="nm-badge" aria-hidden="true">{NUM.skills}</span>
+          <div><h2>Skills</h2><p class="nm-sub">Tools of the trade. Type to light them up.</p></div>
+        </header>
+        <div class="nm-finder">
+          <label class="nm-label" for="nm-skill-q">Find a skill</label>
+          <div class="nm-field">
+            <Icon name="search" />
+            <input id="nm-skill-q" class="nm-input" type="search" placeholder="Kafka, LangGraph, Docker..." autocomplete="off" spellcheck="false" data-skill-q />
+            <output class="nm-found" data-skill-count aria-live="polite"></output>
+          </div>
+        </div>
+        <div class="nm-skills" data-skills>
+          {profile.skills.map((g) => (
+            <article class="nm-skillgroup nm-card">
+              <header>
+                <span class="nm-knob nm-knob--sm" aria-hidden="true"><Icon name={skillIcon[g.group] ?? 'list'} /></span>
+                <h3>{g.group}</h3>
+                <span class="nm-count" aria-hidden="true">{g.items.length + (((g as any).familiar ?? []).length)}</span>
+              </header>
+              <ul class="nm-chips nm-chips--cloud">
+                {g.items.map((i) => <li class="nm-chip" data-skill>{i}</li>)}
+                {((g as any).familiar ?? []).map((f: string) => <li class="nm-chip nm-chip--familiar" data-skill>{f} <small>familiar</small></li>)}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <!-- ========================================================= BEYOND CODE -->
+      <section class="nm-sec nm-wrap" id="beyond-code" data-pf-section="beyond-code">
+        <header class="nm-sec-head">
+          <span class="nm-badge" aria-hidden="true">{NUM['beyond-code']}</span>
+          <div><h2>Beyond code</h2><p class="nm-sub">The personal half: trips, rides, books, friends and the odd dog.</p></div>
+        </header>
+        <div class="nm-filter" role="group" aria-label="Filter photos">
+          <button type="button" class="nm-chipbtn" aria-pressed="true" data-cat="all">All <small>{allPhotos.length}</small></button>
+          {groups.map((g) => <button type="button" class="nm-chipbtn" aria-pressed="false" data-cat={g.category}>{g.title} <small>{g.photos.length}</small></button>)}
+        </div>
+        <div class="nm-albums" data-albums>
+          {groups.map((g) => (
+            <section class="nm-album nm-panel" data-album={g.category} aria-labelledby={`alb-${g.category}`}>
+              <header class="nm-album-head">
+                <h3 id={`alb-${g.category}`}>{g.title}</h3>
+                <p>{g.blurb}</p>
+                <span class="nm-count" aria-hidden="true">{g.photos.length}</span>
+              </header>
+              <div class={`nm-grid${g.photos.length >= 5 ? ' nm-grid--feat' : ''}`} data-shape={g.category}>
+                {g.photos.map((p) => (
+                  <figure class="nm-tile">
+                    <a class="nm-plate" href={p.img.src} data-lb data-full={p.img.src} data-cap={p.caption ?? ''} data-alt={p.alt} aria-label={`Open photo: ${p.caption ?? p.alt}`}>
+                      <span class="nm-ph"><img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} /></span>
+                    </a>
+                    {p.caption && <figcaption>{p.caption}</figcaption>}
+                  </figure>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </section>
+
+      <!-- ========================================================= WRITING -->
+      <section class="nm-sec nm-wrap" id="writing" data-pf-section="writing">
+        <header class="nm-sec-head">
+          <span class="nm-badge" aria-hidden="true">{NUM.writing}</span>
+          <div><h2>Writing</h2><p class="nm-sub">Notes from the work, on the way.</p></div>
+        </header>
+        <div class="nm-panel nm-writing">
+          <p class="nm-well nm-write-status"><span class="nm-led nm-led--off" aria-hidden="true"></span>{profile.writing.status}</p>
+          <span class="nm-label">Planned</span>
+          <ul class="nm-planned">
+            {profile.writing.planned.map((t) => (
+              <li><span class="nm-switch nm-switch--static" aria-hidden="true"><i></i></span><span>{t}</span><span class="nm-chip nm-chip--plain">Planned</span></li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <!-- ========================================================= CONTACT -->
+      <section class="nm-sec nm-wrap nm-sec--last" id="contact" data-pf-section="contact">
+        <header class="nm-sec-head">
+          <span class="nm-badge" aria-hidden="true">{NUM.contact}</span>
+          <div><h2>Contact</h2><p class="nm-sub">Open to interesting problems in GenAI agents, workflow systems and backend infrastructure.</p></div>
+        </header>
+        <div class="nm-contact">
+          <div class="nm-panel nm-direct">
+            <h3 class="nm-panel-title">Direct lines</h3>
+            <ul class="nm-lines">
+              <li><Protected kind="email" class="nm-line"><span class="nm-knob nm-knob--sm" aria-hidden="true"><Icon name="mail" /></span><span class="nm-line-t"><b>Email</b><small data-addr="email">Reveal address</small></span></Protected></li>
+              <li><Protected kind="phone" class="nm-line"><span class="nm-knob nm-knob--sm" aria-hidden="true"><Icon name="phone" /></span><span class="nm-line-t"><b>Phone</b><small data-addr="phone">Reveal number</small></span></Protected></li>
+              <li><a class="nm-line" href={profile.contact.linkedin} rel="noopener me" data-pf-linkedin><span class="nm-knob nm-knob--sm" aria-hidden="true"><Icon name="linkedin" /></span><span class="nm-line-t"><b>LinkedIn</b><small>{linkedinShown}</small></span></a></li>
+              <li><a class="nm-line" href={profile.contact.github} rel="noopener me" data-pf-github><span class="nm-knob nm-knob--sm" aria-hidden="true"><Icon name="branch" /></span><span class="nm-line-t"><b>GitHub</b><small>{githubShown}</small></span></a></li>
+              <li><a class="nm-line nm-line--accent" href={withBase(profile.resume.href)} data-pf-resume download><span class="nm-knob nm-knob--sm" aria-hidden="true"><Icon name="download" /></span><span class="nm-line-t"><b>Resume</b><small>PDF, updated {profile.resume.updated}</small></span></a></li>
+            </ul>
+          </div>
+
+          <div class="nm-panel nm-intake" data-intake>
+            <h3 class="nm-panel-title"><Icon name="chat" /> Intake</h3>
+            <fieldset class="nm-fs">
+              <legend>I'm reaching out about</legend>
+              <div class="nm-filter nm-filter--tight" role="group" aria-label="Topic">
+                {topics.map((t, i) => <button type="button" class="nm-chipbtn" data-topic aria-pressed={i === 0 ? 'true' : 'false'}>{t}</button>)}
+              </div>
+            </fieldset>
+            <fieldset class="nm-fs">
+              <legend>Best way to reply</legend>
+              <div class="nm-filter nm-filter--tight" role="group" aria-label="Preferred reply">
+                {replies.map((t, i) => <button type="button" class="nm-chipbtn" data-reply aria-pressed={i === 0 ? 'true' : 'false'}>{t}</button>)}
+              </div>
+              <p class="nm-hint" data-reply-hint>I'll reply to the email address you give below.</p>
+            </fieldset>
+            <ContactForm class="nm-form" submitLabel="Send message" labels={{ name: 'Your name', email: 'Your email', message: 'Your message' }} />
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="nm-foot">
+      <div class="nm-wrap">
+        <span class="nm-knob nm-knob--md" aria-hidden="true">AK</span>
+        <p class="nm-foot-line">{meta.flavor.footer}</p>
+        <p class="nm-foot-small">&copy; {year} {profile.name}. Built with Astro. A different art style every day - see the <a href={withBase('gallery/')}>gallery</a>.</p>
+      </div>
+    </footer>
+
+    <!-- photo viewer -->
+    <dialog class="nm-lightbox" data-lightbox aria-label="Photo viewer">
+      <figure>
+        <div class="nm-lb-frame"></div>
+        <figcaption><span data-lb-cap></span><small data-lb-count></small></figcaption>
+      </figure>
+      <button type="button" class="nm-round nm-lb-prev" data-lb-prev aria-label="Previous photo"><Icon name="chevL" /></button>
+      <button type="button" class="nm-round nm-lb-next" data-lb-next aria-label="Next photo"><Icon name="chevR" /></button>
+      <button type="button" class="nm-round nm-lb-close" data-lb-close aria-label="Close viewer"><Icon name="close" /></button>
+    </dialog>
+
+    <UtilityBar style={STYLE} />
+    <script>import './client.ts';</script>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+---
+/**
+ * A circular "dial": raised disc, groove ring, raised face holding the value.
+ * `percent` draws a real progress arc (only pass it when the value IS a percentage); otherwise a tick ring is drawn.
+ */
+interface Props { value: string; label?: string; percent?: number; size?: 'md' | 'sm' | 'lg'; class?: string }
+const { value, label, percent, size = 'md', class: cls = '' } = Astro.props;
+const R = 46;
+const ticks = Array.from({ length: 36 }, (_, i) => {
+  const a = (i / 36) * Math.PI * 2;
+  const big = i % 3 === 0;
+  const r1 = 52 - (big ? 5 : 3), r2 = 52;
+  return { x1: 60 + Math.sin(a) * r1, y1: 60 - Math.cos(a) * r1, x2: 60 + Math.sin(a) * r2, y2: 60 - Math.cos(a) * r2, big };
+});
+---
+<div class={`nm-dial nm-dial--${size} ${cls}`.trim()} style={percent != null ? `--p:${percent}` : undefined}>
+  <svg class="nm-dial-svg" viewBox="0 0 120 120" aria-hidden="true" focusable="false">
+    {percent != null ? (
+      <>
+        <circle class="nm-dial-track" cx="60" cy="60" r={R} />
+        <circle class="nm-dial-arc" cx="60" cy="60" r={R} pathLength="100" stroke-dasharray={`${percent} 100`} transform="rotate(-90 60 60)" />
+      </>
+    ) : (
+      ticks.map((t) => <line class={t.big ? 'nm-tick nm-tick--big' : 'nm-tick'} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} />)
+    )}
+  </svg>
+  <span class="nm-dial-face"><b class="nm-dial-val">{value}</b></span>
+</div>
+{label && <span class="nm-dial-label">{label}</span>}
