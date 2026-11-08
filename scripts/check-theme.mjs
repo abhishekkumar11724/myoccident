@@ -159,13 +159,60 @@ const lowContrast = await d.page.evaluate(() => {
   return out;
 });
 soft('text contrast meets WCAG AA (solid backgrounds)', lowContrast.length === 0, `${lowContrast.length} low: ${lowContrast.slice(0, 5).join(' | ')}`);
+
+// pixel-sampled contrast: collect text boxes, hide all text, screenshot the real backdrop behind each box, compute contrast.
+{
+  const samples = await d.page.evaluate(() => {
+    const parse = (c) => { const m = c.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[ ,\/]+/).filter(Boolean).map(Number); return { r: p[0], g: p[1], b: p[2], a: p[3] ?? 1 }; };
+    const out = [], seen = new Set(), w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    while (w.nextNode()) {
+      const t = w.currentNode, txt = t.textContent.trim(); if (txt.length < 3) continue;
+      const el = t.parentElement; if (!el || seen.has(el)) continue; seen.add(el);
+      if (el.closest('[data-pf-bar],dialog,[aria-hidden="true"],svg,script,style,noscript,canvas,[hidden]')) continue;
+      const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || cs.display === 'none') continue;
+      let op = 1; for (let e = el; e; e = e.parentElement) op *= +getComputedStyle(e).opacity; if (op < 0.2) continue;
+      const rg = document.createRange(); rg.selectNodeContents(t); const r = rg.getBoundingClientRect(); if (r.width < 10 || r.height < 8) continue;
+      const fg = parse(cs.color); if (!fg || fg.a * op < 0.2) continue;
+      if (parseFloat(cs.fontSize) < 12) continue;
+      out.push({ x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height, fg: [fg.r, fg.g, fg.b], a: Math.min(1, fg.a * op), fs: parseFloat(cs.fontSize), fw: +cs.fontWeight, txt: txt.slice(0, 26), tag: el.tagName.toLowerCase() + '.' + String(el.className || '').split(' ')[0] });
+    }
+    return out;
+  });
+  const pick = samples.length > 90 ? samples.filter((_, i) => i % Math.ceil(samples.length / 90) === 0) : samples;
+  await d.page.addStyleTag({ content: '*,*::before,*::after{color:transparent !important;-webkit-text-fill-color:transparent !important;text-shadow:none !important;-webkit-text-stroke:0 !important;caret-color:transparent !important}input::placeholder,textarea::placeholder{color:transparent !important}' });
+  await d.page.waitForTimeout(150);
+  const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  const Lum = (r, g, b) => 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+  const bad = []; let measured = 0;
+  for (const q of pick) {
+    try {
+      const clip = { x: Math.max(0, q.x), y: Math.max(0, q.y), width: Math.min(q.w, 700), height: Math.min(q.h, 140) };
+      const png = await d.page.screenshot({ clip, fullPage: true, type: 'png', timeout: 8000 });
+      const { data, info } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+      const lums = []; let R = 0, G = 0, B = 0, n = 0;
+      for (let i = 0; i < data.length; i += 3 * 3) { lums.push(Lum(data[i], data[i + 1], data[i + 2])); R += data[i]; G += data[i + 1]; B += data[i + 2]; n++; }
+      lums.sort((a, b) => a - b);
+      const med = lums[Math.floor(lums.length / 2)], mr = R / n, mg = G / n, mb = B / n;
+      const er = mr + (q.fg[0] - mr) * q.a, eg = mg + (q.fg[1] - mg) * q.a, eb = mb + (q.fg[2] - mb) * q.a; // effective text colour at its alpha
+      const tl = Lum(er, eg, eb);
+      const cr = (a, b) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+      const ratio = cr(tl, med), p10 = lums[Math.floor(lums.length * 0.1)], p90 = lums[Math.floor(lums.length * 0.9)];
+      const worst = Math.min(cr(tl, p10), cr(tl, p90), ratio);
+      const large = q.fs >= 24 || (q.fs >= 18.66 && q.fw >= 700);
+      measured++;
+      if (ratio < (large ? 3 : 4.5)) bad.push(`${q.tag} "${q.txt}" ${ratio.toFixed(1)}:1 (worst ${worst.toFixed(1)})`);
+    } catch { /* element off-canvas; skip */ }
+  }
+  soft(`pixel-sampled contrast over real backdrops (${measured} text boxes)`, bad.length === 0, `${bad.length} low: ${bad.slice(0, 6).join(' | ')}`);
+}
 await d.ctx.close();
 
 // ----------------------------------------------------------- MOBILE
 const m = await load({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }, 'mobile');
 await m.page.screenshot({ path: path.join(shots, 'mobile-fold.png') });
 const mt = await tiles(m.page, 'mobile', 10, 2400);
-hard('no horizontal overflow (phone 390px)', await m.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `scrollWidth ${await m.page.evaluate(() => document.documentElement.scrollWidth)} > 390`);
+const mw = await m.page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth));
+hard('no horizontal overflow (phone 390px)', mw <= 391, `content is ${mw}px wide in a 390px viewport`);
 hard('phone: no console errors', m.log.console.length === 0 && m.log.pageErrors.length === 0, [...m.log.console, ...m.log.pageErrors].slice(0, 2).join(' || '));
 hard('phone: UtilityBar visible', await m.page.locator('[data-pf-bar]').first().isVisible());
 const small = await m.page.evaluate(() => { const bad = []; for (const e of document.querySelectorAll('a,button,input,textarea,select')) { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); if (r.width && r.height && cs.visibility !== 'hidden' && (r.width < 24 || r.height < 24) && !e.closest('[data-pf-bar]') && e.getAttribute('name') !== 'botcheck' && !(e.tagName === 'A' && e.closest('p,li,span') && cs.display === 'inline')) bad.push(`${e.tagName.toLowerCase()} ${Math.round(r.width)}x${Math.round(r.height)}`); } return bad; });
