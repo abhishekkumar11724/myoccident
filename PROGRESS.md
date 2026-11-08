@@ -13,13 +13,13 @@ Started 2026-11-09. One local git commit per theme. Nothing is pushed or deploye
 | # | Style | Research | Theme | Check | Notes |
 |---|-------|----------|-------|-------|-------|
 | 1 | Brutalism (`brutalism`) | done | done | 42 pass, 0 fail (1 warn: honeypot, now ignored) | Poured-concrete building: floor-directory rail, acid-yellow signal, concrete-cast photos |
-| 2 | Vaporwave (`vaporwave`) | todo | todo | todo | |
-| 3 | Bauhaus (`bauhaus`) | todo | todo | todo | |
+| 2 | Vaporwave (`vaporwave`) | done | done | 42 pass, 0 fail (1 warn: outlined wordmark contrast, judged legible) | Dream-mall sunset desktop: fake-OS windows, taskbar/Start menu, sunset/midnight toggle |
+| 3 | Bauhaus (`bauhaus`) | done | done | 43 pass, 0 fail | Exhibition-poster composition, numbered contents nav with shape previews, two-ink halftone photos in geometric masks |
 | 4 | Glitch (`glitch`) | done | done | 42 pass, 0 fail | Terminal/VHS: htop experience, hexdump skills, one-shot glitch bursts, photos decode on hover; reduced-motion static |
-| 5 | Mid-century (`mid-century`) | todo | todo | todo | |
-| 6 | Psychedelic (`psychedelic`) | todo | todo | todo | |
-| 7 | Neumorphism (`neumorphism`) | todo | todo | todo | |
-| 8 | Grunge (`grunge`) | todo | todo | todo | |
+| 5 | Mid-century (`mid-century`) | done | done | 43 pass, 0 fail | 1962 annual report: sunburst dial clock, scoreboard of key numbers, itinerary timeline, six-ink screen-print photos |
+| 6 | Psychedelic (`psychedelic`) | done | done | 43 pass, 0 fail | 1967 Fillmore bill: set-list chapter names, stretched wobbly lettering, heat-mapped halftone photos in arches |
+| 7 | Neumorphism (`neumorphism`) | done | done | 43 pass, 0 fail | One soft surface, scroll-reactive knob hero, dock nav, working mini-UI mock per case study (labelled illustrative) |
+| 8 | Grunge (`grunge`) | done | done | 43 pass, 0 fail | Photocopied zine on a plaster wall: ransom-note name, torn scraps, record-sleeve experience, xerox photos |
 | 9 | Art Nouveau (`art-nouveau`) | todo | todo | todo | |
 | 10 | Memphis (`memphis`) | todo | todo | todo | |
 | 11 | Steampunk (`steampunk`) | todo | todo | todo | |
