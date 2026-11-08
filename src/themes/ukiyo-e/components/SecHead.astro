@@ -1,0 +1,13 @@
+---
+/** Section heading as a print cartouche: red kanji tab + framed title + small note. */
+interface Props { kanji: string; kicker: string; title: string; note?: string; id?: string; tone?: 'light' | 'dark' }
+const { kanji, kicker, title, note, id, tone = 'light' } = Astro.props;
+---
+<header class={`sec-head ${tone === 'dark' ? 'sec-head--dark' : ''}`}>
+  <span class="sec-tab" aria-hidden="true">{kanji}</span>
+  <div class="sec-cartouche">
+    <p class="sec-kicker">{kicker}</p>
+    <h2 id={id}>{title}</h2>
+  </div>
+  {note && <p class="sec-note">{note}</p>}
+</header>

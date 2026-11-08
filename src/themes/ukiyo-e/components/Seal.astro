@@ -1,0 +1,23 @@
+---
+/** Hand-drawn hanko (red seal). kind 'ak' = monogram of the initials in blocky seal script (white-on-red / hakubun),
+ *  kind 'ukiyo' = the characters for "floating world" stacked vertically. Decorative: aria-hidden unless a label is given. */
+interface Props { kind?: 'ak' | 'ukiyo'; class?: string; label?: string }
+const { kind = 'ak', class: cls = '', label } = Astro.props;
+---
+<svg class={`seal ${cls}`.trim()} viewBox="0 0 100 100" role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : 'true'} focusable="false">
+  <g filter="url(#uk-worn)">
+    <rect x="3" y="3" width="94" height="94" rx="7" fill="currentColor" />
+    <rect x="10" y="10" width="80" height="80" rx="3" fill="none" stroke="var(--seal-ink, #f6ecd6)" stroke-width="3.2" />
+    {kind === 'ak' ? (
+      <g fill="none" stroke="var(--seal-ink, #f6ecd6)" stroke-width="8.5" stroke-linecap="butt" stroke-linejoin="miter">
+        <path d="M17 76 L33 24 L49 76 M23.5 59 H42.5" />
+        <path d="M58 24 V76 M58 52 L81 24 M65 45 L84 76" />
+      </g>
+    ) : (
+      <g fill="var(--seal-ink, #f6ecd6)" font-family="'Shippori Mincho', serif" font-weight="800" text-anchor="middle">
+        <text x="50" y="47" font-size="35">浮</text>
+        <text x="50" y="83" font-size="35">世</text>
+      </g>
+    )}
+  </g>
+</svg>

@@ -1,0 +1,76 @@
+---
+/** The hero print: bokashi sky, vermilion sun, Fuji with a snow cap, drifting kasumi cloud bands, plover birds.
+ *  Pure SVG, decorative only. The seigaiha sea and the wave curl are layered by CSS. */
+---
+<svg class="scene" viewBox="0 0 1600 720" preserveAspectRatio="xMidYMax slice" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="uk-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1f4670" />
+      <stop offset=".22" stop-color="#3f6f98" />
+      <stop offset=".46" stop-color="#9dbfc6" />
+      <stop offset=".66" stop-color="#eadcb9" />
+      <stop offset=".84" stop-color="#e8b79e" />
+      <stop offset="1" stop-color="#f1e6cf" />
+    </linearGradient>
+    <linearGradient id="uk-fuji" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#25507c" />
+      <stop offset=".55" stop-color="#4a7ba1" />
+      <stop offset="1" stop-color="#8fb7c2" />
+    </linearGradient>
+    <linearGradient id="uk-kfade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f6ecd6" stop-opacity="0" />
+      <stop offset=".12" stop-color="#f6ecd6" stop-opacity=".96" />
+      <stop offset=".88" stop-color="#f6ecd6" stop-opacity=".96" />
+      <stop offset="1" stop-color="#f6ecd6" stop-opacity="0" />
+    </linearGradient>
+    <clipPath id="uk-fuji-clip"><path d="M0 300 C130 296 235 190 320 98 Q338 78 360 72 L440 72 Q462 78 480 98 C565 190 670 296 800 300 Z" /></clipPath>
+    <!-- a kasumi band: flat top, softly waved lower edge, ends dissolving into the sky -->
+    <path id="uk-band" d="M0 6 Q140 0 280 5 T560 6 V30 Q420 38 280 33 T0 30 Z" />
+  </defs>
+
+  <rect width="1600" height="720" fill="url(#uk-sky)" />
+
+  <!-- sun balanced above the summit: a flat disc with a soft halo ring -->
+  <circle class="sun-halo" cx="900" cy="196" r="132" fill="#c8402f" opacity=".13" />
+  <circle class="sun" cx="900" cy="196" r="90" fill="#c8402f" />
+
+  <!-- far ranges -->
+  <path d="M0 470 C90 430 170 440 260 420 C340 402 420 440 520 418 C620 396 700 440 800 430 L800 580 L0 580 Z" fill="#7aa6bc" opacity=".5" />
+  <path d="M1000 470 C1080 436 1170 446 1250 424 C1330 402 1420 440 1520 420 C1560 412 1590 420 1600 428 L1600 580 L1000 580 Z" fill="#7aa6bc" opacity=".55" />
+
+  <!-- Fuji -->
+  <g transform="translate(520 258) scale(.92)">
+    <path d="M0 300 C130 296 235 190 320 98 Q338 78 360 72 L440 72 Q462 78 480 98 C565 190 670 296 800 300 Z" fill="url(#uk-fuji)" />
+    <g clip-path="url(#uk-fuji-clip)">
+      <path d="M200 0 H600 V176 L572 170 L548 140 L520 164 L498 126 L470 156 L444 120 L418 150 L392 118 L368 152 L346 124 L322 162 L300 140 L278 168 L262 152 L232 170 L200 176 Z" fill="#f6ecd6" />
+      <path d="M392 150 C378 200 340 250 316 300 M432 154 C434 210 452 250 440 300 M498 150 C520 210 556 250 590 300 M322 150 C296 196 256 246 220 300 M560 150 C590 196 640 250 680 300" fill="none" stroke="#1f4670" stroke-width="3" opacity=".32" stroke-linecap="round" />
+    </g>
+    <path d="M0 300 C130 296 235 190 320 98 Q338 78 360 72 L440 72 Q462 78 480 98 C565 190 670 296 800 300" fill="none" stroke="#17130f" stroke-width="3.6" stroke-linejoin="round" />
+  </g>
+
+  <!-- kasumi: cloud bands that slide between the planes -->
+  <g class="kasumi" fill="url(#uk-kfade)">
+    <g class="drift-r">
+      <use href="#uk-band" transform="translate(300 430) scale(1.5 1.15)" />
+      <use href="#uk-band" transform="translate(940 470) scale(1.35 1)" />
+      <use href="#uk-band" transform="translate(120 520) scale(1.2 .9)" opacity=".8" />
+    </g>
+    <g class="drift-l">
+      <use href="#uk-band" transform="translate(560 506) scale(1.6 1.1)" />
+      <use href="#uk-band" transform="translate(1080 538) scale(1.3 1)" />
+      <use href="#uk-band" transform="translate(-80 556) scale(1.5 1)" />
+    </g>
+    <g class="drift-r">
+      <use href="#uk-band" transform="translate(560 120) scale(.8 .7)" opacity=".85" />
+      <use href="#uk-band" transform="translate(1130 92) scale(.7 .6)" opacity=".8" />
+      <use href="#uk-band" transform="translate(700 340) scale(.7 .6)" opacity=".8" />
+    </g>
+  </g>
+
+  <!-- plover birds -->
+  <g fill="none" stroke="#17130f" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M1010 120 q14 -16 28 0 q14 -16 28 0" />
+    <path d="M1080 156 q10 -12 20 0 q10 -12 20 0" />
+    <path d="M700 140 q9 -11 18 0 q9 -11 18 0" />
+  </g>
+</svg>

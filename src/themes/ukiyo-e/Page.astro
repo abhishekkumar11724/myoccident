@@ -1,0 +1,384 @@
+---
+/**
+ * Ukiyo-e theme: an Edo-period print sheet. Washi ground, sumi key-lines, indigo + vermilion + ochre.
+ * Nav = left rail of kanji "stamp" tabs. Hero = Fuji / sun / kasumi scene with a title cartouche and a pillar-print portrait.
+ * Experience = Tokaido road with numbered stations. Case studies = a print series. Projects = banzuke (ranking sheet).
+ * Skills = tanzaku slips on a rope. Photos = emaki (hand scrolls). Contact = night sheet with a hanko submit button.
+ * Every data-pf-* hook from docs/THEME_GUIDE.md is kept; all content comes from @/content/profile.
+ */
+import { profile } from '@/content/profile';
+import { photoGroups, heroPhotos, photos } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import meta from './meta';
+import Seal from './components/Seal.astro';
+import SecHead from './components/SecHead.astro';
+import HeroScene from './components/HeroScene.astro';
+import waveUrl from './assets/wave.svg?url';
+import './theme.css';
+
+const STYLE = 'ukiyo-e';
+const all = photos(STYLE);
+const heroList = heroPhotos(STYLE);
+const hero = heroList.find((p) => p.id.includes('red-kurta-seated')) ?? heroList[0] ?? all[0];
+const aboutPhoto = heroList.find((p) => p.id !== hero?.id) ?? all.find((p) => p.id !== hero?.id);
+const groups = photoGroups(STYLE);
+
+const NUM = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+const num = (i: number) => NUM[i] ?? String(i + 1);
+const nameParts = profile.name.split(' ');
+const lastName = nameParts.slice(1).join(' ');
+
+const nav = [
+  ['about', 'About', '序'],
+  ['experience', 'Experience', '道'],
+  ['case-studies', 'Case studies', '版'],
+  ['projects', 'Projects', '作'],
+  ['skills', 'Skills', '技'],
+  ['beyond-code', 'Beyond code', '旅'],
+  ['writing', 'Writing', '文'],
+  ['contact', 'Contact', '便'],
+] as const;
+
+const featured = profile.caseStudies.filter((c) => c.featured);
+const more = profile.caseStudies.filter((c) => !c.featured);
+const year = new Date().getFullYear();
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style={STYLE} themeColor="#f1e6cf" />
+    <meta name="robots" content="index,follow" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+  </head>
+  <body class="uk">
+    <!-- shared SVG filters: rough ink edge + worn seal -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+      <defs>
+        <filter id="uk-worn" x="-4%" y="-4%" width="108%" height="108%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.09 0.11" numOctaves="3" seed="8" result="t" />
+          <feColorMatrix in="t" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -14 11.4" result="holes" />
+          <feComposite in="SourceGraphic" in2="holes" operator="in" result="worn" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="1" seed="3" result="n2" />
+          <feDisplacementMap in="worn" in2="n2" scale="1.7" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+      </defs>
+    </svg>
+
+    <a class="uk-skip" href="#main">Skip to content</a>
+
+    <!-- nav: left rail of kanji stamp tabs (top strip on small screens) -->
+    <nav class="rail" aria-label="Sections">
+      <a class="rail-seal" href="#hero" aria-label={`${profile.name} - back to top`}><Seal kind="ak" /></a>
+      <ul class="rail-list">
+        {nav.map(([id, label, kanji]) => (
+          <li><a href={`#${id}`} data-spy={id}><span class="k" aria-hidden="true">{kanji}</span><span class="l">{label}</span></a></li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="page">
+      <main id="main">
+        <!-- ============================================================ HERO -->
+        <section class="uk-hero" id="hero" data-pf-section="hero">
+          <div class="hero-print">
+            <HeroScene />
+            <div class="hero-sea" aria-hidden="true"></div>
+            <img class="hero-wave" src={waveUrl} alt="" width="640" height="520" aria-hidden="true" />
+
+            <div class="cartouche">
+              <span class="cartouche-tab" aria-hidden="true">浮世絵</span>
+              <p class="uk-kicker">{meta.flavor.kicker}</p>
+              <h1><span class="n1">{profile.firstName}</span> <span class="n2">{lastName}</span></h1>
+              <p class="role">{profile.role}<span class="dot" aria-hidden="true"> / </span><span class="loc">{profile.location}</span></p>
+              <p class="tagline">{profile.tagline}</p>
+              <p class="uk-cta">
+                <a class="uk-btn uk-btn-primary" href={withBase(profile.resume.href)} data-pf-resume download>{profile.resume.label}</a>
+                <a class="uk-btn" href="#contact">Get in touch</a>
+              </p>
+              <p class="focus-line">Focus: {profile.focus}</p>
+            </div>
+
+            {hero && (
+              <figure class="pillar">
+                <div class="pillar-mat">
+                  <img src={hero.img.src} width={hero.img.width} height={hero.img.height} alt={hero.alt} style={`object-position:${hero.focus}`} fetchpriority="high" decoding="async" />
+                </div>
+                <figcaption><span aria-hidden="true">絵</span> {hero.caption ?? 'Portrait'}</figcaption>
+                <Seal kind="ak" class="hero-seal" />
+              </figure>
+            )}
+          </div>
+
+          <ul class="statband" aria-label="Key numbers">
+            {profile.stats.map((s) => (
+              <li><strong>{s.value}</strong><span>{s.label}</span></li>
+            ))}
+          </ul>
+        </section>
+
+        <!-- ============================================================ ABOUT -->
+        <section class="sheet-section" id="about" data-pf-section="about" aria-labelledby="h-about">
+          <SecHead kanji="序" kicker="Preface" title="About" id="h-about" note="A short introduction to the artist." />
+          <div class="about reveal">
+            <div class="about-text">
+              <p class="uk-lead">{profile.summary}</p>
+              {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+              <p class="brush" aria-hidden="true">a clear route, a few good tools</p>
+              <ul class="uk-chips" aria-label="Interests">
+                {profile.interests.map((i) => <li>{i}</li>)}
+              </ul>
+            </div>
+            {aboutPhoto && (
+              <figure class="kakemono">
+                <div class="kake-top" aria-hidden="true"></div>
+                <div class="kake-body">
+                  <img src={aboutPhoto.img.src} width={aboutPhoto.img.width} height={aboutPhoto.img.height} alt={aboutPhoto.alt} loading="lazy" decoding="async" style={`object-position:${aboutPhoto.focus}`} />
+                </div>
+                <figcaption>{aboutPhoto.caption ?? 'Portrait'}</figcaption>
+                <div class="kake-bottom" aria-hidden="true"></div>
+              </figure>
+            )}
+          </div>
+        </section>
+
+        <!-- ============================================================ EXPERIENCE -->
+        <section class="sheet-section" id="experience" data-pf-section="experience" aria-labelledby="h-exp">
+          <SecHead kanji="道" kicker="The road so far" title="Experience" id="h-exp" note="Stations on the road, newest first." />
+          <ol class="road">
+            {profile.experience.map((e, i) => (
+              <li class="station reveal">
+                <span class="stop" aria-hidden="true"><b>{num(i)}</b></span>
+                <article class="uk-job" data-pf-job={e.id}>
+                  <header class="job-head">
+                    <div>
+                      <p class="job-co">{e.company}</p>
+                      <h3>{e.title}</h3>
+                    </div>
+                    <p class="job-meta"><span class="when">{e.start} - {e.end}</span><span class="where">{e.place}</span></p>
+                  </header>
+                  <p class="job-blurb">{e.blurb}</p>
+                  <ol class="stamps">
+                    {e.bullets.map((b, j) => (
+                      <li>
+                        <span class="stamp" aria-hidden="true">{num(j)}</span>
+                        <div><strong class="bh">{b.head}</strong> <span class="bt">{b.text}</span></div>
+                      </li>
+                    ))}
+                  </ol>
+                </article>
+              </li>
+            ))}
+            {profile.education.map((ed) => (
+              <li class="station station--end reveal">
+                <span class="stop stop--gate" aria-hidden="true">
+                  <svg viewBox="0 0 48 48" focusable="false"><path d="M4 12 Q24 6 44 12 L44 17 H4 Z M9 17 H39 V21 H9 Z M12 21 V44 M36 21 V44" fill="none" stroke="currentColor" stroke-width="4" stroke-linejoin="round" stroke-linecap="round" /></svg>
+                </span>
+                <article class="uk-job job--edu" data-pf-education>
+                  <header class="job-head">
+                    <div>
+                      <p class="job-co">Education - where the road began</p>
+                      <h3>{ed.school}</h3>
+                    </div>
+                    <p class="job-meta"><span class="when">{ed.start} - {ed.end}</span><span class="where">{ed.short}</span></p>
+                  </header>
+                  <p class="job-blurb">{ed.degree}</p>
+                </article>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <!-- ============================================================ CASE STUDIES -->
+        <section class="sheet-section" id="case-studies" data-pf-section="case-studies" aria-labelledby="h-cases">
+          <SecHead kanji="版" kicker="A print series" title="Case studies" id="h-cases" note="Problem, approach and impact - one sheet each." />
+          <div class="prints">
+            {featured.map((c, i) => (
+              <article class={`sheet tone-${i % 6} reveal`} data-pf-case={c.id}>
+                <div class="sheet-band">
+                  <span class="no" aria-hidden="true">{num(i)}</span>
+                  <p class="sheet-org">{c.org}<span aria-hidden="true"> / </span>{c.period}</p>
+                </div>
+                <div class="sheet-body">
+                  <h3>{c.title}</h3>
+                  <p class="sheet-kick">{c.kicker}</p>
+                  <p class="sheet-role"><span>Role</span> {c.role}</p>
+                  <dl class="pa">
+                    <dt>Problem</dt><dd>{c.problem}</dd>
+                    <dt>Approach</dt><dd>{c.approach}</dd>
+                  </dl>
+                  <ul class="impact" aria-label="Impact">{c.impact.map((x) => <li>{x}</li>)}</ul>
+                  <ul class="uk-tags" aria-label="Tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+                </div>
+              </article>
+            ))}
+          </div>
+          {more.length > 0 && (
+            <>
+              <h3 class="subhead">More sheets from earlier years</h3>
+              <div class="prints prints--more">
+                {more.map((c, i) => (
+                  <article class={`sheet tone-${(i + 3) % 6} reveal`} data-pf-case={c.id}>
+                    <div class="sheet-band">
+                      <span class="no" aria-hidden="true">{num(featured.length + i)}</span>
+                      <p class="sheet-org">{c.org}<span aria-hidden="true"> / </span>{c.period}</p>
+                    </div>
+                    <div class="sheet-body">
+                      <h3>{c.title}</h3>
+                      <p class="sheet-kick">{c.kicker}</p>
+                      <p class="sheet-role"><span>Role</span> {c.role}</p>
+                      <dl class="pa">
+                        <dt>Problem</dt><dd>{c.problem}</dd>
+                        <dt>Approach</dt><dd>{c.approach}</dd>
+                      </dl>
+                      <ul class="impact" aria-label="Impact">{c.impact.map((x) => <li>{x}</li>)}</ul>
+                      <ul class="uk-tags" aria-label="Tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+
+        <!-- ============================================================ PROJECTS (banzuke) -->
+        <section class="sheet-section" id="projects" data-pf-section="projects" aria-labelledby="h-proj">
+          <SecHead kanji="作" kicker="Banzuke" title="Projects" id="h-proj" note="Public repositories, ranked by nothing but curiosity." />
+          <div class="banzuke">
+            <p class="ban-side" aria-hidden="true"><span>作</span></p>
+            <ul class="ban-grid">
+              {profile.projects.map((p, i) => (
+                <li class="ban-cell reveal" data-pf-project={p.name}>
+                  <div class="ban-top"><span class="ban-no" aria-hidden="true">{num(i)}</span><span class="ban-year">{p.year}</span></div>
+                  <h3>{p.title}</h3>
+                  <p class="ban-blurb">{p.blurb}</p>
+                  <p class="ban-stack">{p.stack.join(' / ')}</p>
+                  <p class="ban-links">
+                    <a href={p.repo} rel="noopener">Source on GitHub</a>
+                    {p.live && <a href={p.live} rel="noopener">Live site</a>}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        <!-- ============================================================ SKILLS (tanzaku) -->
+        <section class="sheet-section" id="skills" data-pf-section="skills" aria-labelledby="h-skills">
+          <SecHead kanji="技" kicker="Tools on the rack" title="Skills" id="h-skills" note="Hung out to dry, grouped by trade." />
+          <div class="rack">
+            <div class="rope" aria-hidden="true"></div>
+            <ul class="slips">
+              {profile.skills.map((g, i) => (
+                <li class={`slip tone-${i % 6} reveal`}>
+                  <span class="string" aria-hidden="true"></span>
+                  <h3>{g.group}</h3>
+                  <ul class="items">{g.items.map((it) => <li>{it}</li>)}</ul>
+                  {(g as any).familiar?.length ? (
+                    <div class="fam">
+                      <p>Familiar with</p>
+                      <ul class="items items--fam">{((g as any).familiar as string[]).map((it) => <li>{it}</li>)}</ul>
+                    </div>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        <!-- ============================================================ BEYOND CODE (emaki) -->
+        <section class="sheet-section" id="beyond-code" data-pf-section="beyond-code" aria-labelledby="h-beyond">
+          <SecHead kanji="旅" kicker="Scrolls from the road" title="Beyond code" id="h-beyond" note="Trips, rides, books and friends - each category is a hand scroll. Drag, swipe or use the arrows; tap a print to see it large." />
+          <div class="emakis">
+            {groups.map((g, gi) => (
+              <div class={`emaki${g.photos.length <= 3 ? ' emaki--short' : ''} reveal`} data-emaki>
+                <div class="emaki-head">
+                  <div>
+                    <h3>{g.title}</h3>
+                    <p>{g.blurb}</p>
+                  </div>
+                  <div class="emaki-ctl" role="group" aria-label={`Scroll ${g.title}`}>
+                    <button type="button" data-dir="-1" aria-label={`Scroll ${g.title} back`}><span aria-hidden="true">&larr;</span></button>
+                    <button type="button" data-dir="1" aria-label={`Scroll ${g.title} forward`}><span aria-hidden="true">&rarr;</span></button>
+                  </div>
+                </div>
+                <div class="emaki-frame">
+                  <span class="roller roller--l" aria-hidden="true"></span>
+                  <div class="emaki-track" tabindex="0" role="region" aria-label={`${g.title} scroll, ${g.photos.length} prints`}>
+                    {g.photos.map((p, pi) => (
+                      <figure class="print" style={`--ar:${p.img.thumbWidth}/${p.img.thumbHeight}`}>
+                        <a href={p.original.src} data-lightbox data-full={p.img.src} data-orig={p.original.src} data-cap={p.caption ?? ''} data-alt={p.alt} aria-label={`View larger: ${p.alt}`}>
+                          <img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} />
+                        </a>
+                        {p.caption && <figcaption>{p.caption}</figcaption>}
+                      </figure>
+                    ))}
+                  </div>
+                  <span class="roller roller--r" aria-hidden="true"></span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <!-- ============================================================ WRITING -->
+        <section class="sheet-section" id="writing" data-pf-section="writing" aria-labelledby="h-writing">
+          <SecHead kanji="文" kicker="On the carver's bench" title="Writing" id="h-writing" note={profile.writing.status} />
+          {profile.writing.posts.length > 0 && (
+            <ul class="posts">{profile.writing.posts.map((p) => <li><a href={p.href}>{p.title}</a> <span>{p.date}</span> - {p.summary}</li>)}</ul>
+          )}
+          <p class="planned-label">Planned blocks:</p>
+          <ul class="blocks">
+            {profile.writing.planned.map((t, i) => (
+              <li class="block reveal"><span class="block-no" aria-hidden="true">{num(i)}</span><span class="block-title">{t}</span></li>
+            ))}
+          </ul>
+        </section>
+
+        <!-- ============================================================ CONTACT -->
+        <section class="contact" id="contact" data-pf-section="contact" aria-labelledby="h-contact">
+          <div class="contact-sea" aria-hidden="true"></div>
+          <div class="contact-inner">
+            <SecHead kanji="便" kicker="Send word" title="Contact" id="h-contact" tone="dark" note="Open to interesting problems in GenAI agents, workflow systems and backend infrastructure." />
+            <div class="contact-grid">
+              <div class="letter reveal">
+                <ul class="uk-links">
+                  <li><span class="lk">Email</span> <Protected kind="email" class="c-link" /></li>
+                  <li><span class="lk">Phone</span> <Protected kind="phone" class="c-link" /></li>
+                  <li><span class="lk">LinkedIn</span> <a class="c-link" href={profile.contact.linkedin} rel="noopener me" data-pf-linkedin>{profile.contact.linkedin.replace('https://www.', '')}</a></li>
+                  <li><span class="lk">GitHub</span> <a class="c-link" href={profile.contact.github} rel="noopener me" data-pf-github>{profile.contact.github.replace('https://', '')}</a></li>
+                  <li><span class="lk">Resume</span> <a class="c-link" href={withBase(profile.resume.href)} download>{profile.resume.label}</a></li>
+                </ul>
+                <Seal kind="ukiyo" class="contact-seal" />
+              </div>
+              <div class="note-card reveal">
+                <ContactForm class="paper-form" submitLabel="Send message" labels={{ name: 'Your name', email: 'Your email', message: 'Your message' }} />
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="colophon">
+        <Seal kind="ukiyo" class="colophon-seal" />
+        <p class="colo-main">&copy; {year} {profile.name}. {meta.flavor.footer}</p>
+        <p class="colo-sub">Hand-set in Astro and TypeScript. A different art style every day - see the <a href={withBase('gallery/')}>gallery</a>.</p>
+      </footer>
+    </div>
+
+    <dialog class="lightbox" data-lightbox-dialog aria-label="Print viewer">
+      <form method="dialog" class="lb-close"><button aria-label="Close viewer">&times;</button></form>
+      <figure>
+        <div data-lb-slot></div>
+        <figcaption data-lb-cap></figcaption>
+      </figure>
+      <p class="lb-actions"><button type="button" data-lb-toggle>Show the original photograph</button></p>
+    </dialog>
+
+    <script>import './client.ts';</script>
+    <UtilityBar style={STYLE} />
+  </body>
+</html>
