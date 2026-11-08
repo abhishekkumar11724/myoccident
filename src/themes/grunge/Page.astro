@@ -1,0 +1,563 @@
+---
+/**
+ * Grunge theme: a zine pasted on a dirty wall.
+ * Every block of text sits on its own solid paper scrap (dark ink on light stock); only headings are distressed and
+ * they stay real text. Keep every data-pf-* hook and ALL content (docs/THEME_GUIDE.md).
+ */
+import { profile } from '@/content/profile';
+import { photoGroups, heroPhotos, photos } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import meta from './meta';
+import './assets/tex.css';
+import './theme.css';
+
+const STYLE = 'grunge';
+const all = photos(STYLE);
+const heroes = heroPhotos(STYLE);
+const hero = heroes[0] ?? all[0];
+const snapB = heroes[1] ?? all[1];
+const snapC = heroes[2] ?? all[2];
+const groups = photoGroups(STYLE);
+const byId = (id: string) => all.find((p) => p.id === id);
+const scrapbook = ['adventure/04-hillside-smile', 'bikes/03-bike-night-rider', 'adventure/09-with-dog', 'portraits/06-alley-smile']
+  .map(byId).filter((p): p is NonNullable<typeof p> => !!p);
+
+// ---------- tiny seeded random (deterministic markup, no layout shift between builds)
+const rng = (seed: number) => { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+const hash = (s: string) => { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+
+/** ransom-note tiles for a word: one cut-out per letter, never the same stock twice in a row */
+function tiles(word: string, seed: number, { jitter = 1 } = {}) {
+  const r = rng(seed);
+  let prev = 0;
+  return [...word].map((ch) => {
+    let t = 1 + Math.floor(r() * 10);
+    if (t === prev) t = (t % 10) + 1;
+    prev = t;
+    const k = 1 + Math.floor(r() * 4);
+    const a = ((r() - 0.5) * 11 * jitter).toFixed(1);
+    const y = ((r() - 0.5) * 0.16 * jitter).toFixed(2);
+    const s = (0.88 + r() * 0.26).toFixed(2);
+    return { ch, cls: `rn t${t} k${k}`, style: `--a:${a}deg;--y:${y}em;--s:${s}` };
+  });
+}
+/** one cut-out per skill (or any short label) */
+function tile(text: string, i = 0) {
+  const r = rng(hash(text) + i);
+  const t = 1 + Math.floor(r() * 10), k = 1 + Math.floor(r() * 4);
+  return { cls: `sk t${t} k${k}`, style: `--a:${((r() - 0.5) * 5).toFixed(1)}deg;--y:${((r() - 0.5) * 5).toFixed(1)}px` };
+}
+
+const lastName = profile.name.split(' ').slice(1).join(' ');
+const pad2 = (n: number) => String(n).padStart(2, '0');
+const sheetSeq = ['tr-a', 'tr-b', 'tr-c', 'tr-d', 'tr-e', 'tr-f', 'tr-g'];
+const tilts = [-1.1, 0.9, -0.6, 1.3, -1.4, 0.5, 1.0, -0.9];
+const stocks = ['s-copy', 's-news', 's-legal', 's-graph', 's-copy', 's-manila', 's-news', 's-legal'];
+const tapeSeq = ['tp-a', 'tp-b', 'tp-c', 'tp-d'];
+
+const nav = [
+  { id: 'about', label: 'About' },
+  { id: 'experience', label: 'Experience' },
+  { id: 'case-studies', label: 'Case studies' },
+  { id: 'projects', label: 'Projects' },
+  { id: 'skills', label: 'Skills' },
+  { id: 'beyond-code', label: 'Beyond code' },
+  { id: 'writing', label: 'Writing' },
+  { id: 'contact', label: 'Contact' },
+];
+
+const featured = profile.caseStudies.filter((c) => c.featured);
+const bsides = profile.caseStudies.filter((c) => !c.featured);
+const half = (n: number) => Math.ceil(n / 2);
+const jobKind = (i: number, n: number) => (n >= 6 ? 'LP' : n >= 3 ? 'EP' : 'DEMO');
+const skillItems = (g: (typeof profile.skills)[number]) => [
+  ...g.items.map((t) => ({ t, fam: false })),
+  ...(((g as { familiar?: readonly string[] }).familiar ?? []).map((t) => ({ t, fam: true }))),
+];
+// where each category sits on the "Beyond code" wall: [grid span of 12, columns]
+const layout: Record<string, [number, number]> = {
+  portraits: [12, 4], adventure: [12, 4], 'friends-trips': [12, 4], bikes: [7, 3], scenery: [5, 2],
+  books: [4, 1], pets: [8, 3], food: [4, 1], 'work-and-lifestyle': [8, 2],
+};
+/** masonry planner: shortest-column placement per breakpoint + a row span from each photo's aspect ratio (no CSS multicol: it mis-places absolutely positioned tape) */
+function plan(ps: { img: { thumbWidth: number; thumbHeight: number } }[]) {
+  const n = ps.map((p) => Math.min(19, Math.max(8, Math.round(10 * (p.img.thumbHeight / p.img.thumbWidth + 0.34)))));
+  const place = (cols: number) => { const h = Array(cols).fill(0); return n.map((span) => { const k = h.indexOf(Math.min(...h)); h[k] += span; return k + 1; }); };
+  return { n, d: (c: number) => place(c), };
+}
+const frames = ['fr-pol', 'fr-xer', 'fr-clip', 'fr-pol fr-flip', 'fr-tape'];
+const ghosts = [
+  { t: '7%', l: '-1%', s: 'XEROX', r: '-8deg' },
+  { t: '22%', l: '92%', s: 'DIY', r: '6deg' },
+  { t: '41%', l: '-2%', s: 'FREE', r: '5deg' },
+  { t: '58%', l: '90%', s: 'PLAY LOUD', r: '-6deg' },
+  { t: '76%', l: '-1%', s: 'TAKE ONE', r: '-4deg' },
+  { t: '90%', l: '88%', s: 'COPY THIS', r: '7deg' },
+];
+---
+<!doctype html>
+<html lang="en" class="gr">
+  <head>
+    <ThemeHead style={STYLE} themeColor="#1c1a17" />
+    <meta name="robots" content="index,follow" />
+  </head>
+  <body>
+    <!-- SVG filter: rough, ink-bled edges for the big headings only -->
+    <svg class="gr-defs" width="0" height="0" aria-hidden="true" focusable="false">
+      <defs>
+        <filter id="ink" x="-4%" y="-8%" width="108%" height="116%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.035 0.05" numOctaves="2" seed="6" result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="4.5" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+        <filter id="ink-sm" x="-4%" y="-8%" width="108%" height="116%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.06 0.08" numOctaves="2" seed="2" result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+      </defs>
+    </svg>
+
+    <a class="gr-skip" href="#main">Skip to content</a>
+
+    <header class="bar">
+      <a class="bar-brand" href="#hero" aria-label={`${profile.name}, back to top`}>AK</a>
+      <nav class="bar-nav" aria-label="Sections">
+        {nav.map((n, i) => <a href={`#${n.id}`} data-nav={n.id} style={`--a:${[-1.2, 0.8, -0.5, 1.1, -0.9, 0.6, -1, 0.7][i]}deg`}>{n.label}</a>)}
+      </nav>
+    </header>
+
+    <div class="ghosts" aria-hidden="true">
+      {ghosts.map((g) => <span style={`top:${g.t};left:${g.l};--r:${g.r}`}>{g.s}</span>)}
+    </div>
+
+    <main id="main">
+      <!-- ================= HERO ================= -->
+      <section class="hero" id="hero" data-pf-section="hero">
+        <div class="wrap hero-grid">
+          <div class="hero-main">
+            <p class="masthead sheet s-copy tr-b"><span>{meta.flavor.kicker}</span></p>
+
+            <h1 class="name">
+              <span class="sr">{profile.name}</span>
+              <span class="name-art" aria-hidden="true">
+                <span class="rn-line">{tiles(profile.firstName.toUpperCase(), 11).map((t) => <span class={t.cls} style={t.style}>{t.ch}</span>)}</span>
+                <span class="rn-line rn-line-2">{tiles(lastName.toUpperCase(), 29).map((t) => <span class={t.cls} style={t.style}>{t.ch}</span>)}</span>
+              </span>
+            </h1>
+
+            <p class="role">
+              <span class="role-a">{profile.role}</span>
+              <span class="role-b">{profile.focus}</span>
+              <span class="role-c">{profile.location}</span>
+            </p>
+
+            <p class="headline sheet s-news tr-d"><span>{profile.tagline}</span></p>
+
+            <p class="cta">
+              <a class="btn btn-red" href={withBase(profile.resume.href)} data-pf-resume download>{profile.resume.label}</a>
+              <a class="btn btn-paper" href="#contact">Get in touch</a>
+              <a class="btn btn-tape" href="#case-studies">Read the case files</a>
+            </p>
+          </div>
+
+          <div class="hero-pics">
+            <p class="note-hero" aria-hidden="true">hover or tap = colour</p>
+            <svg class="arrow-hero" viewBox="0 0 80 70" aria-hidden="true" focusable="false">
+              <path d="M6 10 C 30 4, 58 22, 62 52 M62 52 L 48 42 M62 52 L 70 36" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <figure class="pic pic-main" style="--r:2.6deg">
+              <i class="tape tp-tc" aria-hidden="true"></i>
+              {hero && (
+                <button type="button" class="shot" aria-pressed="false" data-o={hero.original.src} title="Show the original colour">
+                  <img src={hero.img.src} width={hero.img.width} height={hero.img.height} alt={hero.alt} fetchpriority="high" decoding="async" style={`object-position:${hero.focus}`} />
+                </button>
+              )}
+              <figcaption class="cap-marker">{hero?.caption ?? 'Me'}</figcaption>
+            </figure>
+            {snapB && (
+              <figure class="pic pic-b fr-pol" style="--r:-6deg">
+                <i class="tape tp-tl" aria-hidden="true"></i>
+                <button type="button" class="shot" aria-pressed="false" data-o={snapB.original.thumb} title="Show the original colour">
+                  <img src={snapB.img.thumb} width={snapB.img.thumbWidth} height={snapB.img.thumbHeight} alt={snapB.alt} loading="lazy" decoding="async" style={`object-position:${snapB.focus}`} />
+                </button>
+                <figcaption>{snapB.caption}</figcaption>
+              </figure>
+            )}
+            {snapC && (
+              <figure class="pic pic-c fr-pol" style="--r:5deg">
+                <i class="tape tp-tr" aria-hidden="true"></i>
+                <button type="button" class="shot" aria-pressed="false" data-o={snapC.original.thumb} title="Show the original colour">
+                  <img src={snapC.img.thumb} width={snapC.img.thumbWidth} height={snapC.img.thumbHeight} alt={snapC.alt} loading="lazy" decoding="async" style={`object-position:${snapC.focus}`} />
+                </button>
+                <figcaption>{snapC.caption}</figcaption>
+              </figure>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= ABOUT ================= -->
+      <section class="sec about" id="about" data-pf-section="about">
+        <div class="wrap">
+          <header class="hd">
+            <span class="hd-no" aria-hidden="true">01</span>
+            <h2 class="hd-t">About</h2>
+            <p class="hd-s">The scrapbook. Facts on top, the rest underneath.</p>
+          </header>
+
+          <div class="about-grid">
+            <article class="sheet s-copy tr-b about-summary" style="--r:-0.8deg">
+              <i class="tape tp-tl" aria-hidden="true"></i><i class="tape tp-tr" aria-hidden="true"></i>
+              <p class="label">The short version</p>
+              <p class="summary">{profile.summary}</p>
+            </article>
+
+            <article class="sheet s-lined tr-c about-notes" style="--r:0.9deg">
+              <i class="staple" aria-hidden="true"></i>
+              <p class="label">Margin notes</p>
+              {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+            </article>
+
+            <div class="scrap-pics">
+              {scrapbook.map((p, i) => (
+                <figure class={`pic fr-pol sp-${i + 1}`} style={`--r:${[-5, 4, 3, -4][i]}deg`}>
+                  <i class={`tape ${tapeSeq[i % 4]}`} aria-hidden="true"></i>
+                  <button type="button" class="shot" aria-pressed="false" data-o={p.original.thumb} title="Show the original colour">
+                    <img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} />
+                  </button>
+                  <figcaption>{p.caption}</figcaption>
+                </figure>
+              ))}
+            </div>
+
+            <aside class="sheet s-graph tr-f about-likes" style="--r:-1.2deg" aria-labelledby="likes-h">
+              <i class="tape tp-tc" aria-hidden="true"></i>
+              <h3 id="likes-h" class="label">Things I like (circled in marker)</h3>
+              <ul class="likes">
+                {profile.interests.map((it, i) => <li class={`mk mk-${['circle-a', 'under', 'circle-b', 'box', 'hl', 'circle-a'][i % 6]}`} style={`--a:${[-2, 1.5, -1, 2, -1.5, 1][i % 6]}deg`}><span>{it}</span></li>)}
+              </ul>
+            </aside>
+
+            <aside class="bizcard" style="--r:2.4deg" aria-label="Side hustles, not on the resume">
+              <i class="staple" aria-hidden="true"></i>
+              <p class="bz-k">Side hustle</p>
+              <p class="bz-t">Professional Waterfall Chaser</p>
+              <p class="bz-s">Hours: weekends. Pay: the view. Chai tasting on the side.</p>
+              <span class="stamp" aria-hidden="true">not on the resume</span>
+            </aside>
+          </div>
+
+          <section class="news sheet s-news tr-a" aria-labelledby="news-h" style="--r:-0.5deg">
+            <i class="tape tp-tl" aria-hidden="true"></i><i class="tape tp-tr" aria-hidden="true"></i>
+            <div class="news-top"><span>Vol. 1 - Gurugram</span><span>Price: free</span><span>No. {profile.stats.length}</span></div>
+            <h3 id="news-h" class="news-name">The Backend Bulletin</h3>
+            <p class="news-sub">All the numbers fit to print</p>
+            <ul class="news-cols">
+              {profile.stats.map((s, i) => (
+                <li><strong>{s.value}</strong><span>{s.label}</span></li>
+              ))}
+            </ul>
+          </section>
+        </div>
+      </section>
+
+      <!-- ================= EXPERIENCE ================= -->
+      <section class="sec exp" id="experience" data-pf-section="experience">
+        <div class="wrap">
+          <header class="hd">
+            <span class="hd-no" aria-hidden="true">02</span>
+            <h2 class="hd-t">Experience</h2>
+            <p class="hd-s">Three jobs pressed to vinyl. Flip the big one for Side B.</p>
+          </header>
+
+          <div class="lps">
+            {profile.experience.map((e, i) => {
+              const n = e.bullets.length;
+              const sides = n >= 6 ? [e.bullets.slice(0, half(n)), e.bullets.slice(half(n))] : [e.bullets];
+              let counter = 0;
+              return (
+                <article class={`lp ${i === 0 ? 'lp-big' : 'lp-small'}`} data-job={e.id} style={`--r:${[-0.5, 0.8, -0.9][i % 3]}deg`}>
+                  <div class="lp-cover">
+                    <span class="lp-disc" aria-hidden="true"></span>
+                    <div class="lp-sleeve sheet s-news tr-d" style={`--r:${[-2.5, 1.8, -1.6][i % 3]}deg`}>
+                      <i class="tape tp-tl" aria-hidden="true"></i>
+                      <p class="lp-kind">{jobKind(i, n)} - {n} tracks</p>
+                      <h3 class="lp-co">{e.company}</h3>
+                      <p class="lp-title">{e.title}</p>
+                      <p class="lp-when">{e.start} - {e.end}</p>
+                      <p class="lp-where">{e.place}</p>
+                      {e.end === 'Present' && <span class="stamp stamp-in" aria-hidden="true">now playing</span>}
+                    </div>
+                  </div>
+                  <div class={`lp-tracks sheet s-copy ${sheetSeq[(i + 1) % 7]}`} style={`--r:${[0.35, -0.5, 0.45][i % 3]}deg`}>
+                    <i class="staple" aria-hidden="true"></i>
+                    <p class="lp-blurb">{e.blurb}</p>
+                    <div class={`lp-sides ${sides.length > 1 ? 'two' : ''}`}>
+                      {sides.map((side, si) => (
+                        <div class="lp-side">
+                          <p class="lp-side-h">{sides.length > 1 ? (si === 0 ? 'Side A' : 'Side B') : 'Side A'}</p>
+                          <ol class="tracks" start={counter + 1}>
+                            {side.map((b) => { counter++; return (
+                              <li>
+                                <span class="tr-no" aria-hidden="true">{pad2(counter)}</span>
+                                <div><strong class="tr-h">{b.head}</strong><p class="tr-t">{b.text}</p></div>
+                              </li>
+                            ); })}
+                          </ol>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          <h3 class="sub-h" id="education">Education</h3>
+          {profile.education.map((ed) => (
+            <article class="ticket" data-pf-education style="--r:-1.2deg">
+              <div class="ticket-stub" aria-hidden="true"><span>Admit one</span></div>
+              <div class="ticket-main">
+                <p class="ticket-k">{ed.start} - {ed.end}</p>
+                <h4 class="ticket-t">{ed.school}</h4>
+                <p class="ticket-d">{ed.degree}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <!-- ================= CASE STUDIES ================= -->
+      <section class="sec cases" id="case-studies" data-pf-section="case-studies">
+        <div class="wrap">
+          <header class="hd">
+            <span class="hd-no" aria-hidden="true">03</span>
+            <h2 class="hd-t">Case studies</h2>
+            <p class="hd-s">{featured.length} case files pinned up, {bsides.length} B-sides at the bottom.</p>
+          </header>
+
+          <div class="files">
+            {featured.map((c, i) => (
+              <article class={`file sheet ${stocks[i % 8]} ${sheetSeq[(i + 2) % 7]} ${i === 0 ? 'file-cover' : ''}`} data-pf-case={c.id} style={`--r:${tilts[i % 8]}deg`}>
+                <i class={`tape ${tapeSeq[i % 4]}`} aria-hidden="true"></i>
+                {i % 3 === 1 && <i class="staple" aria-hidden="true"></i>}
+                <p class="file-no">{i === 0 ? 'Cover story' : `Case file ${pad2(i + 1)}`}</p>
+                <p class="file-meta">{c.org} - {c.period} - {c.role}</p>
+                <h3 class="file-t">{c.title}</h3>
+                <p class="file-kick">{c.kicker}</p>
+                <div class="file-body">
+                  <div><p class="tag-k">Problem</p><p>{c.problem}</p></div>
+                  <div><p class="tag-k">Approach</p><p>{c.approach}</p></div>
+                </div>
+                <ul class="stamps" aria-label="Impact">
+                  {c.impact.map((m, k) => <li style={`--a:${[-2.5, 2, -1, 3][k % 4]}deg`}>{m}</li>)}
+                </ul>
+                <ul class="chips">{c.tags.map((t) => <li>{t}</li>)}</ul>
+              </article>
+            ))}
+            {bsides.length > 0 && (featured.length - 1) % 2 === 1 && (
+              <div class="bs-label"><h3 class="sub-h">B-sides</h3><p class="hd-s">Older tracks, still good. {bsides.length} more below.</p></div>
+            )}
+          </div>
+
+          {bsides.length > 0 && (
+            <div class="bsides">
+              {(featured.length - 1) % 2 !== 1 && <h3 class="sub-h">B-sides</h3>}
+              <div class="files files-b">
+                {bsides.map((c, i) => (
+                  <article class={`file file-b sheet ${stocks[(i + 4) % 8]} ${sheetSeq[(i + 4) % 7]}`} data-pf-case={c.id} style={`--r:${tilts[(i + 5) % 8]}deg`}>
+                    <i class={`tape ${tapeSeq[(i + 2) % 4]}`} aria-hidden="true"></i>
+                    <p class="file-no">B-side {pad2(i + 1)}</p>
+                    <p class="file-meta">{c.org} - {c.period} - {c.role}</p>
+                    <h3 class="file-t">{c.title}</h3>
+                    <p class="file-kick">{c.kicker}</p>
+                    <div class="file-body">
+                      <div><p class="tag-k">Problem</p><p>{c.problem}</p></div>
+                      <div><p class="tag-k">Approach</p><p>{c.approach}</p></div>
+                    </div>
+                    <ul class="stamps" aria-label="Impact">
+                      {c.impact.map((m, k) => <li style={`--a:${[-2.5, 2, -1, 3][k % 4]}deg`}>{m}</li>)}
+                    </ul>
+                    <ul class="chips">{c.tags.map((t) => <li>{t}</li>)}</ul>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <!-- ================= PROJECTS ================= -->
+      <section class="sec projects" id="projects" data-pf-section="projects">
+        <div class="wrap">
+          <header class="hd">
+            <span class="hd-no" aria-hidden="true">04</span>
+            <h2 class="hd-t">Projects</h2>
+            <p class="hd-s">Demo tapes, recorded at home. The repos open on GitHub.</p>
+          </header>
+
+          <div class="cassettes">
+            {profile.projects.map((p, i) => (
+              <article class={`cass cass-${['red', 'ink', 'paper'][i % 3]}`} data-pf-project={p.name} style={`--r:${[-1.4, 1, -0.7, 1.5, -1.1, 0.8][i % 6]}deg`}>
+                <div class="cass-label">
+                  <p class="cass-side"><span>Side A</span><span>{p.year}</span></p>
+                  <h3 class="cass-t">{p.title}</h3>
+                  <p class="cass-b">{p.blurb}</p>
+                  <p class="cass-stack">{p.stack.join(' / ')}</p>
+                  <p class="cass-links">
+                    <a href={p.repo} rel="noopener" target="_blank">Source on GitHub</a>
+                    {p.live && <a href={p.live} rel="noopener" target="_blank">Live site</a>}
+                  </p>
+                </div>
+                <div class="cass-foot" aria-hidden="true"><span class="reel"></span><span class="window"></span><span class="reel"></span></div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SKILLS ================= -->
+      <section class="sec skills" id="skills" data-pf-section="skills">
+        <div class="wrap">
+          <header class="hd">
+            <span class="hd-no" aria-hidden="true">05</span>
+            <h2 class="hd-t">Skills</h2>
+            <p class="hd-s">Cut out of the paper and glued down. Dashed outline means familiar, not daily.</p>
+          </header>
+
+          <div class="bins">
+            {profile.skills.map((g, gi) => (
+              <section class="bin" aria-labelledby={`sk-${gi}`} style={`--r:${[-0.6, 0.7, -0.4, 0.5, -0.8, 0.6][gi % 6]}deg`}>
+                <h3 id={`sk-${gi}`} class="bin-h"><span>{g.group}</span></h3>
+                <ul class="skill-list">
+                  {skillItems(g).map((s, si) => {
+                    const t = tile(s.t, gi * 7 + si);
+                    return <li class={`${t.cls} ${s.fam ? 'fam' : ''}`} style={t.style}>{s.t}{s.fam && <small> (familiar)</small>}</li>;
+                  })}
+                </ul>
+              </section>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= BEYOND CODE ================= -->
+      <section class="sec beyond" id="beyond-code" data-pf-section="beyond-code">
+        <div class="wrap">
+          <header class="hd">
+            <span class="hd-no" aria-hidden="true">06</span>
+            <h2 class="hd-t">Beyond code</h2>
+            <p class="hd-s">Taped to the wall: hills, rides, books and friends. Hover a photo for the colour, or tap it.</p>
+          </header>
+
+          <div class="bc">
+            {groups.map((g, gi) => {
+              const [span, cols] = layout[g.category] ?? [12, 4];
+              const pl = plan(g.photos);
+              const cd = pl.d(cols), cm = pl.d(Math.min(cols, 3)), cs = pl.d(Math.min(cols, 2));
+              return (
+                <section class="bc-group" style={`--span:${span};--cd:${cols};--cm:${Math.min(cols, 3)};--cs:${Math.min(cols, 2)}`} aria-labelledby={`bc-${g.category}`}>
+                  <header class="bc-head">
+                    <h3 id={`bc-${g.category}`} class="bc-tag" style={`--a:${[-1.5, 1, -0.8, 1.4][gi % 4]}deg`}>{g.title}</h3>
+                    <p class="bc-blurb">{g.blurb}</p>
+                  </header>
+                  <div class="bc-board" data-cols={cols}>
+                    {g.photos.map((p, i) => {
+                      const r = rng(hash(p.id));
+                      const rot = ((r() - 0.5) * 7).toFixed(1);
+                      return (
+                        <figure class={`pic ${frames[(i + gi) % 5]}`} style={`--r:${rot}deg;--n:${pl.n[i]};--pd:${cd[i]};--pm:${cm[i]};--ps:${cs[i]}`}>
+                          <i class={`tape ${tapeSeq[(i + gi) % 4]}`} aria-hidden="true"></i>
+                          <button type="button" class="shot" aria-pressed="false" data-o={p.original.thumb} title="Show the original colour">
+                            <img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} />
+                          </button>
+                          {p.caption && <figcaption>{p.caption}</figcaption>}
+                        </figure>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= WRITING ================= -->
+      <section class="sec writing" id="writing" data-pf-section="writing">
+        <div class="wrap">
+          <header class="hd">
+            <span class="hd-no" aria-hidden="true">07</span>
+            <h2 class="hd-t">Writing</h2>
+            <p class="hd-s">Zine no. 2 is still in the typewriter.</p>
+          </header>
+
+          <p class="typed-status sheet s-copy tr-c" style="--r:-0.7deg"><i class="tape tp-tc" aria-hidden="true"></i>{profile.writing.status}</p>
+
+          <p class="sub-h sub-h-sm">Planned</p>
+          <ol class="drafts">
+            {profile.writing.planned.map((t, i) => (
+              <li class={`draft sheet ${['s-news', 's-copy', 's-legal', 's-graph'][i % 4]}`} style={`--r:${[-1.8, 1.2, -0.8, 1.6][i % 4]}deg`}>
+                <i class={`tape ${tapeSeq[i % 4]}`} aria-hidden="true"></i>
+                <span class="draft-no" aria-hidden="true">{pad2(i + 1)}</span>
+                <span class="draft-t">{t}</span>
+                <span class="stamp" aria-hidden="true">draft</span>
+              </li>
+            ))}
+          </ol>
+          {profile.writing.posts.length > 0 && (
+            <ul class="posts">
+              {profile.writing.posts.map((post) => <li><a href={post.href}>{post.title}</a> <span>{post.date}</span></li>)}
+            </ul>
+          )}
+        </div>
+      </section>
+
+      <!-- ================= CONTACT ================= -->
+      <section class="sec contact" id="contact" data-pf-section="contact">
+        <div class="wrap">
+          <header class="hd">
+            <span class="hd-no" aria-hidden="true">08</span>
+            <h2 class="hd-t">Contact</h2>
+            <p class="hd-s">Take a tab. Or fill in the form.</p>
+          </header>
+
+          <div class="contact-grid">
+            <article class="flyer sheet s-copy tr-c" style="--r:-0.8deg">
+              <i class="tape tp-tl" aria-hidden="true"></i><i class="tape tp-tr" aria-hidden="true"></i>
+              <p class="flyer-k">Wanted</p>
+              <h3 class="flyer-h">Interesting problems</h3>
+              <p class="flyer-p">Open to interesting problems in GenAI agents, workflow systems and backend infrastructure. Call, write, or tear off a tab.</p>
+              <ul class="tabs">
+                <li class="tab"><span class="tab-k">Email</span><Protected kind="email" class="tab-a" /></li>
+                <li class="tab"><span class="tab-k">Phone</span><Protected kind="phone" class="tab-a" /></li>
+                <li class="tab"><span class="tab-k">LinkedIn</span><a class="tab-a" href={profile.contact.linkedin} rel="noopener me" target="_blank" data-pf-linkedin>{profile.contact.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\//, '')}</a></li>
+                <li class="tab"><span class="tab-k">GitHub</span><a class="tab-a" href={profile.contact.github} rel="noopener me" target="_blank" data-pf-github>{profile.handle}</a></li>
+                <li class="tab"><span class="tab-k">Resume</span><a class="tab-a" href={withBase(profile.resume.href)} download>PDF, updated {profile.resume.updated}</a></li>
+              </ul>
+            </article>
+
+            <div class="order sheet s-legal tr-b" style="--r:0.9deg">
+              <i class="staple" aria-hidden="true"></i>
+              <h3 class="order-h">Or write it down</h3>
+              <ContactForm class="gr-form" submitLabel="Send it" labels={{ name: 'Your name', email: 'Your email', message: 'What do you want to build?' }} />
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">
+        <p class="foot-a">&copy; {new Date().getFullYear()} {profile.name}. {meta.flavor.footer}</p>
+        <p class="foot-b">A different art style every day: see the <a href={withBase('gallery/')}>gallery</a>. <a href="#hero">Back to the top</a></p>
+      </div>
+    </footer>
+
+    <UtilityBar style={STYLE} />
+    <script>import './client.ts';</script>
+  </body>
+</html>
