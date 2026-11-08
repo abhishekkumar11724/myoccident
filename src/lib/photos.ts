@@ -1,11 +1,26 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { photoMeta, categoryInfo, categoryOrder, type PhotoMeta } from '@/content/photos';
 import { withBase } from './urls';
 
 interface Entry { src: string; thumb: string; w: number; h: number; tw: number; th: number; treatment: string }
 interface Manifest { style: string; photos: Record<string, Entry> }
-const manifests = import.meta.glob('../generated/manifest/*.json', { eager: true, import: 'default' }) as Record<string, Manifest>;
-const byStyle: Record<string, Manifest> = {};
-for (const [k, v] of Object.entries(manifests)) byStyle[k.split('/').pop()!.replace('.json', '')] = v;
+
+// Read manifests from disk (cached by mtime) instead of import.meta.glob: a glob would put EVERY theme's manifest
+// into the module graph, so rebuilding one theme's images would reload every other theme's dev server.
+const dir = path.resolve(process.cwd(), 'src/generated/manifest');
+const cache = new Map<string, { mtime: number; data: Manifest }>();
+function manifest(style: string): Manifest | undefined {
+  const f = path.join(dir, `${style}.json`);
+  try {
+    const mtime = fs.statSync(f).mtimeMs;
+    const hit = cache.get(f);
+    if (hit && hit.mtime === mtime) return hit.data;
+    const data = JSON.parse(fs.readFileSync(f, 'utf8')) as Manifest;
+    cache.set(f, { mtime, data });
+    return data;
+  } catch { return undefined; }
+}
 
 export interface Variant { src: string; thumb: string; width: number; height: number; thumbWidth: number; thumbHeight: number }
 export interface Photo extends Required<Pick<PhotoMeta, 'alt'>> {
@@ -20,8 +35,8 @@ const toVariant = (e: Entry): Variant => ({ src: withBase(e.src), thumb: withBas
 
 /** All photos for a style, in a stable order (category order, then filename). */
 export function photos(style: string): Photo[] {
-  const orig = byStyle['_original']?.photos ?? {};
-  const mine = byStyle[style]?.photos ?? {};
+  const orig = manifest('_original')?.photos ?? {};
+  const mine = manifest(style)?.photos ?? {};
   const out: Photo[] = Object.keys(orig).map((id) => {
     const [category, ...rest] = id.split('/');
     const m = photoMeta[id];
