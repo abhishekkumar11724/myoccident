@@ -1,0 +1,439 @@
+---
+/**
+ * Memphis theme: a Milan showroom of laminate furniture.
+ * Terrazzo hero, zigzag nav ribbon, stacked folder tabs for experience, laminate-swatch skills, geometric stat badges,
+ * sticker-sheet photo wall, copy-email button with a pre-filled mailto, and a scrapbook About.
+ * Keeps every data-pf-* hook and all content from @/content/profile.
+ */
+import { profile } from '@/content/profile';
+import { photoGroups, photos, heroPhotos } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import SecHead from './components/SecHead.astro';
+import meta from './meta';
+import { shape } from './shapes';
+import './theme.css';
+
+const STYLE = 'memphis';
+const pad = (n: number) => String(n).padStart(2, '0');
+const all = photos(STYLE);
+const byId = (id: string) => all.find((p) => p.id === id);
+const heroes = heroPhotos(STYLE);
+const hMain = byId('portraits/02-smile-jacket') ?? heroes[0] ?? all[0];
+const hCircle = byId('adventure/05-snow-arms-crossed') ?? heroes[1] ?? all[1];
+const hTilt = byId('bikes/03-bike-night-rider') ?? heroes[2] ?? all[2];
+const groups = photoGroups(STYLE);
+
+const nav = [
+  { id: 'about', label: 'About' },
+  { id: 'experience', label: 'Experience' },
+  { id: 'case-studies', label: 'Case studies' },
+  { id: 'projects', label: 'Projects' },
+  { id: 'skills', label: 'Skills' },
+  { id: 'beyond-code', label: 'Beyond code' },
+  { id: 'writing', label: 'Writing' },
+  { id: 'contact', label: 'Contact' },
+];
+
+const badgeShapes = ['circle', 'triangle', 'hex', 'squircle', 'dome', 'burst'];
+const badgeColors = ['--pink', '--lemon', '--teal', '--lilac', '--tang', '--mint'];
+const badgeTilt = ['-5deg', '4deg', '-3deg', '5deg', '-4deg', '3deg'];
+
+const folderColors = ['--pink', '--lemon', '--lilac'];
+const caseColors = ['--pink', '--teal', '--lilac', '--mint', '--tang', '--sky', '--pink', '--teal'];
+const projColors = ['--pink', '--teal', '--lemon', '--mint', '--tang', '--sky'];
+const projShapes = ['circle', 'triangle', 'dome', 'hex', 'burst', 'diamond'];
+const caseShapes = ['circle', 'squircle', 'triangle', 'hex', 'dome', 'diamond', 'burst', 'circle'];
+const skillPatterns = ['terrazzo', 'squig', 'dots', 'zig', 'checks', 'tri'];
+const sheetColors = ['--pink', '--lemon', '--teal', '--lilac', '--mint', '--tang', '--sky', '--pink', '--lemon'];
+
+const stickerKinds = {
+  portrait: ['arch', 'round', 'circle', 'arch', 'leaf', 'round'],
+  landscape: ['pill', 'tab', 'dome', 'wide', 'pill', 'tab'],
+  square: ['circle', 'leaf', 'round'],
+} as const;
+const tilts = ['-3deg', '2.5deg', '-1.5deg', '4deg', '-4.5deg', '1.5deg', '3deg', '-2deg'];
+const drops = ['0px', '14px', '-8px', '10px', '-12px', '6px', '-4px', '12px'];
+
+const stripUrl = (u: string) => u.replace(/^https?:\/\//, '').replace(/\/$/, '');
+const sheetCount = groups.reduce((n, g) => n + g.photos.length, 0);
+
+const featured = profile.caseStudies.filter((c) => c.featured);
+const more = profile.caseStudies.filter((c) => !c.featured);
+const orderedCases = [...featured, ...more];
+
+const aboutSnaps = [
+  { id: 'adventure/01-waterfall-standing', kind: 'arch', rot: '-4deg', cap: 'Waterfall chasing' },
+  { id: 'bikes/03-bike-night-rider', kind: 'circle', rot: '5deg', cap: 'Night ride' },
+  { id: 'pets/02-dog-on-ledge', kind: 'round', rot: '-2deg', cap: 'Ledge dog' },
+  { id: 'books/01-a-little-life', kind: 'leaf', rot: '4deg', cap: 'Currently reading' },
+]
+  .map((s) => ({ ...s, p: byId(s.id) }))
+  .filter((s) => s.p);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style="memphis" title={`${profile.name} - ${profile.role} (Memphis edition)`} themeColor="#ff6fb5" />
+    <meta name="robots" content="index,follow" />
+  </head>
+  <body class="memphis">
+    <a class="skip" href="#main">Skip to content</a>
+
+    <!-- ───────── zigzag nav ribbon ───────── -->
+    <header class="ribbon" data-ribbon>
+      <div class="ribbon-in">
+        <a class="brand" href="#hero" aria-label={`${profile.name} - back to top`}>
+          <span class="brand-badge" aria-hidden="true"><Fragment set:html={shape('burst')} /><b>AK</b></span>
+          <span class="brand-name">{profile.name}</span>
+        </a>
+        <button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-btn>Menu</button>
+        <nav id="site-nav" class="site-nav" aria-label="Sections" data-nav>
+          <ul>
+            {nav.map((n, i) => (
+              <li><a href={`#${n.id}`} data-nav-link={n.id} style={`--hv:var(${['--lemon', '--teal', '--pink', '--lilac', '--mint', '--tang', '--sky', '--lemon'][i]})`}>{n.label}</a></li>
+            ))}
+            <li class="nav-resume"><a class="pill-ink" href={withBase(profile.resume.href)} download data-pf-resume>Resume</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ───────── HERO: terrazzo ───────── -->
+      <section class="band band-hero" id="hero" data-pf-section="hero">
+        <div class="hero-in">
+          <div class="hero-copy">
+            <p class="tag tag-lemon">{profile.role} <span class="dot" aria-hidden="true"></span> {profile.location}</p>
+            <h1 class="h1"><span class="h1-tile h1-a">Abhishek</span> <span class="h1-tile h1-b">Kumar</span></h1>
+            <div class="hero-card">
+              <p class="hero-lead">{profile.tagline}</p>
+              <p class="hero-focus"><span class="chip chip-teal">Focus</span> {profile.focus}</p>
+            </div>
+            <p class="cta">
+              <a class="btn btn-ink" href={withBase(profile.resume.href)} data-pf-resume download>{profile.resume.label}</a>
+              <a class="btn btn-cream" href="#contact">Say hello</a>
+              <a class="btn btn-cream btn-small" href="#experience">See the work</a>
+            </p>
+            <p class="hero-flavor">{meta.flavor.kicker}. {meta.flavor.tagline}</p>
+          </div>
+
+          <div class="hero-art" aria-hidden="false">
+            <span class="deco d-dome" style="--c:var(--lemon)" aria-hidden="true"><Fragment set:html={shape('dome')} /></span>
+            <span class="deco d-tri" style="--c:var(--cobalt)" aria-hidden="true"><Fragment set:html={shape('triangle')} /></span>
+            <span class="deco d-ring" style="--c:var(--cream)" aria-hidden="true"><Fragment set:html={shape('ring')} /></span>
+            <span class="deco d-squig" style="--c:var(--teal)" aria-hidden="true"><Fragment set:html={shape('squiggle')} /></span>
+            <span class="deco d-dots" style="--c:var(--ink)" aria-hidden="true"><Fragment set:html={shape('dots')} /></span>
+            <span class="deco d-bolt" style="--c:var(--lemon)" aria-hidden="true"><Fragment set:html={shape('bolt')} /></span>
+            <span class="deco d-plus" style="--c:var(--teal)" aria-hidden="true"><Fragment set:html={shape('plus')} /></span>
+            {hTilt && (
+              <figure class="hs hs-tilt">
+                <img src={hTilt.img.thumb} width={hTilt.img.thumbWidth} height={hTilt.img.thumbHeight} alt={hTilt.alt} loading="lazy" decoding="async" style={`object-position:${hTilt.focus}`} />
+              </figure>
+            )}
+            {hMain && (
+              <figure class="hs hs-arch">
+                <img src={hMain.img.src} width={hMain.img.width} height={hMain.img.height} alt={hMain.alt} fetchpriority="high" decoding="async" style={`object-position:${hMain.focus}`} />
+              </figure>
+            )}
+            {hCircle && (
+              <figure class="hs hs-circle">
+                <img src={hCircle.img.thumb} width={hCircle.img.thumbWidth} height={hCircle.img.thumbHeight} alt={hCircle.alt} loading="eager" decoding="async" style={`object-position:${hCircle.focus}`} />
+              </figure>
+            )}
+            <span class="hello" aria-hidden="true"><Fragment set:html={shape('bubble')} /><b>Hi!</b></span>
+          </div>
+        </div>
+
+        <!-- stats: geometric badges -->
+        <ul class="badges" aria-label="Impact in numbers">
+          {profile.stats.map((s, i) => (
+            <li class={`badge badge-${badgeShapes[i % badgeShapes.length]}`} style={`--c:var(${badgeColors[i % badgeColors.length]});--tilt:${badgeTilt[i % badgeTilt.length]}`}>
+              <span class="badge-shape" aria-hidden="true"><Fragment set:html={shape(badgeShapes[i % badgeShapes.length])} /></span>
+              <strong class="badge-num">{s.value}</strong>
+              <span class="badge-label">{s.label}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <!-- ───────── ABOUT: scrapbook ───────── -->
+      <section class="band band-about" id="about" data-pf-section="about">
+        <div class="wrap">
+          <SecHead title="About" sub="Pages from the scrapbook: the day job, and the rest." shape="squircle" c="var(--lemon)" n="01" />
+          <div class="about-grid">
+            <div class="about-main">
+              <div class="paper paper-summary">
+                <p class="lead-in">{profile.summary}</p>
+              </div>
+              <div class="paper paper-personal">
+                {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+                <ul class="chips" aria-label="Interests">
+                  {profile.interests.map((i, k) => <li class={`chip chip-${['pink', 'teal', 'lemon', 'lilac', 'mint', 'tang'][k % 6]}`}>{i}</li>)}
+                </ul>
+              </div>
+              <aside class="nametag" aria-label="Name tag with a joke job title">
+                <p class="nt-top">Hello <span>my job title is</span></p>
+                <p class="nt-name">Chief Waterfall Chaser</p>
+                <p class="nt-small"><strong>Officially:</strong> {profile.role}, {profile.location}.<br /><strong>Unofficially</strong> (not on the resume, mostly): senior chai taster, stray-dog diplomat, night-ride navigator.</p>
+              </aside>
+            </div>
+            <div class="snaps" aria-label="Snapshots">
+              {aboutSnaps.map((s, i) => s.p && (
+                <figure class={`snap snap-${s.kind} snap-${i + 1}`} style={`--rot:${s.rot}`}>
+                  <div class="snap-frame">
+                    <img src={s.p.img.thumb} width={s.p.img.thumbWidth} height={s.p.img.thumbHeight} alt={s.p.alt} loading="lazy" decoding="async" style={`object-position:${s.p.focus}`} />
+                  </div>
+                  <span class="tape" aria-hidden="true"></span>
+                  <figcaption>{s.cap}</figcaption>
+                </figure>
+              ))}
+              <span class="deco snaps-tri" style="--c:var(--pink)" aria-hidden="true"><Fragment set:html={shape('triangle')} /></span>
+              <span class="deco snaps-zig" style="--c:var(--teal)" aria-hidden="true"><Fragment set:html={shape('zigzag')} /></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────── EXPERIENCE: stacked folder tabs ───────── -->
+      <section class="band band-exp" id="experience" data-pf-section="experience">
+        <div class="wrap">
+          <SecHead title="Experience" sub="Three folders, stacked newest first. Everything is open, nothing is hidden." shape="circle" c="var(--pink)" n="02" />
+          <div class="folders">
+            {profile.experience.map((e, i) => (
+              <article class="folder" id={`job-${e.id}`} style={`--c:var(${folderColors[i % folderColors.length]});--i:${i}`}>
+                <div class="folder-tabs">
+                  <h3 class="tab tab-main">{e.company}</h3>
+                  <p class="tab tab-dates">{e.start} - {e.end}</p>
+                </div>
+                <div class="folder-body">
+                  <header class="folder-head">
+                    <div>
+                      <p class="folder-title">{e.title}</p>
+                      <p class="folder-place">{e.place}</p>
+                    </div>
+                    <p class="folder-blurb">{e.blurb}</p>
+                  </header>
+                  <ol class="tiles">
+                    {e.bullets.map((b, k) => (
+                      <li class="tile" style={`--tc:var(${['--cream', '--mint', '--cream', '--sky', '--cream', '--lemon'][k % 6]})`}>
+                        <span class={`tile-n n-${k % 4}`} aria-hidden="true">{k + 1}</span>
+                        <h4 class="tile-head">{b.head}</h4>
+                        <p>{b.text}</p>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div class="diplomas" id="education">
+            {profile.education.map((ed) => (
+              <article class="diploma" data-pf-education>
+                <span class="diploma-badge" aria-hidden="true"><Fragment set:html={shape('dome')} /></span>
+                <div>
+                  <h3 class="diploma-h">Education</h3>
+                  <p class="diploma-school">{ed.school}</p>
+                  <p class="diploma-deg">{ed.degree} <span class="chip chip-lemon">{ed.start} - {ed.end}</span></p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────── CASE STUDIES: furniture cards ───────── -->
+      <section class="band band-cases" id="case-studies" data-pf-section="case-studies">
+        <div class="wrap">
+          <SecHead title="Case studies" sub={`The long versions of the bullet points: problem, approach, impact. ${profile.caseStudies.length} stories.`} shape="triangle" c="var(--teal)" n="03" />
+          <div class="cases">
+            {orderedCases.map((c, i) => (
+              <article class={`case ${c.featured ? '' : 'case-minor'}`} data-pf-case={c.id} style={`--c:var(${caseColors[i % caseColors.length]});--r:${['-0.6deg', '0.5deg', '0.4deg', '-0.5deg'][i % 4]}`}>
+                <header class="case-head">
+                  <span class="case-n" data-shape={caseShapes[i % caseShapes.length]} aria-hidden="true"><Fragment set:html={shape(caseShapes[i % caseShapes.length])} /><b>{pad(i + 1)}</b></span>
+                  <div class="case-titles">
+                    <p class="case-meta">{c.org} <span aria-hidden="true">/</span> {c.period} <span aria-hidden="true">/</span> {c.role}</p>
+                    <h3>{c.title}</h3>
+                    <span class="squig" aria-hidden="true"></span>
+                  </div>
+                </header>
+                <p class="case-kick">{c.kicker}</p>
+                <div class="pa">
+                  <div class="pa-box"><h4><span class="pa-ico pa-circle" aria-hidden="true"></span>Problem</h4><p>{c.problem}</p></div>
+                  <div class="pa-box"><h4><span class="pa-ico pa-tri" aria-hidden="true"></span>Approach</h4><p>{c.approach}</p></div>
+                </div>
+                <div class="impact">
+                  <h4><span class="pa-ico pa-sq" aria-hidden="true"></span>Impact</h4>
+                  <ul>{c.impact.map((x) => <li>{x}</li>)}</ul>
+                </div>
+                <ul class="tags" aria-label="Topics">{c.tags.map((t) => <li>{t}</li>)}</ul>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────── PROJECTS ───────── -->
+      <section class="band band-projects" id="projects" data-pf-section="projects">
+        <div class="wrap">
+          <SecHead title="Projects" sub="Side quests with public source code. Click through, poke around." shape="hex" c="var(--lemon)" n="04" />
+          <div class="projects">
+            {profile.projects.map((p, i) => (
+              <article class="project" data-pf-project={p.name} style={`--c:var(${projColors[i % projColors.length]});--r:${['-1.2deg', '0.9deg', '-0.6deg', '1.1deg', '-0.9deg', '0.7deg'][i % 6]}`}>
+                <span class="project-deco" aria-hidden="true"><Fragment set:html={shape(projShapes[i % projShapes.length])} /></span>
+                <p class="project-year">{p.year}</p>
+                <h3>{p.title}</h3>
+                <span class="squig" aria-hidden="true"></span>
+                <p class="project-blurb">{p.blurb}</p>
+                <ul class="stack" aria-label="Tech stack">{p.stack.map((s) => <li>{s}</li>)}</ul>
+                <p class="project-links">
+                  <a class="btn btn-ink btn-small" href={p.repo} rel="noopener">Source on GitHub</a>
+                  {p.live && <a class="btn btn-cream btn-small" href={p.live} rel="noopener">Live site</a>}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────── SKILLS: laminate swatches ───────── -->
+      <section class="band band-skills" id="skills" data-pf-section="skills">
+        <div class="wrap">
+          <SecHead title="Skills" sub="A swatch book of the tools I reach for. Dashed ones I know well enough to be dangerous." shape="diamond" c="var(--mint)" n="05" />
+          <div class="swatches">
+            {profile.skills.map((g, i) => (
+              <article class={`swatch sw-${skillPatterns[i % skillPatterns.length]}`} style={`--c:var(${['--pink', '--teal', '--lemon', '--lilac', '--mint', '--tang'][i % 6]});--r:${['-0.8deg', '0.6deg', '-0.4deg', '0.8deg', '-0.6deg', '0.5deg'][i % 6]}`}>
+                <div class="swatch-top" aria-hidden="true"></div>
+                <h3 class="swatch-title">{g.group}</h3>
+                <ul class="skill-list">
+                  {g.items.map((it) => <li class="skill">{it}</li>)}
+                  {((g as any).familiar ?? []).map((it: string) => <li class="skill skill-fam">{it} <small>familiar</small></li>)}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────── BEYOND CODE: sticker sheet ───────── -->
+      <section class="band band-beyond" id="beyond-code" data-pf-section="beyond-code">
+        <div class="wrap wrap-wide">
+          <SecHead title="Beyond code" sub={`A sticker sheet of ${sheetCount} photos: hills, rides, books, dogs and the people who make trips worth taking. Tap a sticker to peel it up close.`} shape="burst" c="var(--tang)" n="06" />
+          <div class="sheets">
+            {groups.map((g, gi) => (
+              <div class="sheet" style={`--c:var(${sheetColors[gi % sheetColors.length]})`}>
+                <div class="sheet-head">
+                  <p class="sheet-n">Sheet {pad(gi + 1)}</p>
+                  <h3>{g.title}</h3>
+                  <p class="sheet-blurb">{g.blurb}</p>
+                  <p class="sheet-count">{g.photos.length} {g.photos.length === 1 ? 'sticker' : 'stickers'}</p>
+                </div>
+                <ul class="stickers">
+                  {g.photos.map((p, i) => {
+                    const kinds = stickerKinds[p.orientation];
+                    const kind = kinds[(i + gi) % kinds.length];
+                    return (
+                      <li class={`sticker st-${kind}`} style={`--rot:${tilts[(i * 3 + gi) % tilts.length]};--dy:${drops[(i * 5 + gi) % drops.length]}`}>
+                        <figure>
+                          <a class="sticker-link" href={p.img.src} data-lightbox data-orig={p.original.src} data-cap={p.caption ?? ''}>
+                            <img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} />
+                          </a>
+                          {p.caption && <figcaption>{p.caption}</figcaption>}
+                        </figure>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────── WRITING ───────── -->
+      <section class="band band-writing" id="writing" data-pf-section="writing">
+        <div class="wrap">
+          <SecHead title="Writing" sub="The notebook is open but the pages are mostly blank." shape="dome" c="var(--lilac)" n="07" />
+          <div class="writing">
+            <div class="paper writing-status">
+              <p class="writing-msg">{profile.writing.status}</p>
+              <p class="writing-planned">Sticky notes for upcoming posts:</p>
+            </div>
+            <ul class="notes">
+              {profile.writing.planned.map((t, i) => (
+                <li class={`note note-${i % 4}`}><span class="note-tag">Draft {pad(i + 1)}</span>{t}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ───────── CONTACT ───────── -->
+      <section class="band band-contact" id="contact" data-pf-section="contact">
+        <div class="wrap">
+          <SecHead title="Contact" sub="Loud emails welcome. Quiet ones too." shape="bubble" c="var(--teal)" n="08" />
+          <div class="contact-grid">
+            <div class="contact-card">
+              <p class="contact-lead">Open to interesting problems in GenAI agents, workflow systems and backend infrastructure. The quickest way in is email.</p>
+
+              <div class="mailbox" data-mailbox>
+                <p class="mailbox-label">Email</p>
+                <div class="mailbox-row">
+                  <Protected kind="email" class="btn btn-ink btn-mail"><span data-mail-label>Email me</span></Protected>
+                  <button class="btn btn-lemon btn-copy" type="button" data-copy-email aria-describedby="copy-status"><span data-copy-label>Copy address</span></button>
+                </div>
+                <p class="mailbox-addr"><span class="addr-k">Address</span> <Protected kind="email" class="addr-link" /></p>
+                <p class="mailbox-note" id="copy-status" role="status" aria-live="polite" data-copy-status>The button opens your mail app with the subject filled in; the copy button just copies the address.</p>
+                <span class="confetti-host" aria-hidden="true" data-confetti></span>
+              </div>
+
+              <ul class="clinks">
+                <li><Protected kind="phone" class="clink clink-teal"><span class="clink-k">Phone</span><span class="clink-v" data-reveal>Tap to call</span></Protected></li>
+                <li><a class="clink clink-lilac" href={profile.contact.linkedin} rel="noopener me" data-pf-linkedin><span class="clink-k">LinkedIn</span><span class="clink-v">{stripUrl(profile.contact.linkedin)}</span></a></li>
+                <li><a class="clink clink-mint" href={profile.contact.github} rel="noopener me" data-pf-github><span class="clink-k">GitHub</span><span class="clink-v">{stripUrl(profile.contact.github)}</span></a></li>
+                <li><a class="clink clink-lemon" href={withBase(profile.resume.href)} download data-pf-resume><span class="clink-k">Resume</span><span class="clink-v">PDF, updated {profile.resume.updated}</span></a></li>
+              </ul>
+            </div>
+
+            <div class="form-card">
+              <h3 class="form-h">Or write it out</h3>
+              <ContactForm class="mform" submitLabel="Send it over" labels={{ name: 'Your name', email: 'Your email', message: 'What are we building?' }} />
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="foot-in">
+        <div class="foot-shapes" aria-hidden="true">
+          {['circle', 'triangle', 'dome', 'hex', 'squiggle', 'burst', 'diamond', 'zigzag', 'ring', 'plus'].map((n, i) => (
+            <span class="fs" style={`--c:var(${['--pink', '--teal', '--lemon', '--lilac', '--mint', '--tang', '--sky', '--pink', '--lemon', '--teal'][i]});--fr:${[-12, 8, -6, 14, -4, 10, -14, 6, -8, 12][i]}deg`}><Fragment set:html={shape(n)} /></span>
+          ))}
+        </div>
+        <p class="foot-line">{meta.flavor.footer}</p>
+        <p class="foot-small">&copy; {new Date().getFullYear()} {profile.name}. Built with Astro. A different art style every day: see the <a href={withBase('gallery/')}>gallery</a>, or <a href="#hero">hop back to the top</a>.</p>
+      </div>
+    </footer>
+
+    <!-- sticker lightbox -->
+    <dialog class="lightbox" data-lightbox-dialog aria-label="Photo viewer">
+      <div class="lb-frame" data-lb-frame>
+        <p class="lb-cap" data-lb-cap></p>
+      </div>
+      <div class="lb-bar">
+        <button type="button" class="btn btn-cream btn-small" data-lb-prev aria-label="Previous photo">Prev</button>
+        <button type="button" class="btn btn-lemon btn-small" data-lb-peel aria-pressed="false">Peel to original</button>
+        <button type="button" class="btn btn-cream btn-small" data-lb-next aria-label="Next photo">Next</button>
+        <button type="button" class="btn btn-ink btn-small" data-lb-close>Close</button>
+      </div>
+    </dialog>
+
+    <UtilityBar style={STYLE} />
+    <script>import './client.ts';</script>
+  </body>
+</html>

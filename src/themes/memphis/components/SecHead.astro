@@ -1,0 +1,13 @@
+---
+/** Section heading lockup: a geometric badge + the title on a cream laminate tile + a squiggle underline + a flavour line. */
+import { shape } from '../shapes';
+interface Props { title: string; sub?: string; shape?: string; c?: string; n?: string }
+const { title, sub, shape: sh = 'circle', c = 'var(--pink)', n } = Astro.props;
+---
+<header class="sec-head" style={`--c:${c}`}>
+  <span class="sec-badge" data-shape={sh} aria-hidden="true"><Fragment set:html={shape(sh)} />{n && <b>{n}</b>}</span>
+  <div class="sec-titles">
+    <h2 class="sec-title">{title}</h2>
+    {sub && <p class="sec-sub">{sub}</p>}
+  </div>
+</header>
