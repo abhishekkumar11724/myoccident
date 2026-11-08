@@ -1,0 +1,517 @@
+---
+/**
+ * Mid-century theme: the front page of an annual report, c. 1962.
+ * Hooks kept from the baseline: data-pf-section, data-pf-resume, <Protected>, data-pf-linkedin/github,
+ * <ContactForm>, data-pf-education, <UtilityBar> last in <body>.
+ */
+import './theme.css';
+import { profile } from '@/content/profile';
+import { photoGroups, photos, heroPhotos } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import meta from './meta';
+
+const STYLE = 'mid-century';
+const all = photos(STYLE);
+const byId = (id: string) => all.find((p) => p.id === id);
+const heroes = heroPhotos(STYLE);
+const hero = byId('portraits/02-smile-jacket') ?? heroes[0] ?? all[0];
+const aboutA = byId('portraits/03-red-kurta-seated') ?? heroes[1] ?? hero;
+const aboutB = byId('adventure/04-hillside-smile') ?? heroes[2] ?? hero;
+const aboutC = byId('portraits/07-tree-dusk') ?? hero;
+const groups = photoGroups(STYLE);
+const current = profile.experience[0];
+
+const NAV = [
+  { id: 'about', label: 'About', deck: 'The editorial' },
+  { id: 'experience', label: 'Experience', deck: 'The itinerary' },
+  { id: 'case-studies', label: 'Case studies', deck: 'Now showing' },
+  { id: 'projects', label: 'Projects', deck: 'The catalogue' },
+  { id: 'skills', label: 'Skills', deck: 'Atomic structure' },
+  { id: 'beyond-code', label: 'Beyond code', deck: 'Kodachrome reels' },
+  { id: 'writing', label: 'Writing', deck: 'Next issue' },
+  { id: 'contact', label: 'Contact', deck: 'Air mail' },
+];
+const INKS = ['orange', 'teal', 'mustard', 'avocado', 'teak'];
+const num = (i: number) => String(i).padStart(2, '0');
+
+/** n-pointed star polygon points */
+const star = (n: number, ro: number, ri: number, cx = 0, cy = 0, rot = 0) =>
+  Array.from({ length: n * 2 }, (_, i) => {
+    const a = rot + (i * Math.PI) / n - Math.PI / 2;
+    const r = i % 2 ? ri : ro;
+    return `${(cx + r * Math.cos(a)).toFixed(1)},${(cy + r * Math.sin(a)).toFixed(1)}`;
+  }).join(' ');
+const pol = (r: number, deg: number, cx = 100, cy = 100) => [cx + r * Math.sin((deg * Math.PI) / 180), cy - r * Math.cos((deg * Math.PI) / 180)] as const;
+
+/** Ball-and-rod "atom" hub used by the MCP poster and the clock */
+const hub = (n: number, r0: number, r1: number, rb: number, cols: string[], rod = 'sa') =>
+  Array.from({ length: n }, (_, k) => {
+    const d = (360 / n) * k;
+    const [x0, y0] = pol(r0, d), [x1, y1] = pol(r1, d), [bx, by] = pol(r1 + rb * 0.6, d);
+    return `<line class="${rod}" x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}"/><circle class="${cols[k % cols.length]}" cx="${bx.toFixed(1)}" cy="${by.toFixed(1)}" r="${rb}"/>`;
+  }).join('');
+
+const hexPts = (r: number) => Array.from({ length: 6 }, (_, k) => pol(r, 60 * k).map((v) => v.toFixed(1)).join(',')).join(' ');
+const bars = [132, 118, 98, 84, 66, 54, 44, 36].map((h, i) => `<rect class="${i > 4 ? 'fc' : 'fa'}" x="${14 + i * 23}" y="${166 - h}" width="17" height="${h}" rx="2"/>`).join('');
+
+/** Hand-built cut-paper glyphs for the case-study posters (classes fa/fb/fc fill, sa/sb/sc stroke) */
+const POSTERS: Record<string, { field: string; tx: string; a: string; b: string; c: string; glyph: string }> = {
+  'nl-to-workflow-compiler': {
+    field: '#e5702f', tx: '#2a1c14', a: '#f4e8cd', b: '#2a1c14', c: '#e6a620',
+    glyph: `<rect class="fa" x="10" y="44" width="66" height="12" rx="6"/><rect class="fa" x="10" y="68" width="46" height="12" rx="6"/><rect class="fa" x="10" y="92" width="70" height="12" rx="6"/><rect class="fa" x="10" y="116" width="38" height="12" rx="6"/>
+      <polygon class="fb" points="84,34 134,84 84,134"/><path class="sb" d="M134 84 L162 54 M134 84 L176 90 M134 84 L160 126"/>
+      <circle class="fc" cx="164" cy="50" r="13"/><circle class="fc" cx="182" cy="91" r="13"/><circle class="fc" cx="162" cy="130" r="13"/>`,
+  },
+  'workflow-engine': {
+    field: '#f4e8cd', tx: '#2a1c14', a: '#1f6f6b', b: '#2a1c14', c: '#d4561c',
+    glyph: `<g fill="none" stroke-width="12"><path class="sa" d="M14 92 H72 L108 48 H156"/><path class="sc" d="M72 92 H156"/><path class="sb" d="M72 92 L108 136 H156"/></g>
+      <polygon class="fa" points="154,30 190,48 154,66"/><polygon class="fc" points="154,74 190,92 154,110"/><polygon class="fb" points="154,118 190,136 154,154"/><circle class="fa" cx="14" cy="92" r="12"/>`,
+  },
+  'mcp-agent-platform': {
+    field: '#e6a620', tx: '#2a1c14', a: '#2a1c14', b: '#d4561c', c: '#1f6f6b',
+    glyph: `<g class="rods">${hub(8, 26, 62, 12, ['fb', 'fc'])}</g><circle class="fa" cx="100" cy="100" r="28"/><circle class="fb" cx="100" cy="100" r="9"/>`,
+  },
+  'agents-retrieval': {
+    field: '#5a661a', tx: '#f4e8cd', a: '#f4e8cd', b: '#2a1c14', c: '#e6a620',
+    glyph: `<rect class="fa" x="10" y="38" width="86" height="34" rx="6"/><rect class="fb" x="10" y="80" width="86" height="34" rx="6"/><rect class="fa" x="10" y="122" width="86" height="34" rx="6"/>
+      <rect class="fc" x="18" y="46" width="34" height="8" rx="2"/><rect class="fc" x="18" y="130" width="52" height="8" rx="2"/><rect class="fa" x="18" y="88" width="26" height="8" rx="2"/>
+      <circle cx="134" cy="82" r="44" fill="none" stroke-width="15" class="sc"/><path d="M166 114 L192 148" fill="none" stroke-width="18" stroke-linecap="round" class="sb"/><circle class="fa" cx="134" cy="82" r="15"/>`,
+  },
+  'reliability-observability': {
+    field: '#8b4a26', tx: '#f4e8cd', a: '#f4e8cd', b: '#2a1c14', c: '#e6a620',
+    glyph: `${bars}<rect class="fb" x="8" y="166" width="190" height="8" rx="4"/><path class="sc" d="M14 28 L74 52 L124 82 L186 120" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="1 14"/><polygon class="fc" points="190,126 166,124 178,106"/>`,
+  },
+  'evals-memory': {
+    field: '#2a1c14', tx: '#f4e8cd', a: '#e6a620', b: '#d4561c', c: '#f4e8cd',
+    glyph: `<polygon class="fa" points="93,176 107,176 105,52 95,52"/><polygon class="fa" points="66,182 134,182 120,166 80,166"/>
+      <g transform="rotate(-8 100 52)"><rect class="fb" x="14" y="46" width="172" height="11" rx="5.5"/><circle class="fa" cx="100" cy="52" r="10"/>
+      <path class="sc" d="M34 57 L14 112 M34 57 L56 112 M166 57 L146 112 M166 57 L188 112" fill="none" stroke-width="2.5"/>
+      <path class="fb" d="M10 112 H60 A25 25 0 0 1 10 112 Z"/><path class="fb" d="M142 112 H192 A25 25 0 0 1 142 112 Z"/>
+      <circle class="fc" cx="24" cy="102" r="9"/><circle class="fc" cx="42" cy="102" r="9"/><path class="sc" d="M154 100 L164 110 L184 88" fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></g>`,
+  },
+  'event-driven-webhooks': {
+    field: '#a63a0c', tx: '#f4e8cd', a: '#e6a620', b: '#f4e8cd', c: '#2a1c14',
+    glyph: `<polygon class="fa" points="122,8 58,108 100,108 78,192 154,84 108,84"/><circle class="fb" cx="22" cy="52" r="11"/><circle class="fb" cx="22" cy="100" r="11"/><circle class="fb" cx="22" cy="148" r="11"/>
+      <path class="sb" d="M38 52 H64 M38 100 H62 M38 148 H66" fill="none" stroke-width="4" stroke-dasharray="3 8" stroke-linecap="round"/><circle class="fb" cx="182" cy="100" r="11"/><path class="sb" d="M156 100 H168" fill="none" stroke-width="4" stroke-dasharray="3 8" stroke-linecap="round"/>`,
+  },
+  webmine: {
+    field: '#efc85a', tx: '#2a1c14', a: '#2a1c14', b: '#1f6f6b', c: '#d4561c',
+    glyph: `<g fill="none" stroke-width="3.5"><polygon class="sa" points="${hexPts(84)}"/><polygon class="sa" points="${hexPts(58)}"/><polygon class="sa" points="${hexPts(32)}"/>${Array.from({ length: 6 }, (_, k) => { const [x, y] = pol(84, 60 * k); return `<line class="sa" x1="100" y1="100" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}"/>`; }).join('')}</g>
+      <circle class="fb" cx="100" cy="100" r="25"/><path d="M88 80 L112 122 M101 102 L88 122" fill="none" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" class="sw"/><circle class="fc" cx="${pol(84, 120)[0].toFixed(1)}" cy="${pol(84, 120)[1].toFixed(1)}" r="9"/>`,
+  },
+};
+const POSTER_ORDER = profile.caseStudies.map((c) => c.id);
+const featured = profile.caseStudies.filter((c) => c.featured);
+const supporting = profile.caseStudies.filter((c) => !c.featured);
+
+const dialTicks = hub(12, 30, 66, 7, ['d-ball1', 'd-ball2', 'd-ball3'], 'd-rod');
+const orbitDots = (n: number, k: number) => {
+  // place n electrons on 3 elliptical orbits (rx 50, ry 19, rotated 0 / 60 / 120 deg)
+  return Array.from({ length: n }, (_, i) => {
+    const orbit = i % 3, t = ((i * 137.5 + k * 40) * Math.PI) / 180;
+    const rot = (orbit * 60 * Math.PI) / 180;
+    const ex = 50 * Math.cos(t), ey = 19 * Math.sin(t);
+    const x = 60 + ex * Math.cos(rot) - ey * Math.sin(rot), y = 60 + ex * Math.sin(rot) + ey * Math.cos(rot);
+    return `<circle class="e${(i + k) % 5}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4.6"/>`;
+  }).join('');
+};
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style={STYLE} themeColor="#f4e8cd" />
+    <meta name="robots" content="index,follow" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+  </head>
+  <body class="mc">
+    <a class="skip" href="#main">Skip to content</a>
+
+    <!-- shared SVG defs: pebble frame for portraits -->
+    <svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+      <defs>
+        <clipPath id="mc-pebble" clipPathUnits="objectBoundingBox">
+          <path d="M0.5,0.01 C0.78,-0.01 0.99,0.15 0.98,0.42 C0.97,0.62 0.87,0.68 0.88,0.82 C0.89,0.95 0.72,1.0 0.5,0.99 C0.25,0.98 0.02,0.86 0.02,0.56 C0.02,0.25 0.2,0.03 0.5,0.01 Z" />
+        </clipPath>
+      </defs>
+    </svg>
+
+    <!-- dateline -->
+    <div class="dateline">
+      <div class="wrap dateline-in">
+        <p class="dl-ed"><span class="dl-vol">The Annual Report</span><span class="dl-sep" aria-hidden="true">/</span><span class="dl-edition">Atomic edition</span></p>
+        <p class="dl-date"><span data-date>{profile.location}</span><span class="dl-loc"> &middot; {profile.location}</span></p>
+        <p class="dl-time"><span class="dl-dot" aria-hidden="true"></span><span data-clock-text>Gurugram time</span> <span class="dl-tz">IST</span></p>
+      </div>
+    </div>
+
+    <header class="mast" id="top">
+      <div class="wrap mast-in">
+        <a class="mast-brand" href="#hero" aria-label={`${profile.name} - top of page`}>
+          <svg viewBox="-24 -24 48 48" aria-hidden="true"><polygon class="mb-star" points={star(12, 23, 14)} /><text class="mb-t" x="0" y="5.5" text-anchor="middle">AK</text></svg>
+          <span class="mast-name">{profile.name}</span>
+        </a>
+        <nav class="mast-nav" aria-label="Inside this issue">
+          <span class="mast-inside" aria-hidden="true">Inside</span>
+          <ul>
+            {NAV.map((n, i) => <li><a href={`#${n.id}`} data-nav={n.id}><b>{num(i + 1)}</b>{n.label}</a></li>)}
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ================================================= HERO / FRONT PAGE -->
+      <section class="hero" id="hero" data-pf-section="hero">
+        <div class="hero-bg" aria-hidden="true">
+          <svg class="hero-rays" viewBox="-100 -100 200 200"><polygon points={star(28, 100, 8)} /></svg>
+          <span class="hero-dots"></span>
+        </div>
+        <div class="wrap hero-grid">
+          <div class="hero-copy">
+            <p class="kicker"><span class="kicker-pill">{meta.flavor.kicker}</span><span class="kicker-role">{profile.role}</span></p>
+            <h1 class="name"><span class="n1">Abhishek</span> <span class="n2">Kumar<svg class="n-star" viewBox="-24 -24 48 48" aria-hidden="true"><polygon points={star(8, 23, 7)} /></svg></span></h1>
+            <p class="lead">{profile.tagline}</p>
+            <p class="focus"><span class="dot-bullet" aria-hidden="true"></span>{profile.focus} &middot; {profile.location}</p>
+            <p class="cta">
+              <a class="btn btn-ink" href={withBase(profile.resume.href)} data-pf-resume download>{profile.resume.label}<span aria-hidden="true">&darr;</span></a>
+              <a class="btn btn-ghost" href="#contact">Get in touch<span aria-hidden="true">&rarr;</span></a>
+              <a class="btn-link" href="#case-studies">See the case studies</a>
+            </p>
+          </div>
+
+          <div class="hero-art">
+            <span class="plate plate-sun" aria-hidden="true"></span>
+            <svg class="orbits" viewBox="-200 -200 400 400" aria-hidden="true">
+              <g class="orb-spin">
+                <ellipse rx="190" ry="68" transform="rotate(-24)" /><ellipse rx="190" ry="68" transform="rotate(34)" />
+                <circle cx="-172" cy="-11" r="10" class="o1" /><circle cx="150" cy="-116" r="8" class="o2" /><circle cx="119" cy="130" r="9" class="o3" />
+              </g>
+            </svg>
+            <span class="plate plate-b" aria-hidden="true"></span>
+            <span class="plate plate-a" aria-hidden="true"></span>
+            {hero && <img class="hero-photo" src={hero.img.src} width={hero.img.width} height={hero.img.height} alt={hero.alt} fetchpriority="high" decoding="async" style={`object-position:${hero.focus}`} />}
+            <div class="sticker">
+              <svg viewBox="-60 -60 120 120" aria-hidden="true"><polygon points={star(16, 58, 46)} /></svg>
+              <p><span>Now at</span><strong>{current.company}</strong><span>since {current.start}</span></p>
+            </div>
+            <div class="dial-card">
+              <svg class="dial" viewBox="0 0 200 200" aria-hidden="true">
+                <circle class="d-face" cx="100" cy="100" r="98" /><circle class="d-ring" cx="100" cy="100" r="92" />
+                <g class="d-ticks" set:html={dialTicks} />
+                <g data-hand="h"><line x1="100" y1="106" x2="100" y2="60" /></g>
+                <g data-hand="m"><line x1="100" y1="108" x2="100" y2="38" /></g>
+                <g data-hand="s"><line x1="100" y1="116" x2="100" y2="24" /><circle cx="100" cy="100" r="5" /></g>
+                <circle class="d-cap" cx="100" cy="100" r="4" />
+              </svg>
+              <p class="dial-txt"><span class="dial-label">Gurugram</span><strong data-clock-big>--:--</strong><span class="dial-status" data-status>Local time, live</span></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- the scoreboard box -->
+        <div class="wrap">
+          <div class="score" role="group" aria-label="Scoreboard: key numbers">
+            <p class="score-tag"><span>The Scoreboard</span></p>
+            <ul>
+              {profile.stats.map((s, i) => <li class={`sc${i % 3}`}><strong>{s.value}</strong><span>{s.label}</span></li>)}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================= ABOUT -->
+      <section class="sec sec-about" id="about" data-pf-section="about">
+        <div class="wrap">
+          <header class="sh" data-rv><span class="sh-no sh-orange">01</span><h2>About</h2><p class="sh-deck">{NAV[0].deck}</p></header>
+          <div class="about-grid">
+            <div class="about-art" aria-hidden="false">
+              <figure class="ab-arch" data-rv>{aboutA && <img src={aboutA.img.src} width={aboutA.img.width} height={aboutA.img.height} alt={aboutA.alt} loading="lazy" decoding="async" style={`object-position:${aboutA.focus}`} />}</figure>
+              <figure class="ab-circ" data-rv>{aboutB && <img src={aboutB.img.thumb} width={aboutB.img.thumbWidth} height={aboutB.img.thumbHeight} alt={aboutB.alt} loading="lazy" decoding="async" style={`object-position:${aboutB.focus}`} />}</figure>
+              <figure class="ab-pill" data-rv>{aboutC && <img src={aboutC.img.thumb} width={aboutC.img.thumbWidth} height={aboutC.img.thumbHeight} alt={aboutC.alt} loading="lazy" decoding="async" style={`object-position:${aboutC.focus}`} />}</figure>
+              <svg class="ab-star" viewBox="-60 -60 120 120" aria-hidden="true"><polygon points={star(12, 58, 36)} /></svg>
+            </div>
+            <div class="about-copy">
+              <p class="lede" data-rv>{profile.summary}</p>
+              <div class="about-cols" data-rv>
+                {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+              </div>
+              <ul class="orbs" aria-label="Interests">
+                {profile.interests.map((it, i) => <li class={`ob ob-${INKS[i % INKS.length]}`}><span>{it}</span></li>)}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================= EXPERIENCE -->
+      <section class="sec sec-exp" id="experience" data-pf-section="experience">
+        <div class="wrap">
+          <header class="sh" data-rv><span class="sh-no sh-teal">02</span><h2>Experience</h2><p class="sh-deck">{NAV[1].deck}</p></header>
+          <ol class="route">
+            {profile.experience.map((e, i) => (
+              <li class="leg" data-rv>
+                <div class="leg-when" aria-label={`${e.start} to ${e.end}`}>
+                  <span class="lw-p"><span class="lw-k">Dep.</span> <span class="lw-v">{e.start}</span></span>
+                  <span class="lw-p"><span class="lw-k">Arr.</span> <span class="lw-v">{e.end}</span></span>
+                </div>
+                <span class={`stop ${i === 0 ? 'stop-now' : ''}`} aria-hidden="true"></span>
+                <div class="leg-card">
+                  <header>
+                    <h3>{e.title}</h3>
+                    <p class="leg-co"><strong>{e.company}</strong><span>{e.place}</span></p>
+                    <p class="leg-blurb">{e.blurb}</p>
+                  </header>
+                  <ol class="stops">
+                    {e.bullets.map((b, k) => (
+                      <li class={`st st-${INKS[(k + i) % INKS.length]}`}>
+                        <span class="st-n" aria-hidden="true">{num(k + 1)}</span>
+                        <h4>{b.head}</h4>
+                        <p>{b.text}</p>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </li>
+            ))}
+            <li class="leg leg-origin" data-rv>
+              <div class="leg-when"><span class="lw-p"><span class="lw-k">Origin</span> <span class="lw-v">Education</span></span></div>
+              <span class="stop stop-origin" aria-hidden="true"></span>
+              <div class="leg-card">
+                <h3 id="education">Education</h3>
+                {profile.education.map((ed) => (
+                  <p class="edu" data-pf-education><strong>{ed.school}</strong><span>{ed.degree}</span><span class="edu-yrs">{ed.start} - {ed.end}</span></p>
+                ))}
+              </div>
+            </li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- ================================================= CASE STUDIES -->
+      <section class="sec sec-cases" id="case-studies" data-pf-section="case-studies">
+        <div class="wrap">
+          <header class="sh sh-inv" data-rv><span class="sh-no sh-mustard">03</span><h2>Case studies</h2><p class="sh-deck">{NAV[2].deck}</p></header>
+          <div class="posters">
+            {featured.map((c, i) => {
+              const P = POSTERS[c.id] ?? POSTERS['workflow-engine'];
+              return (
+                <article class="poster" data-pf-case={c.id} data-rv style={`--field:${P.field};--tx:${P.tx};--pa:${P.a};--pb:${P.b};--pc:${P.c}`}>
+                  <div class="poster-art">
+                    <p class="poster-top"><span>No. {num(POSTER_ORDER.indexOf(c.id) + 1)}</span><span>{c.org} &middot; {c.period}</span></p>
+                    <svg class="poster-glyph" viewBox="0 0 200 200" aria-hidden="true" set:html={P.glyph} />
+                    <h3 class="poster-title">{c.title}</h3>
+                  </div>
+                  <div class="poster-body">
+                    <p class="poster-kick">{c.kicker}</p>
+                    <p class="poster-role"><span>Role</span>{c.role}</p>
+                    <dl>
+                      <dt>Problem</dt><dd>{c.problem}</dd>
+                      <dt>Approach</dt><dd>{c.approach}</dd>
+                    </dl>
+                    <ul class="impact" aria-label="Impact">{c.impact.map((x) => <li>{x}</li>)}</ul>
+                    <ul class="ptags" aria-label="Tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          {supporting.length > 0 && (
+            <div class="double">
+              <p class="double-tag"><span>Also on the programme</span></p>
+              <div class="posters posters-b">
+                {supporting.map((c) => {
+                  const P = POSTERS[c.id] ?? POSTERS['workflow-engine'];
+                  return (
+                    <article class="poster poster-h" data-pf-case={c.id} data-rv style={`--field:${P.field};--tx:${P.tx};--pa:${P.a};--pb:${P.b};--pc:${P.c}`}>
+                      <div class="poster-art">
+                        <p class="poster-top"><span>No. {num(POSTER_ORDER.indexOf(c.id) + 1)}</span><span>{c.org} &middot; {c.period}</span></p>
+                        <svg class="poster-glyph" viewBox="0 0 200 200" aria-hidden="true" set:html={P.glyph} />
+                        <h3 class="poster-title">{c.title}</h3>
+                      </div>
+                      <div class="poster-body">
+                        <p class="poster-kick">{c.kicker}</p>
+                        <p class="poster-role"><span>Role</span>{c.role}</p>
+                        <dl>
+                          <dt>Problem</dt><dd>{c.problem}</dd>
+                          <dt>Approach</dt><dd>{c.approach}</dd>
+                        </dl>
+                        <ul class="impact" aria-label="Impact">{c.impact.map((x) => <li>{x}</li>)}</ul>
+                        <ul class="ptags" aria-label="Tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <!-- ================================================= PROJECTS -->
+      <section class="sec sec-proj" id="projects" data-pf-section="projects">
+        <div class="wrap">
+          <header class="sh" data-rv><span class="sh-no sh-avocado">04</span><h2>Projects</h2><p class="sh-deck">{NAV[3].deck}</p></header>
+          <ol class="cat">
+            {profile.projects.map((p, i) => (
+              <li class="cat-row" data-pf-project={p.name} data-rv>
+                <p class="cat-no"><span>No.&nbsp;{num(i + 1)}</span><strong>{p.year}</strong></p>
+                <div class="cat-main">
+                  <h3>{p.title}</h3>
+                  <p>{p.blurb}</p>
+                </div>
+                <ul class="cat-stack" aria-label="Stack">{p.stack.map((s) => <li>{s}</li>)}</ul>
+                <p class="cat-links">
+                  <a href={p.repo} rel="noopener">Source<span aria-hidden="true"> &nearr;</span></a>
+                  {p.live ? <a href={p.live} rel="noopener">Live site<span aria-hidden="true"> &nearr;</span></a> : <span class="cat-na">No live site</span>}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <!-- ================================================= SKILLS -->
+      <section class="sec sec-skills" id="skills" data-pf-section="skills">
+        <div class="wrap">
+          <header class="sh" data-rv><span class="sh-no sh-teak">05</span><h2>Skills</h2><p class="sh-deck">{NAV[4].deck}</p></header>
+          <div class="atoms">
+            {profile.skills.map((g, k) => {
+              const fam: string[] = ((g as any).familiar ?? []) as string[];
+              const n = g.items.length + fam.length;
+              return (
+                <article class="atom" data-rv>
+                  <svg class="atom-svg" viewBox="0 0 120 120" aria-hidden="true">
+                    <g class="atom-orbits">
+                      <ellipse cx="60" cy="60" rx="50" ry="19" /><ellipse cx="60" cy="60" rx="50" ry="19" transform="rotate(60 60 60)" /><ellipse cx="60" cy="60" rx="50" ry="19" transform="rotate(120 60 60)" />
+                      <g set:html={orbitDots(n, k)} />
+                    </g>
+                    <circle class="nuc" cx="60" cy="60" r="13" /><text class="nuc-t" x="60" y="64.5" text-anchor="middle">{n}</text>
+                  </svg>
+                  <h3>{g.group}</h3>
+                  <ul class="dots">
+                    {g.items.map((it, i) => <li class={`d${(i + k) % 5}`}><i aria-hidden="true"></i>{it}</li>)}
+                    {fam.map((it) => <li class="fam"><i aria-hidden="true"></i>{it} <em>(familiar)</em></li>)}
+                  </ul>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================= BEYOND CODE -->
+      <section class="sec sec-beyond" id="beyond-code" data-pf-section="beyond-code">
+        <div class="wrap">
+          <header class="sh sh-inv" data-rv><span class="sh-no sh-orange">06</span><h2>Beyond code</h2><p class="sh-deck">{NAV[5].deck}</p></header>
+          <p class="beyond-intro" data-rv>The other half of the portfolio, shot on imaginary Kodachrome: rides, hill trips, books, strays and street food. Click any slide to project the original colour print.</p>
+          {groups.map((g, gi) => (
+            <div class={`reel reel-${INKS[gi % INKS.length]}`}>
+              <header class="reel-head" data-rv>
+                <p class="reel-no" aria-hidden="true">Reel {num(gi + 1)}</p>
+                <h3>{g.title}</h3>
+                <p class="reel-blurb">{g.blurb}</p>
+                <p class="reel-count">{g.photos.length} slides</p>
+              </header>
+              <ul class="slides">
+                {g.photos.map((p, pi) => (
+                  <li class="slide" style={`--ar:${(p.img.thumbWidth / p.img.thumbHeight).toFixed(3)}`}>
+                    <a class="slide-link" href={p.original.src} data-full={p.original.src} data-cap={p.caption ?? ''} data-alt={p.alt} aria-label={`Project slide: ${p.alt}`}>
+                      <span class="mount">
+                        <img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} />
+                        <span class="mount-no" aria-hidden="true">{String(gi + 1)}-{num(pi + 1)}</span>
+                      </span>
+                    </a>
+                    {p.caption && <p class="slide-cap">{p.caption}</p>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- ================================================= WRITING -->
+      <section class="sec sec-writing" id="writing" data-pf-section="writing">
+        <div class="wrap">
+          <header class="sh" data-rv><span class="sh-no sh-teal">07</span><h2>Writing</h2><p class="sh-deck">{NAV[6].deck}</p></header>
+          <div class="next-issue" data-rv>
+            <div class="ni-tag">
+              <svg viewBox="-60 -60 120 120" aria-hidden="true"><polygon points={star(14, 58, 40)} /></svg>
+              <p>Coming<br />soon</p>
+            </div>
+            <div class="ni-body">
+              <p class="ni-status">{profile.writing.status}</p>
+              <p class="ni-label">Planned for the next issue</p>
+              <ol class="ni-list">
+                {profile.writing.planned.map((t, i) => <li><span class="ni-n" aria-hidden="true">{num(i + 1)}</span><span>{t}</span></li>)}
+              </ol>
+              {profile.writing.posts.length > 0 && (
+                <ul class="ni-posts">{profile.writing.posts.map((po) => <li><a href={po.href}>{po.title}</a> <time>{po.date}</time><p>{po.summary}</p></li>)}</ul>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================= CONTACT -->
+      <section class="sec sec-contact" id="contact" data-pf-section="contact">
+        <div class="wrap">
+          <header class="sh" data-rv><span class="sh-no sh-cream">08</span><h2>Contact</h2><p class="sh-deck">{NAV[7].deck}</p></header>
+          <div class="envelope" data-rv>
+            <div class="env-inner">
+              <div class="env-to">
+                <svg class="env-stamp" viewBox="0 0 90 110" aria-hidden="true">
+                  <rect x="3" y="3" width="84" height="104" class="st-paper" /><rect x="11" y="11" width="68" height="88" class="st-field" />
+                  <polygon points={star(12, 28, 17, 45, 50)} class="st-star" /><text x="45" y="92" text-anchor="middle" class="st-t">AIR MAIL</text>
+                </svg>
+                <svg class="env-mark" viewBox="0 0 120 60" aria-hidden="true"><circle cx="30" cy="30" r="26" /><circle cx="30" cy="30" r="19" /><path d="M64 14 q8 -8 16 0 t16 0 t16 0 M64 26 q8 -8 16 0 t16 0 t16 0 M64 38 q8 -8 16 0 t16 0 t16 0" /></svg>
+                <p class="env-label">To:</p>
+                <p class="env-addr"><strong>{profile.name}</strong><span>{profile.role}</span><span>{profile.location}</span></p>
+                <p class="env-note">Open to interesting problems in GenAI agents, workflow systems and backend infrastructure.</p>
+                <ul class="env-links">
+                  <li><span>Email</span><Protected kind="email" /></li>
+                  <li><span>Phone</span><Protected kind="phone" /></li>
+                  <li><span>LinkedIn</span><a href={profile.contact.linkedin} rel="noopener me" data-pf-linkedin>{profile.contact.linkedin.replace('https://www.', '')}</a></li>
+                  <li><span>GitHub</span><a href={profile.contact.github} rel="noopener me" data-pf-github>{profile.contact.github.replace('https://', '')}</a></li>
+                  <li><span>Resume</span><a href={withBase(profile.resume.href)} download>{profile.resume.label}</a></li>
+                </ul>
+              </div>
+              <div class="env-card">
+                <p class="env-card-h">Write on the card</p>
+                <ContactForm class="mc-form" submitLabel="Post it" labels={{ name: 'Your name', email: 'Your email', message: 'Your message' }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap foot-in">
+        <svg class="foot-star" viewBox="-24 -24 48 48" aria-hidden="true"><polygon points={star(12, 23, 14)} /></svg>
+        <p class="foot-line">{meta.flavor.footer}</p>
+        <p class="foot-small">&copy; {new Date().getFullYear()} {profile.name} &middot; {meta.flavor.tagline} &middot; A different art style every day: see the <a href={withBase('gallery/')}>gallery</a>.</p>
+      </div>
+    </footer>
+
+    <!-- slide projector -->
+    <dialog class="projector" data-projector aria-label="Slide projector">
+      <form method="dialog" class="proj-close"><button aria-label="Close projector">&times;</button></form>
+      <figure>
+        <div class="proj-frame" data-proj-frame></div>
+        <figcaption><span data-proj-cap></span><span class="proj-count" data-proj-count></span></figcaption>
+      </figure>
+      <div class="proj-nav">
+        <button type="button" data-proj-prev aria-label="Previous slide">&larr; Prev</button>
+        <button type="button" data-proj-next aria-label="Next slide">Next &rarr;</button>
+      </div>
+    </dialog>
+
+    <script>import './client.ts';</script>
+    <UtilityBar style={STYLE} />
+  </body>
+</html>
