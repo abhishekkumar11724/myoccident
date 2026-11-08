@@ -1,0 +1,409 @@
+---
+/**
+ * Art Nouveau theme: a bound folio of botanical plates.
+ * Sage-green cloth cover with gilt vines that grow up the gutters as you scroll; a cream paper folio in the middle.
+ * Nav = "Index of Plates" (I-VIII, real section names kept). Hero = Mucha-style halo roundel + arch-window portrait.
+ * Experience = a plant stem with the education at its roots. Case studies = tall arched panels (Mucha's decorative panels).
+ * Projects = herbarium sheets with specimen labels. Skills = a Tiffany-style glasshouse. Beyond code = framed salon wall.
+ * Every data-pf-* hook from docs/THEME_GUIDE.md is kept; all content comes from @/content/profile.
+ */
+import { profile } from '@/content/profile';
+import { photoGroups, heroPhotos, photos } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import meta from './meta';
+import Sprite from './components/Sprite.astro';
+import Orn from './components/Orn.astro';
+import PlateHead from './components/PlateHead.astro';
+import Roundel from './components/Roundel.astro';
+import './theme.css';
+
+const STYLE = 'art-nouveau';
+const all = photos(STYLE);
+const heroList = heroPhotos(STYLE);
+const hero = heroList.find((p) => p.id.includes('red-kurta-seated')) ?? heroList[0] ?? all[0];
+const aboutPhoto = heroList.find((p) => p.id.includes('smile-jacket')) ?? heroList.find((p) => p.id !== hero?.id) ?? all.find((p) => p.id !== hero?.id);
+const groups = photoGroups(STYLE);
+
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+const roman = (i: number) => ROMAN[i] ?? String(i + 1);
+const nameParts = profile.name.split(' ');
+const lastName = nameParts.slice(1).join(' ');
+
+const nav = [
+  ['about', 'About', 'I'],
+  ['experience', 'Experience', 'II'],
+  ['case-studies', 'Case studies', 'III'],
+  ['projects', 'Projects', 'IV'],
+  ['skills', 'Skills', 'V'],
+  ['beyond-code', 'Beyond code', 'VI'],
+  ['writing', 'Writing', 'VII'],
+  ['contact', 'Contact', 'VIII'],
+] as const;
+
+const featured = profile.caseStudies.filter((c) => c.featured);
+const more = profile.caseStudies.filter((c) => !c.featured);
+const MOTIFS = ['n-iris', 'n-dragonfly', 'n-feather', 'n-ginkgo', 'n-fern', 'n-berry', 'n-iris', 'n-dragonfly'];
+const SPRIGS = ['n-fern', 'n-berry', 'n-ginkgo', 'n-iris', 'n-feather', 'n-dragonfly'];
+
+const SHAPES: Record<string, string[]> = {
+  portrait: ['arch', 'oval', 'pillar', 'leaf'],
+  landscape: ['lunette', 'circle', 'ovalw', 'leaf'],
+  square: ['circle', 'leaf', 'arch', 'oval'],
+};
+let shapeCount = 0;
+const shapeFor = (o: string) => { const l = SHAPES[o] ?? SHAPES.square; return l[shapeCount++ % l.length]; };
+
+const year = new Date().getFullYear();
+const mailLinkedin = profile.contact.linkedin.replace('https://www.', '');
+const mailGithub = profile.contact.github.replace('https://', '');
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style={STYLE} themeColor="#2d3f33" />
+    <meta name="robots" content="index,follow" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+  </head>
+  <body class="nv">
+    <Sprite />
+    <a class="nv-skip" href="#main">Skip to content</a>
+
+    <div class="stage">
+      <div class="vine vine--l" data-vine="l" aria-hidden="true"></div>
+
+      <div class="folio">
+        <!-- ===================================================== HEADER: index of plates -->
+        <header class="bar" id="top">
+          <a class="bar-brand" href="#hero" aria-label={`${profile.name} - back to top`}>
+            <span class="mono" aria-hidden="true">AK</span>
+            <span class="bar-name">{profile.name}</span>
+          </a>
+          <button class="bar-menu" type="button" aria-expanded="false" aria-controls="plates-nav"><span>Index of plates</span><i aria-hidden="true"></i></button>
+          <nav class="bar-nav" id="plates-nav" aria-label="Index of plates">
+            <ul>
+              {nav.map(([id, label, n]) => (
+                <li><a href={`#${id}`} data-spy={id}><b aria-hidden="true">{n}</b><span>{label}</span></a></li>
+              ))}
+            </ul>
+          </nav>
+          <span class="bar-stem" aria-hidden="true"></span>
+        </header>
+
+        <main id="main">
+          <!-- ===================================================== HERO: frontispiece -->
+          <section class="hero" id="hero" data-pf-section="hero">
+            <Orn id="n-corner" class="corner corner--tl" />
+            <Orn id="n-corner" class="corner corner--tr" />
+
+            <div class="hero-copy">
+              <p class="kicker"><span class="kicker-tag">Frontispiece</span><span class="kicker-line" aria-hidden="true"></span><span>{meta.flavor.kicker}</span></p>
+              <h1><span class="h1-a">{profile.firstName}</span> <span class="h1-b">{lastName}</span></h1>
+              <svg class="flourish" viewBox="0 0 420 36" aria-hidden="true" focusable="false">
+                <path class="fl-main" pathLength="1" d="M4 22 C 60 22 90 8 150 12 C 210 16 236 30 300 24 C 340 20 366 8 396 12 C 410 14 414 24 404 28 C 395 31 390 22 398 20" />
+                <path class="fl-leaf" pathLength="1" d="M150 12 C 156 2 170 -1 180 4 C 174 12 162 15 150 12Z" />
+              </svg>
+              <p class="hero-role"><span class="role">{profile.role}</span><span class="sep" aria-hidden="true">&#10086;</span><em class="loc">{profile.location}</em></p>
+              <p class="hero-tag">{profile.tagline}</p>
+              <p class="hero-cta">
+                <a class="btn btn--solid" href={withBase(profile.resume.href)} data-pf-resume download><span>{profile.resume.label}</span></a>
+                <a class="btn" href="#contact"><span>Get in touch</span></a>
+              </p>
+              <p class="hero-focus"><b>Focus</b> {profile.focus}</p>
+            </div>
+
+            <div class="hero-art">
+              <Roundel />
+              {hero && (
+                <figure class="arch">
+                  <div class="arch-in">
+                    <img src={hero.img.src} width={hero.img.width} height={hero.img.height} alt={hero.alt} style={`object-position:${hero.focus}`} fetchpriority="high" decoding="async" />
+                  </div>
+                  <figcaption>{hero.caption ?? 'Portrait'}</figcaption>
+                </figure>
+              )}
+              <Orn id="n-iris" class="art-iris art-iris--l" />
+              <Orn id="n-iris" class="art-iris art-iris--r" />
+              <Orn id="n-dragonfly" class="art-fly" />
+            </div>
+
+            <ul class="stats" aria-label="Key numbers">
+              {profile.stats.map((s) => (
+                <li><strong>{s.value}</strong><span>{s.label}</span></li>
+              ))}
+            </ul>
+          </section>
+
+          <!-- ===================================================== PLATE I: ABOUT -->
+          <section class="plate sec-about" id="about" data-pf-section="about" aria-labelledby="h-about">
+            <PlateHead n="I" id="h-about" title="About" sub="A short note from the gardener" />
+            <div class="about-grid">
+              {aboutPhoto && (
+                <figure class="cameo rv">
+                  <div class="cameo-in">
+                    <img src={aboutPhoto.img.src} width={aboutPhoto.img.width} height={aboutPhoto.img.height} alt={aboutPhoto.alt} loading="lazy" decoding="async" style={`object-position:${aboutPhoto.focus}`} />
+                  </div>
+                  <Orn id="n-berry" class="cameo-spray cameo-spray--l" />
+                  <Orn id="n-berry" class="cameo-spray cameo-spray--r" />
+                  <figcaption>{aboutPhoto.caption ?? 'Portrait'}</figcaption>
+                </figure>
+              )}
+              <div class="about-text rv">
+                <p class="lead dropcap">{profile.summary}</p>
+                {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+                <p class="tags-label">Pressed between the pages</p>
+                <ul class="tags" aria-label="Interests">
+                  {profile.interests.map((i) => <li><span class="hole" aria-hidden="true"></span>{i}</li>)}
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- ===================================================== PLATE II: EXPERIENCE -->
+          <section class="plate sec-exp" id="experience" data-pf-section="experience" aria-labelledby="h-exp">
+            <PlateHead n="II" id="h-exp" title="Experience" sub="Growth rings, newest first - with the roots at the bottom" />
+            <ol class="stem">
+              {profile.experience.map((e, i) => (
+                <li class="node rv">
+                  <span class="node-mark" aria-hidden="true">{e.start.split(' ')[1]}</span>
+                  <article class="job" data-pf-job={e.id}>
+                    <header class="job-head">
+                      <div>
+                        <p class="job-co">{e.company}</p>
+                        <h3>{e.title}</h3>
+                      </div>
+                      <p class="job-when"><span>{e.start} - {e.end}</span><span>{e.place}</span></p>
+                    </header>
+                    <p class="job-blurb">{e.blurb}</p>
+                    <ul class="rings">
+                      {e.bullets.map((b) => (
+                        <li><strong class="bh">{b.head}</strong><span class="bt">{b.text}</span></li>
+                      ))}
+                    </ul>
+                  </article>
+                </li>
+              ))}
+              {profile.education.map((ed) => (
+                <li class="node node--root rv">
+                  <span class="node-mark node-mark--root" aria-hidden="true">{ed.end.split(' ')[1]}</span>
+                  <article class="job job--edu" data-pf-education>
+                    <header class="job-head">
+                      <div>
+                        <p class="job-co">Education - where it took root</p>
+                        <h3>{ed.school}</h3>
+                      </div>
+                      <p class="job-when"><span>{ed.start} - {ed.end}</span><span>{ed.short}</span></p>
+                    </header>
+                    <p class="job-blurb">{ed.degree}</p>
+                  </article>
+                </li>
+              ))}
+            </ol>
+            <svg class="roots" viewBox="0 0 300 90" aria-hidden="true" focusable="false">
+              <path d="M150 0 C 150 20 148 30 140 42 C 128 58 104 58 88 72 C 80 79 78 86 70 88" />
+              <path d="M150 0 C 152 24 160 34 172 46 C 188 60 212 60 228 74 C 234 80 238 84 246 86" />
+              <path d="M150 8 C 148 30 150 52 146 72 C 144 80 146 86 142 90" />
+              <path d="M140 42 C 130 46 120 42 112 34 C 106 28 110 22 116 24" />
+              <path d="M172 46 C 182 48 192 42 196 34 C 199 28 193 23 188 26" />
+              <path d="M104 58 C 96 56 90 50 92 44" />
+              <path d="M212 60 C 220 58 226 52 224 46" />
+            </svg>
+          </section>
+
+          <!-- ===================================================== PLATE III: CASE STUDIES -->
+          <section class="plate sec-cases" id="case-studies" data-pf-section="case-studies" aria-labelledby="h-cases">
+            <PlateHead n="III" id="h-cases" title="Case studies" sub="Mounted plates: the problem, the approach, the result" />
+            <div class="panels">
+              {featured.map((c, i) => (
+                <article class={`panel panel--${i % 6} rv`} data-pf-case={c.id}>
+                  <div class="panel-arch">
+                    <span class="panel-no" aria-hidden="true">No. {i + 1}</span>
+                    <Orn id={MOTIFS[i % MOTIFS.length]} class="panel-motif" />
+                  </div>
+                  <div class="panel-body">
+                    <p class="panel-org">{c.org}<span aria-hidden="true"> &middot; </span>{c.period}</p>
+                    <h3>{c.title}</h3>
+                    <p class="panel-kick">{c.kicker}</p>
+                    <p class="panel-role"><b>Role</b> {c.role}</p>
+                    <dl class="pa">
+                      <dt>Problem</dt><dd>{c.problem}</dd>
+                      <dt>Approach</dt><dd>{c.approach}</dd>
+                    </dl>
+                    <ul class="impact" aria-label="Impact">{c.impact.map((x) => <li>{x}</li>)}</ul>
+                    <ul class="ptags" aria-label="Tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+                  </div>
+                </article>
+              ))}
+            </div>
+            {more.length > 0 && (
+              <>
+                <h3 class="subhead rv"><span>More plates from earlier years</span></h3>
+                <div class="panels panels--more">
+                  {more.map((c, i) => (
+                    <article class={`panel panel--${(i + 3) % 6} panel--wide rv`} data-pf-case={c.id}>
+                      <div class="panel-arch">
+                        <span class="panel-no" aria-hidden="true">No. {featured.length + i + 1}</span>
+                        <Orn id={MOTIFS[(featured.length + i) % MOTIFS.length]} class="panel-motif" />
+                      </div>
+                      <div class="panel-body">
+                        <p class="panel-org">{c.org}<span aria-hidden="true"> &middot; </span>{c.period}</p>
+                        <h3>{c.title}</h3>
+                        <p class="panel-kick">{c.kicker}</p>
+                        <p class="panel-role"><b>Role</b> {c.role}</p>
+                        <dl class="pa">
+                          <dt>Problem</dt><dd>{c.problem}</dd>
+                          <dt>Approach</dt><dd>{c.approach}</dd>
+                        </dl>
+                        <ul class="impact" aria-label="Impact">{c.impact.map((x) => <li>{x}</li>)}</ul>
+                        <ul class="ptags" aria-label="Tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </>
+            )}
+          </section>
+
+          <!-- ===================================================== PLATE IV: PROJECTS (herbarium) -->
+          <section class="plate sec-proj" id="projects" data-pf-section="projects" aria-labelledby="h-proj">
+            <PlateHead n="IV" id="h-proj" title="Projects" sub="Specimens from the herbarium - public repositories on GitHub" />
+            <ul class="herb">
+              {profile.projects.map((p, i) => (
+                <li class={`sheet sheet--${i % 3} rv`} data-pf-project={p.name}>
+                  <span class="tape tape--a" aria-hidden="true"></span>
+                  <span class="tape tape--b" aria-hidden="true"></span>
+                  <div class="sheet-art" aria-hidden="true"><Orn id={SPRIGS[i % SPRIGS.length]} class="sheet-sprig" /></div>
+                  <div class="label">
+                    <p class="lab-top"><span>Specimen No. {i + 1}</span><span>Collected {p.year}</span></p>
+                    <h3>{p.title}</h3>
+                    <p class="lab-blurb">{p.blurb}</p>
+                    <p class="lab-stack"><b>Grown with</b> {p.stack.join(', ')}</p>
+                    <p class="lab-links">
+                      <a href={p.repo} rel="noopener">Source on GitHub</a>
+                      {p.live && <a href={p.live} rel="noopener">Live site</a>}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <!-- ===================================================== PLATE V: SKILLS (glasshouse) -->
+          <section class="plate plate--teal sec-skills" id="skills" data-pf-section="skills" aria-labelledby="h-skills">
+            <PlateHead n="V" id="h-skills" title="Skills" sub="The glasshouse: what grows well here" tone="dark" />
+            <ul class="panes">
+              {profile.skills.map((g, i) => (
+                <li class={`pane pane--${i % 6} rv`}>
+                  <h3>{g.group}</h3>
+                  <ul class="items">{g.items.map((it) => <li>{it}</li>)}</ul>
+                  {(g as any).familiar?.length ? (
+                    <div class="fam">
+                      <p>Familiar with</p>
+                      <ul class="items items--fam">{((g as any).familiar as string[]).map((it) => <li>{it}</li>)}</ul>
+                    </div>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <!-- ===================================================== PLATE VI: BEYOND CODE (salon wall) -->
+          <section class="plate sec-beyond" id="beyond-code" data-pf-section="beyond-code" aria-labelledby="h-beyond">
+            <PlateHead n="VI" id="h-beyond" title="Beyond code" sub="Field plates: trips, rides, books and friends. Tap a frame to see it larger." />
+            <div class="walls">
+              {groups.map((g, gi) => (
+                <div class="wall rv">
+                  <header class="wall-legend">
+                    <p class="wall-no" aria-hidden="true">{String.fromCharCode(97 + gi)}.</p>
+                    <h3>{g.title}</h3>
+                    <p class="wall-blurb">{g.blurb}</p>
+                    <p class="wall-count">{g.photos.length} {g.photos.length === 1 ? 'plate' : 'plates'}</p>
+                  </header>
+                  <ul class="wall-grid">
+                    {g.photos.map((p) => {
+                      const shape = shapeFor(p.orientation);
+                      return (
+                        <li class={`fr fr--${shape}`}>
+                          <a href={p.original.src} data-lightbox data-full={p.img.src} data-orig={p.original.src} data-cap={p.caption ?? ''} data-alt={p.alt} aria-label={`View larger: ${p.alt}`}>
+                            <span class="fr-in"><img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} /></span>
+                          </a>
+                          {p.caption && <p class="fr-cap">{p.caption}</p>}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <!-- ===================================================== PLATE VII: WRITING -->
+          <section class="plate sec-writing" id="writing" data-pf-section="writing" aria-labelledby="h-writing">
+            <PlateHead n="VII" id="h-writing" title="Writing" sub="Forthcoming plates, still in the press" />
+            <div class="toc-wrap rv">
+              <p class="toc-status">{profile.writing.status}</p>
+              {profile.writing.posts.length > 0 && (
+                <ul class="posts">{profile.writing.posts.map((p) => <li><a href={p.href}>{p.title}</a> <span>{p.date}</span> - {p.summary}</li>)}</ul>
+              )}
+              <ol class="toc">
+                {profile.writing.planned.map((t, i) => (
+                  <li><span class="toc-no" aria-hidden="true">{roman(i)}</span><span class="toc-t">{t}</span><span class="toc-lead" aria-hidden="true"></span><span class="toc-st">in preparation</span></li>
+                ))}
+              </ol>
+            </div>
+          </section>
+
+          <!-- ===================================================== PLATE VIII: CONTACT -->
+          <section class="plate plate--plum sec-contact" id="contact" data-pf-section="contact" aria-labelledby="h-contact">
+            <PlateHead n="VIII" id="h-contact" title="Contact" sub="Correspondence, pressed and posted" tone="dark" />
+            <p class="contact-lead rv">Open to interesting problems in GenAI agents, workflow systems and backend infrastructure.</p>
+            <div class="contact-grid">
+              <div class="calling rv">
+                <Orn id="n-corner" class="corner corner--tl" />
+                <Orn id="n-corner" class="corner corner--br" />
+                <p class="calling-title">Calling card</p>
+                <ul class="calls">
+                  <li><span class="ck">Email</span> <Protected kind="email" class="c-link" /></li>
+                  <li><span class="ck">Phone</span> <Protected kind="phone" class="c-link" /></li>
+                  <li><span class="ck">LinkedIn</span> <a class="c-link" href={profile.contact.linkedin} rel="noopener me" data-pf-linkedin>{mailLinkedin}</a></li>
+                  <li><span class="ck">GitHub</span> <a class="c-link" href={profile.contact.github} rel="noopener me" data-pf-github>{mailGithub}</a></li>
+                  <li><span class="ck">Resume</span> <a class="c-link" href={withBase(profile.resume.href)} download>{profile.resume.label}</a></li>
+                </ul>
+              </div>
+              <div class="letter rv">
+                <ContactForm class="nv-form" submitLabel="Post the letter" labels={{ name: 'Your name', email: 'Your email', message: 'Your message' }} />
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <footer class="colophon">
+          <span class="mono mono--lg" aria-hidden="true">AK</span>
+          <p class="colo-main">&copy; {year} {profile.name}. {meta.flavor.footer}</p>
+          <p class="colo-sub">Set in Macondo, Federo and Goudy, with ornament drawn by hand. A different art style every day - see the <a href={withBase('gallery/')}>gallery</a>.</p>
+        </footer>
+      </div>
+
+      <div class="vine vine--r" data-vine="r" aria-hidden="true"></div>
+    </div>
+
+    <dialog class="lightbox" data-lightbox-dialog aria-label="Plate viewer">
+      <form method="dialog" class="lb-close"><button aria-label="Close viewer">&times;</button></form>
+      <figure>
+        <div class="lb-frame" data-lb-frame></div>
+        <figcaption data-lb-cap></figcaption>
+      </figure>
+      <p class="lb-actions">
+        <button type="button" data-lb-prev aria-label="Previous plate">&larr;</button>
+        <button type="button" data-lb-toggle>Show the original photograph</button>
+        <button type="button" data-lb-next aria-label="Next plate">&rarr;</button>
+      </p>
+    </dialog>
+
+    <script>import './client.ts';</script>
+    <UtilityBar style={STYLE} />
+  </body>
+</html>

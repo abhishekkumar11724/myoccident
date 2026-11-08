@@ -1,0 +1,12 @@
+---
+/** Section heading in the form of a botanical-plate title: PLATE <numeral>, the real section name as H2, a metaphor subtitle. */
+import Divider from './Divider.astro';
+interface Props { n: string; id: string; title: string; sub?: string; tone?: 'light' | 'dark' }
+const { n, id, title, sub, tone = 'light' } = Astro.props;
+---
+<header class={`plate-head rv plate-head--${tone}`}>
+  <p class="plate-no"><span class="plate-word">Plate</span> <b>{n}</b></p>
+  <h2 id={id}>{title}</h2>
+  {sub && <p class="plate-sub">{sub}</p>}
+  <Divider />
+</header>

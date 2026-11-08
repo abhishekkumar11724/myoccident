@@ -1,0 +1,29 @@
+---
+/**
+ * The Mucha-style halo behind the portrait: a disc, a rosette of petals and a ring of lettering that turns very slowly
+ * (like the zodiac ring of his 1897 calendar). Text comes from the profile; the whole thing is decorative.
+ */
+import { profile } from '@/content/profile';
+const ringText = `${profile.role} · ${profile.focus} · ${profile.location} · `.toUpperCase();
+const petals = Array.from({ length: 24 }, (_, i) => i * 15);
+const ticks = Array.from({ length: 72 }, (_, i) => i * 5);
+---
+<svg class="roundel" viewBox="0 0 500 500" aria-hidden="true" focusable="false">
+  <defs>
+    <path id="rd-path" d="M250 250 m -207 0 a 207 207 0 1 1 414 0 a 207 207 0 1 1 -414 0" />
+  </defs>
+  <circle class="rd-disc" cx="250" cy="250" r="246" />
+  <circle class="rd-hair" cx="250" cy="250" r="238" />
+  <g class="rd-spin">
+    <circle class="rd-ring" cx="250" cy="250" r="226" />
+    <circle class="rd-ring" cx="250" cy="250" r="190" />
+    <text class="rd-text"><textPath href="#rd-path" textLength="1296" lengthAdjust="spacing">{ringText}</textPath></text>
+  </g>
+  <g class="rd-ticks">
+    {ticks.map((a) => <circle cx="250" cy="66" r={a % 15 === 0 ? 2.6 : 1.3} transform={`rotate(${a} 250 250)`} />)}
+  </g>
+  <g class="rd-petals" transform="translate(250 250)">
+    {petals.map((a) => <path d="M0 -178 C 8 -168 8 -158 0 -143 C -8 -158 -8 -168 0 -178Z" transform={`rotate(${a})`} />)}
+  </g>
+  <circle class="rd-core" cx="250" cy="250" r="136" />
+</svg>

@@ -1,0 +1,20 @@
+---
+/** Places one symbol from Sprite.astro in its own box. Decorative: always aria-hidden. */
+interface Props { id: string; class?: string; style?: string }
+const { id, class: cls = '', style } = Astro.props;
+const VB: Record<string, string> = {
+  'n-leaf': '-28 -98 62 100',
+  'n-lance': '-12 -174 44 176',
+  'n-curl': '-6 -66 56 68',
+  'n-bud': '-22 -50 44 52',
+  'n-iris': '-70 -194 140 196',
+  'n-ginkgo': '-50 -94 100 98',
+  'n-dragonfly': '-82 -36 164 106',
+  'n-feather': '-34 -176 68 180',
+  'n-fern': '-26 -122 56 126',
+  'n-berry': '-6 -100 90 104',
+  'n-corner': '0 0 124 124',
+  'n-seed': '-8 -24 16 26',
+};
+---
+<svg class={`orn orn-${id} ${cls}`.trim()} viewBox={VB[id] ?? '-50 -100 100 100'} aria-hidden="true" focusable="false" style={style}><use href={`#${id}`} /></svg>

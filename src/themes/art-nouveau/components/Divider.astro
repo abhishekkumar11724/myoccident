@@ -1,0 +1,24 @@
+---
+/** Symmetric whiplash divider. Strokes carry pathLength=1 so CSS can draw them in when the plate enters view. */
+interface Props { class?: string }
+const { class: cls = '' } = Astro.props;
+// right half; the left half is the same paths mirrored
+const half = [
+  { d: 'M254 20 C 276 20 286 31 308 29 C 334 27 342 12 368 12 C 394 12 404 22 428 22 L 470 22', cls: 'dv-main' },
+  { d: 'M308 29 C 314 40 332 41 334 31 C 335 25 328 22 324 26', cls: 'dv-curl' },
+  { d: 'M368 12 C 374 3 388 0 398 5 C 392 13 380 15 368 12Z', cls: 'dv-leaf' },
+  { d: 'M428 22 C 432 30 440 33 448 30 C 444 26 438 24 428 22Z', cls: 'dv-leaf' },
+];
+---
+<svg class={`divider ${cls}`.trim()} viewBox="0 0 480 40" aria-hidden="true" focusable="false">
+  <g class="dv-half">
+    {half.map((p) => <path class={p.cls} d={p.d} pathLength="1" />)}
+  </g>
+  <g class="dv-half" transform="translate(480 0) scale(-1 1)">
+    {half.map((p) => <path class={p.cls} d={p.d} pathLength="1" />)}
+  </g>
+  <path class="dv-bud" d="M240 6 C 247 13 247 27 240 35 C 233 27 233 13 240 6Z" />
+  <path class="dv-bud-vein" d="M240 10 V 31" />
+  <circle class="dv-dot" cx="224" cy="20" r="2.3" />
+  <circle class="dv-dot" cx="256" cy="20" r="2.3" />
+</svg>
