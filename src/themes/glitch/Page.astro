@@ -1,0 +1,403 @@
+---
+/**
+ * Glitch theme: a terminal/IDE-window portfolio over a near-black void.
+ * Bursts of RGB-split / slice damage only on headings, borders and photos; body copy stays clean.
+ * Keep every data-pf-* hook and ALL content (docs/THEME_GUIDE.md).
+ */
+import { profile } from '@/content/profile';
+import { photoGroups, heroPhotos, photos } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import meta from './meta';
+import './theme.css';
+
+const STYLE = 'glitch';
+const heroes = heroPhotos(STYLE);
+const hero = heroes[0] ?? photos(STYLE)[0];
+const idPhoto = heroes[2] ?? heroes[1] ?? hero;
+const groups = photoGroups(STYLE);
+
+const pad = (n: number, l = 2) => String(n).padStart(l, '0');
+const hex4 = (n: number) => '0x' + n.toString(16).toUpperCase().padStart(4, '0');
+const snake = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+const lastName = profile.name.split(' ').slice(1).join(' ');
+const shotStyle = (p: { focus: string; original: { src: string; thumb: string } }, big = false) =>
+  `--o:url('${big ? p.original.src : p.original.thumb}');--fp:${p.focus}`;
+
+const nav = [
+  { id: 'about', label: 'About' },
+  { id: 'experience', label: 'Experience' },
+  { id: 'case-studies', label: 'Case studies' },
+  { id: 'projects', label: 'Projects' },
+  { id: 'skills', label: 'Skills' },
+  { id: 'beyond-code', label: 'Beyond code' },
+  { id: 'writing', label: 'Writing' },
+  { id: 'contact', label: 'Contact' },
+];
+const bootLines = [
+  { tag: 'OK', text: `signal locked: ${profile.location}` },
+  { tag: 'OK', text: `user ${profile.handle} logged in` },
+  { tag: 'WARN', text: 'personality module exceeds buffer' },
+  { tag: 'OK', text: 'rendering human... done' },
+];
+const bars = ['#bfbfbf', '#bfbf00', '#00bfbf', '#00bf00', '#bf00bf', '#bf0000', '#0000bf'];
+---
+<!doctype html>
+<html lang="en" class="tg">
+  <head>
+    <ThemeHead style={STYLE} themeColor="#0a0a0f" />
+    <meta name="robots" content="index,follow" />
+    <script is:inline>try{if(sessionStorage.getItem('pf-gl-boot'))document.documentElement.classList.add('g-boot-done')}catch(e){}</script>
+  </head>
+  <body>
+    <a class="g-skip" href="#main">Skip to content</a>
+
+    <header class="g-bar">
+      <a class="g-bar-brand" href="#hero" aria-label={`${profile.name}, back to top`}>ak@glitch<span>:~$</span></a>
+      <nav class="g-bar-nav" aria-label="Sections">
+        {nav.map((n, i) => <a href={`#${n.id}`} data-nav={n.id}><i aria-hidden="true">{pad(i + 1)}</i>{n.label}</a>)}
+      </nav>
+    </header>
+
+    <div class="g-sig" aria-hidden="true">
+      <span class="g-sig-n">SIG <b data-sig>000</b></span>
+      <span class="g-sig-track"><span class="g-sig-fill"></span></span>
+    </div>
+
+    <main id="main">
+      <!-- ================= HERO ================= -->
+      <section class="g-hero g-wrap" id="hero" data-pf-section="hero">
+        <p class="g-kicker">{meta.flavor.kicker}</p>
+        <h1 class="g-name">
+          <span class="gl" data-gl data-text={profile.firstName}>{profile.firstName}</span>
+          <span class="gl" data-gl data-text={lastName}>{lastName}</span>
+        </h1>
+        <div class="g-hero-grid">
+          <div class="g-hero-main">
+            <ol class="g-boot" aria-hidden="true">
+              {bootLines.map((b, i) => (
+                <li style={`--i:${i};--n:${b.text.length + 8}`}><span class={`g-tag g-tag-${b.tag.toLowerCase()}`}>[{b.tag.padStart(4, ' ')}]</span> {b.text}</li>
+              ))}
+            </ol>
+            <p class="g-role"><span class="g-prompt" aria-hidden="true">&gt;</span> {profile.role}<span class="g-slashes" aria-hidden="true"> // </span><span class="g-focus">{profile.focus}</span><span class="g-cursor" aria-hidden="true"></span></p>
+            <p class="g-lead">{profile.tagline}</p>
+            <p class="g-cta">
+              <a class="g-btn g-btn-primary" href={withBase(profile.resume.href)} data-pf-resume download>{profile.resume.label}</a>
+              <a class="g-btn" href="#contact">Open channel</a>
+              <a class="g-btn g-btn-ghost" href="#case-studies">Case files</a>
+            </p>
+          </div>
+
+          <div class="g-hero-side">
+            <figure class="g-crt">
+              <div class="g-crt-screen">
+                {hero && (
+                  <button type="button" class="g-shot" aria-pressed="false" data-shot title="Decode the original photo" style={shotStyle(hero, true)}>
+                    <img src={hero.img.src} width={hero.img.width} height={hero.img.height} alt={hero.alt} fetchpriority="high" decoding="async" />
+                  </button>
+                )}
+                <span class="g-osd g-osd-tl" aria-hidden="true">PLAY &#9654;</span>
+                <span class="g-osd g-osd-tr" aria-hidden="true">CH 04</span>
+                <span class="g-osd g-osd-bl" aria-hidden="true">SP &#9679;&#9679;&#9679;</span>
+                <span class="g-crt-noise" aria-hidden="true"></span>
+              </div>
+              <figcaption class="g-crt-cap">AK-1100 // AUTO TRACKING <span class="g-err-code">ERR_404: human not found. (found anyway.)</span></figcaption>
+            </figure>
+          </div>
+        </div>
+
+        <h2 class="g-sr-only">Key numbers</h2>
+        <ul class="g-tele" aria-label="Key numbers">
+          {profile.stats.map((s) => (
+            <li data-gl><strong class="gl" data-text={s.value}>{s.value}</strong><span>{s.label}</span></li>
+          ))}
+        </ul>
+      </section>
+
+      <div class="g-tear" aria-hidden="true"><i></i><i></i><i></i></div>
+
+      <!-- ================= ABOUT ================= -->
+      <section class="g-sec g-wrap" id="about" data-pf-section="about">
+        <header class="g-sec-head">
+          <p class="g-sec-idx"><b>// 01</b> <span>~/about</span></p>
+          <h2 class="g-sec-title gl" data-gl data-text="About">About</h2>
+          <p class="g-sec-cmd"><span class="g-prompt">$</span> cat README.md</p>
+        </header>
+        <div class="g-about-grid">
+          <div class="g-about-main">
+          <article class="g-win g-readme">
+            <div class="g-win-bar"><i class="g-led"></i><span class="g-win-title">README.md</span><span class="g-win-btns" aria-hidden="true"><b></b><b></b><b></b></span></div>
+            <div class="g-win-body">
+              <p class="g-about-lead">{profile.summary}</p>
+              {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+            </div>
+          </article>
+
+          <div class="g-win g-interests" role="group" aria-label="Interests">
+            <div class="g-win-bar"><i class="g-led"></i><span class="g-win-title">interests.sh</span><span class="g-win-btns" aria-hidden="true"><b></b><b></b><b></b></span></div>
+            <div class="g-win-body">
+              <p class="g-cmt"># off-duty processes</p>
+              <ul class="g-checks">{profile.interests.map((i) => <li><span aria-hidden="true">[x]</span> {i}</li>)}</ul>
+            </div>
+          </div>
+          </div>
+          <aside class="g-win g-idcard" aria-label="Profile card">
+            <div class="g-win-bar"><i class="g-led"></i><span class="g-win-title">whoami.json</span><span class="g-win-btns" aria-hidden="true"><b></b><b></b><b></b></span></div>
+            <div class="g-win-body">
+              <div class="g-id-photo">
+                {idPhoto && (
+                  <button type="button" class="g-shot" aria-pressed="false" data-shot title="Decode the original photo" style={shotStyle(idPhoto, true)}>
+                    <img src={idPhoto.img.thumb} width={idPhoto.img.thumbWidth} height={idPhoto.img.thumbHeight} alt={idPhoto.alt} loading="lazy" decoding="async" />
+                  </button>
+                )}
+              </div>
+              <dl class="g-kv">
+                <div><dt>name</dt><dd>{profile.name}</dd></div>
+                <div><dt>role</dt><dd>{profile.role}</dd></div>
+                <div><dt>loc</dt><dd>{profile.location}</dd></div>
+                <div><dt>uid</dt><dd>{profile.handle}</dd></div>
+              </dl>
+            </div>
+          </aside>
+
+        </div>
+      </section>
+
+      <div class="g-tear" aria-hidden="true"><i></i><i></i><i></i></div>
+
+      <!-- ================= EXPERIENCE ================= -->
+      <section class="g-sec g-wrap" id="experience" data-pf-section="experience">
+        <header class="g-sec-head">
+          <p class="g-sec-idx"><b>// 02</b> <span>~/experience</span></p>
+          <h2 class="g-sec-title gl" data-gl data-text="Experience">Experience</h2>
+          <p class="g-sec-cmd"><span class="g-prompt">$</span> ps aux | grep {profile.handle}</p>
+        </header>
+
+        <div class="g-procs-head" aria-hidden="true"><span>PID</span><span>STAT</span><span>COMMAND</span><span>TIME</span><span>LOC</span></div>
+        {profile.experience.map((e, i) => {
+          const running = e.end === 'Present';
+          return (
+            <article class={`g-proc${running ? ' g-run' : ''}`} data-gl>
+              <header class="g-proc-row">
+                <span class="g-pid">{pad(profile.experience.length - i)}</span>
+                <span class="g-stat">{running ? 'RUNNING' : 'EXIT 0'}</span>
+                <h3 class="g-cmd gl" data-text={`${e.title} @ ${e.company}`}>{e.title} <span class="g-at" aria-hidden="true">@</span> <strong>{e.company}</strong></h3>
+                <span class="g-time">{e.start} - {e.end}</span>
+                <span class="g-loc">{e.place}</span>
+              </header>
+              <p class="g-blurb"><span aria-hidden="true"># </span>{e.blurb}</p>
+              <ol class="g-log">
+                {e.bullets.map((b, j) => (
+                  <li><span class="g-ln" aria-hidden="true">{pad(j + 1)}</span><strong class="g-mod">{b.head}</strong><span class="g-msg">{b.text}</span></li>
+                ))}
+              </ol>
+            </article>
+          );
+        })}
+
+        <h3 class="g-sub" id="education"><span class="g-prompt">$</span> mount | grep education</h3>
+        {profile.education.map((e) => (
+          <div class="g-win g-mount" data-pf-education>
+            <div class="g-win-bar"><i class="g-led"></i><span class="g-win-title">/dev/{snake(e.short)}</span><span class="g-win-btns" aria-hidden="true"><b></b><b></b><b></b></span></div>
+            <div class="g-win-body">
+              <h4>{e.school}</h4>
+              <p>{e.degree}, {e.start} - {e.end}</p>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <div class="g-tear" aria-hidden="true"><i></i><i></i><i></i></div>
+
+      <!-- ================= CASE STUDIES ================= -->
+      <section class="g-sec g-wrap" id="case-studies" data-pf-section="case-studies">
+        <header class="g-sec-head">
+          <p class="g-sec-idx"><b>// 03</b> <span>~/case-studies</span></p>
+          <h2 class="g-sec-title gl" data-gl data-text="Case studies">Case studies</h2>
+          <p class="g-sec-cmd"><span class="g-prompt">$</span> tail -n +1 case_files/*.log</p>
+        </header>
+        <div class="g-cases">
+          {profile.caseStudies.map((c, i) => (
+            <article class={`g-win g-case${c.featured ? '' : ' g-minor'}`} data-pf-case={c.id} data-gl>
+              <div class="g-win-bar"><i class="g-led"></i><span class="g-win-title">case_{pad(i + 1)}_{snake(c.id)}.log</span><span class="g-win-btns" aria-hidden="true"><b></b><b></b><b></b></span></div>
+              <div class="g-win-body">
+                <p class="g-meta">{c.org} / {c.period} / {c.role}</p>
+                <h3 class="g-case-title gl" data-text={c.title}>{c.title}</h3>
+                <p class="g-kick"><span aria-hidden="true">// </span>{c.kicker}</p>
+                <dl class="g-pa">
+                  <dt>Problem</dt><dd>{c.problem}</dd>
+                  <dt>Approach</dt><dd>{c.approach}</dd>
+                </dl>
+                <ul class="g-impact" aria-label="Impact">{c.impact.map((x) => <li><span aria-hidden="true">+ </span>{x}</li>)}</ul>
+                <ul class="g-tags" aria-label="Tags">{c.tags.map((t) => <li>#{t}</li>)}</ul>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <div class="g-tear" aria-hidden="true"><i></i><i></i><i></i></div>
+
+      <!-- ================= PROJECTS ================= -->
+      <section class="g-sec g-wrap" id="projects" data-pf-section="projects">
+        <header class="g-sec-head">
+          <p class="g-sec-idx"><b>// 04</b> <span>~/projects</span></p>
+          <h2 class="g-sec-title gl" data-gl data-text="Projects">Projects</h2>
+          <p class="g-sec-cmd"><span class="g-prompt">$</span> ls -l ~/projects</p>
+        </header>
+        <ul class="g-ls">
+          {profile.projects.map((p) => (
+            <li class="g-ls-row" data-pf-project={p.name} data-gl>
+              <div class="g-ls-meta"><span class="g-yr">{p.year}</span><span class="g-perm" aria-hidden="true">-rwxr-xr-x</span></div>
+              <div class="g-ls-main">
+                <h3 class="gl" data-text={p.title}>{p.title}</h3>
+                <p>{p.blurb}</p>
+                <ul class="g-stack" aria-label="Stack">{p.stack.map((s) => <li>{s}</li>)}</ul>
+              </div>
+              <p class="g-ls-links">
+                <a class="g-lnk" href={p.repo} rel="noopener">Source<span class="g-sr-only"> for {p.title} on GitHub</span></a>
+                {p.live && <a class="g-lnk" href={p.live} rel="noopener">Live<span class="g-sr-only"> site for {p.title}</span></a>}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <div class="g-tear" aria-hidden="true"><i></i><i></i><i></i></div>
+
+      <!-- ================= SKILLS ================= -->
+      <section class="g-sec g-wrap" id="skills" data-pf-section="skills">
+        <header class="g-sec-head">
+          <p class="g-sec-idx"><b>// 05</b> <span>~/skills</span></p>
+          <h2 class="g-sec-title gl" data-gl data-text="Skills">Skills</h2>
+          <p class="g-sec-cmd"><span class="g-prompt">$</span> hexdump -C skills.bin</p>
+        </header>
+        <div class="g-mem">
+          {profile.skills.map((g, i) => (
+            <div class="g-mem-row">
+              <span class="g-addr" aria-hidden="true">{hex4(i * 16)}</span>
+              <h3 class="g-mem-group">{g.group}</h3>
+              <ul class="g-chips">
+                {g.items.map((it) => <li>{it}</li>)}
+                {((g as any).familiar ?? []).map((f: string) => <li class="g-fam">{f} <small>(familiar)</small></li>)}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div class="g-tear" aria-hidden="true"><i></i><i></i><i></i></div>
+
+      <!-- ================= BEYOND CODE ================= -->
+      <section class="g-sec g-wrap" id="beyond-code" data-pf-section="beyond-code">
+        <header class="g-sec-head">
+          <p class="g-sec-idx"><b>// 06</b> <span>~/beyond-code</span></p>
+          <h2 class="g-sec-title gl" data-gl data-text="Beyond code">Beyond code</h2>
+          <p class="g-sec-cmd"><span class="g-prompt">$</span> ls /dev/frames</p>
+        </header>
+        <p class="g-note">Off-duty footage, pre-damaged at build time. Hover, focus or tap a frame to decode the original.</p>
+        {groups.map((g) => (
+          <div class="g-reel">
+            <header class="g-reel-head">
+              <h3>{g.title}</h3>
+              <span class="g-reel-path" aria-hidden="true">/dev/frames/{g.category}</span>
+              <span class="g-reel-n">{g.photos.length} {g.photos.length === 1 ? 'frame' : 'frames'}</span>
+              <p>{g.blurb}</p>
+            </header>
+            <ul class="g-wall">
+              {g.photos.map((p) => (
+                <li style={`--ar:${Math.min(1.9, Math.max(0.68, p.img.thumbWidth / p.img.thumbHeight)).toFixed(3)}`}>
+                  <figure>
+                    <button type="button" class="g-shot" aria-pressed="false" data-shot title="Decode the original photo" style={shotStyle(p)}>
+                      <img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" />
+                    </button>
+                    {p.caption && <figcaption>{p.caption}</figcaption>}
+                  </figure>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </section>
+
+      <div class="g-tear" aria-hidden="true"><i></i><i></i><i></i></div>
+
+      <!-- ================= WRITING ================= -->
+      <section class="g-sec g-wrap" id="writing" data-pf-section="writing">
+        <header class="g-sec-head">
+          <p class="g-sec-idx"><b>// 07</b> <span>~/writing</span></p>
+          <h2 class="g-sec-title gl" data-gl data-text="Writing">Writing</h2>
+          <p class="g-sec-cmd"><span class="g-prompt">$</span> ls posts/</p>
+        </header>
+        <div class="g-win g-term">
+          <div class="g-win-bar"><i class="g-led"></i><span class="g-win-title">writing.sh</span><span class="g-win-btns" aria-hidden="true"><b></b><b></b><b></b></span></div>
+          <div class="g-win-body g-term-body">
+            {profile.writing.posts.length ? (
+              <>
+                <p class="g-cl"><span class="g-prompt">$</span> ls posts/</p>
+                <ul class="g-out g-posts">{profile.writing.posts.map((p) => <li><a href={p.href}>{p.title}</a> <span class="g-mut">{p.date}</span></li>)}</ul>
+              </>
+            ) : (
+              <>
+                <p class="g-cl"><span class="g-prompt">$</span> ls posts/</p>
+                <p class="g-out g-err">ls: cannot access 'posts/': No such file or directory <span class="g-code">[ERR_ENOENT]</span></p>
+              </>
+            )}
+            <p class="g-cl"><span class="g-prompt">$</span> cat STATUS</p>
+            <p class="g-out">{profile.writing.status}</p>
+            <p class="g-cl"><span class="g-prompt">$</span> cat drafts.todo</p>
+            <ol class="g-out g-todo">{profile.writing.planned.map((t) => <li><span class="g-box" aria-hidden="true">[ ]</span> {t}</li>)}</ol>
+            <p class="g-cl"><span class="g-prompt">$</span> <span class="g-cursor" aria-hidden="true"></span></p>
+          </div>
+        </div>
+      </section>
+
+      <div class="g-tear" aria-hidden="true"><i></i><i></i><i></i></div>
+
+      <!-- ================= CONTACT ================= -->
+      <section class="g-sec g-wrap" id="contact" data-pf-section="contact">
+        <header class="g-sec-head">
+          <p class="g-sec-idx"><b>// 08</b> <span>~/contact</span></p>
+          <h2 class="g-sec-title gl" data-gl data-text="Contact">Contact</h2>
+          <p class="g-sec-cmd"><span class="g-prompt">$</span> ssh hello@{profile.handle}</p>
+        </header>
+        <div class="g-contact-grid">
+          <div class="g-win g-chan">
+            <div class="g-win-bar"><i class="g-led"></i><span class="g-win-title">channels.conf</span><span class="g-win-btns" aria-hidden="true"><b></b><b></b><b></b></span></div>
+            <div class="g-win-body">
+              <p class="g-chan-lead">Open to interesting problems in GenAI agents, workflow systems and backend infrastructure.</p>
+              <ul class="g-channels">
+                <li><span class="g-k">mail</span><Protected kind="email" /></li>
+                <li><span class="g-k">tel</span><Protected kind="phone" /></li>
+                <li><span class="g-k">in</span><a href={profile.contact.linkedin} rel="noopener me" data-pf-linkedin>LinkedIn</a></li>
+                <li><span class="g-k">git</span><a href={profile.contact.github} rel="noopener me" data-pf-github>GitHub</a></li>
+                <li><span class="g-k">pdf</span><a href={withBase(profile.resume.href)} download>{profile.resume.label}</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="g-win g-send">
+            <div class="g-win-bar"><i class="g-led"></i><span class="g-win-title">transmit.sh</span><span class="g-win-btns" aria-hidden="true"><b></b><b></b><b></b></span></div>
+            <div class="g-win-body">
+              <ContactForm submitLabel="Transmit" labels={{ name: 'name', email: 'return address', message: 'payload' }} />
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="g-foot">
+      <div class="g-bars g-scan" aria-hidden="true">{bars.map((c) => <i style={`background:${c}`}></i>)}</div>
+      <div class="g-pluge" aria-hidden="true"><i></i><i></i><i></i></div>
+      <div class="g-wrap g-foot-in">
+        <p class="g-foot-line">{meta.flavor.footer}</p>
+        <p class="g-foot-sub">&copy; {new Date().getFullYear()} {profile.name} // {meta.flavor.tagline} // <a href={withBase('gallery/')}>See the other styles</a></p>
+      </div>
+    </footer>
+
+    <UtilityBar style={STYLE} />
+    <script>import './client.ts';</script>
+  </body>
+</html>
