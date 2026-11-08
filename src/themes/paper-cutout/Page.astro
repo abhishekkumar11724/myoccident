@@ -1,0 +1,447 @@
+---
+/**
+ * Paper cutout theme: the whole site is sheets of coloured paper laid over each other.
+ *  - nav: bookmark tabs hanging from a kraft strip (current section hangs lower)
+ *  - hero: a paper-diorama scene (sun, clouds, three hills, trees) whose layers slide at different speeds on scroll;
+ *          the name is built from letter tiles; the portrait is a scalloped cut-out held on with tape
+ *  - sections: each is a sheet with its own cut top edge (blobs, wave, scallop, torn, zigzag, cloud)
+ *  - experience: a stack of overlapping file folders; case studies: layered cards; projects: luggage tags on string;
+ *    skills: torn paper chips on coloured strips; beyond code: a draggable scrapbook (grid fallback); writing: sticky notes
+ *  - contact: a letter on a green sheet, copy-email button, paper-button links
+ * Every data-pf-* hook from docs/THEME_GUIDE.md is kept; all content comes from @/content/profile.
+ */
+import { profile } from '@/content/profile';
+import { photoGroups, heroPhotos, photos } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import meta from './meta';
+import SecHead from './components/SecHead.astro';
+import { cutPoly, cookie, tilt, pick, rng } from './cut';
+import sunUrl from './assets/sun.svg?url';
+import cloudUrl from './assets/cloud.svg?url';
+import './theme.css';
+
+const STYLE = 'paper-cutout';
+const all = photos(STYLE);
+const heroList = heroPhotos(STYLE);
+const hero = heroList.find((p) => p.id.includes('red-kurta-seated')) ?? heroList[0] ?? all[0];
+const byId = (frag: string) => all.find((p) => p.id.includes(frag));
+const aboutA = byId('adventure/02-waterfall-closeup') ?? heroList[1];
+const aboutB = byId('bikes/01-royal-enfield-day') ?? all[3];
+const aboutC = byId('pets/02-dog-on-ledge') ?? all[5];
+const groups = photoGroups(STYLE);
+
+const nameWords = profile.name.split(' ');
+const TILE = ['var(--yellow)', 'var(--coral)', 'var(--skyp)', 'var(--mint)', 'var(--lilac)', 'var(--orange)', 'var(--cream)'];
+const PASTEL = ['var(--butter)', 'var(--pink)', 'var(--mint)', 'var(--skyp)', 'var(--lilac)', 'var(--cream)'];
+const STRIP = ['var(--yellow)', 'var(--coral)', 'var(--skyp)', 'var(--lilac)', 'var(--orange)', 'var(--mint)'];
+const CHIPBG = ['var(--paper)', 'var(--butter)', 'var(--paper)', 'var(--pink)', 'var(--paper)', 'var(--mint)'];
+const TABCOL = ['var(--yellow)', 'var(--coral)', 'var(--skyp)', 'var(--mint)', 'var(--lilac)', 'var(--orange)', 'var(--butter)', 'var(--pink)'];
+
+const nav = [
+  ['about', 'About'],
+  ['experience', 'Experience'],
+  ['case-studies', 'Case studies'],
+  ['projects', 'Projects'],
+  ['skills', 'Skills'],
+  ['beyond-code', 'Beyond code'],
+  ['writing', 'Writing'],
+  ['contact', 'Contact'],
+] as const;
+
+const featured = profile.caseStudies.filter((c) => c.featured);
+const more = profile.caseStudies.filter((c) => !c.featured);
+const year = new Date().getFullYear();
+const firstResume = withBase(profile.resume.href);
+let seedN = 100;
+const sd = () => ++seedN;
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style={STYLE} themeColor="#43bfe0" />
+    <meta name="robots" content="index,follow" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+  </head>
+  <body class="pc">
+    <!-- shared SVG filters: slightly wobbly hand-cut edges (used on small elements only) -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+      <defs>
+        <filter id="pc-rough" x="-4%" y="-8%" width="108%" height="116%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="4" result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="3.4" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+      </defs>
+    </svg>
+
+    <a class="skip" href="#main">Skip to content</a>
+    <div class="grain" aria-hidden="true"></div>
+
+    <!-- nav: bookmark tabs hanging from a kraft strip -->
+    <header class="tabs">
+      <a class="stamp" href="#hero" aria-label={`${profile.name} - back to top`} style={`--cut:${cookie(2, 13, 2.6)}`}><span>AK</span></a>
+      <nav aria-label="Sections">
+        <ul>
+          {nav.map(([id, label], i) => (
+            <li style={`--tab:${pick(TABCOL, i)}`}>
+              <a href={`#${id}`} data-spy={id}><span>{label}</span></a>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </header>
+
+    <main id="main">
+      <!-- ============================================================ HERO -->
+      <section class="hero" id="hero" data-pf-section="hero" aria-labelledby="top-name">
+        <div class="scene" aria-hidden="true">
+          <div class="px px-sun"><img src={sunUrl} alt="" width="400" height="400" decoding="async" /></div>
+          <div class="px px-c1"><img class="drift d1" src={cloudUrl} alt="" width="320" height="130" decoding="async" /></div>
+          <div class="px px-c2"><img class="drift d2" src={cloudUrl} alt="" width="320" height="130" decoding="async" /></div>
+          <div class="px px-c3"><img class="drift d3" src={cloudUrl} alt="" width="320" height="130" decoding="async" /></div>
+          <div class="px px-far"><div class="hill hill-far"></div></div>
+          <div class="px px-mid"><div class="hill hill-mid"></div></div>
+          <div class="px px-near">
+            <div class="hill hill-near"></div>
+            <svg class="tree t1" viewBox="0 0 60 110"><rect x="27" y="60" width="7" height="50" fill="#8a5a2f"/><path d="M30 4C53 2 59 28 53 45C48 62 13 64 7 46C1 28 9 6 30 4Z" fill="#ffc928"/><path d="M30 14C44 14 48 28 44 38C40 50 20 50 16 38C12 26 18 14 30 14Z" fill="#ff8a1f"/></svg>
+            <svg class="tree t2" viewBox="0 0 60 110"><rect x="27" y="60" width="7" height="50" fill="#8a5a2f"/><path d="M30 4C53 2 59 28 53 45C48 62 13 64 7 46C1 28 9 6 30 4Z" fill="#ff8fa0"/><path d="M30 14C44 14 48 28 44 38C40 50 20 50 16 38C12 26 18 14 30 14Z" fill="#e5412a"/></svg>
+            <svg class="tree t3" viewBox="0 0 60 110"><rect x="27" y="60" width="7" height="50" fill="#6b4423"/><path d="M30 4C53 2 59 28 53 45C48 62 13 64 7 46C1 28 9 6 30 4Z" fill="#43bfe0"/><path d="M30 14C44 14 48 28 44 38C40 50 20 50 16 38C12 26 18 14 30 14Z" fill="#1f45c8"/></svg>
+            <i class="leaf lf-a"></i><i class="leaf lf-b"></i><i class="leaf lf-c"></i>
+          </div>
+        </div>
+
+        <div class="wrap hero-in">
+          <div class="hero-copy">
+            <p class="kicker" style={`--cut:${cutPoly(sd(), { nx: 6, ny: 1, j: 2 })}`}><span>{meta.flavor.kicker}</span></p>
+            <h1 id="top-name" aria-label={profile.name}>
+              {nameWords.map((word, wi) => (
+                <>
+                  <span class="word" aria-hidden="true">{[...word].map((ch, ci) => <span class="lt" style={`--bg:${pick(TILE, wi * 3 + ci * 2 + 1)};--r:${tilt(wi * 40 + ci + 7, 5)}deg;--dy:${Math.round(tilt(wi * 17 + ci + 3, 5))}px;--cut:${cutPoly(300 + wi * 20 + ci, { nx: 2, ny: 2, j: 2.4, jc: 3.4 })}`}>{ch}</span>)}</span>
+                  {wi < nameWords.length - 1 ? ' ' : ''}
+                </>
+              ))}
+            </h1>
+            <p class="role"><span class="r-a">{profile.role}</span> <span class="r-b">{profile.location}</span></p>
+            <p class="tagline" style={`--cut:${cutPoly(sd(), { nx: 8, ny: 2, j: 2.4, jc: 4 })}`}><span>{profile.tagline}</span></p>
+            <p class="cta">
+              <a class="btn btn-primary" href={firstResume} data-pf-resume download style={`--bg:var(--poppy);--cut:${cutPoly(sd(), { nx: 4, ny: 1, j: 2.2 })}`}><span>{profile.resume.label}</span></a>
+              <a class="btn" href="#contact" style={`--bg:var(--yellow);--cut:${cutPoly(sd(), { nx: 4, ny: 1, j: 2.2 })}`}><span>Get in touch</span></a>
+              <a class="btn" href="#case-studies" style={`--bg:var(--paper);--cut:${cutPoly(sd(), { nx: 4, ny: 1, j: 2.2 })}`}><span>See the work</span></a>
+            </p>
+            <p class="focus"><span>Focus: {profile.focus}</span></p>
+          </div>
+
+          {hero && (
+            <figure class="hero-photo" style={`--cut:${cutPoly(7, { nx: 5, ny: 5, j: 2.6, jc: 4 })}`}>
+              <i class="tape tape-a" aria-hidden="true"></i>
+              <div class="frame">
+                <img src={hero.img.src} width={hero.img.width} height={hero.img.height} alt={hero.alt} style={`object-position:${hero.focus}`} fetchpriority="high" decoding="async" />
+              </div>
+              <figcaption><span>{hero.caption ?? 'Portrait'}</span></figcaption>
+            </figure>
+          )}
+        </div>
+      </section>
+
+      <!-- ============================================================ ABOUT -->
+      <section class="sheet s-about" id="about" data-pf-section="about" aria-labelledby="h-about">
+        <div class="edge" aria-hidden="true"></div>
+        <div class="wrap">
+          <ul class="stats" aria-label="Key numbers">
+            {profile.stats.map((s, i) => (
+              <li class="sticker" style={`--bg:${pick(['var(--yellow)', 'var(--coral)', 'var(--skyp)', 'var(--mint)', 'var(--lilac)', 'var(--orange)'], i)};--r:${tilt(60 + i, 6)}deg;--cut:${cookie(70 + i, 12 + (i % 3), 3)}`}>
+                <strong>{s.value}</strong><span>{s.label}</span>
+              </li>
+            ))}
+          </ul>
+
+          <SecHead n="01" title="About" id="h-about" sub="A short introduction, cut to size." seed={1} />
+          <div class="about reveal">
+            <div class="about-text">
+              <p class="lead">{profile.summary}</p>
+              {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+              <ul class="scraps" aria-label="Interests">
+                {profile.interests.map((it, i) => (
+                  <li style={`--bg:${pick(CHIPBG, i + 1)};--r:${tilt(80 + i, 3)}deg;--cut:${cutPoly(90 + i, { nx: 3, ny: 1, j: 2.2, jc: 3.2 })}`}><span>{it}</span></li>
+                ))}
+              </ul>
+            </div>
+            <div class="about-photos">
+              {aboutA && (
+                <figure class="cutph cp-a" style={`--r:-4deg;--cut:${cutPoly(11, { nx: 5, ny: 5, j: 2.4, jc: 4 })}`}>
+                  <i class="tape tape-a" aria-hidden="true"></i>
+                  <div class="frame"><img src={aboutA.img.thumb} width={aboutA.img.thumbWidth} height={aboutA.img.thumbHeight} alt={aboutA.alt} loading="lazy" decoding="async" style={`object-position:${aboutA.focus}`} /></div>
+                </figure>
+              )}
+              {aboutB && (
+                <figure class="cutph cp-b" style={`--r:3.5deg;--cut:${cutPoly(12, { nx: 5, ny: 3, j: 2.4, jc: 4 })}`}>
+                  <i class="tape tape-b" aria-hidden="true"></i>
+                  <div class="frame"><img src={aboutB.img.thumb} width={aboutB.img.thumbWidth} height={aboutB.img.thumbHeight} alt={aboutB.alt} loading="lazy" decoding="async" style={`object-position:${aboutB.focus}`} /></div>
+                </figure>
+              )}
+              {aboutC && (
+                <figure class="cutph cp-c" style={`--r:-2deg;--cut:${cutPoly(13, { nx: 5, ny: 3, j: 2.4, jc: 4 })}`}>
+                  <div class="frame"><img src={aboutC.img.thumb} width={aboutC.img.thumbWidth} height={aboutC.img.thumbHeight} alt={aboutC.alt} loading="lazy" decoding="async" style={`object-position:${aboutC.focus}`} /></div>
+                </figure>
+              )}
+              <i class="leaf lf-d" aria-hidden="true"></i>
+              <i class="leaf lf-e" aria-hidden="true"></i>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ EXPERIENCE -->
+      <section class="sheet s-exp" id="experience" data-pf-section="experience" aria-labelledby="h-exp">
+        <div class="edge" aria-hidden="true"></div>
+        <div class="wrap">
+          <SecHead n="02" title="Experience" id="h-exp" sub="A stack of file folders, newest on top." seed={2} />
+          <div class="folders">
+            {profile.experience.map((e, i) => (
+              <article class="folder reveal" style={`--bg:${pick(['var(--butter)', 'var(--pink)', 'var(--mint)'], i)};--tabx:${[4, 27, 50][i % 3]}%;--cut:${cutPoly(120 + i, { nx: 9, ny: 4, j: 2.4, jc: 4 })};--r:${[-0.4, 0.5, -0.3][i % 3]}deg`} data-pf-job={e.id}>
+                <div class="folder-tab"><span>{e.start} - {e.end}</span></div>
+                <div class="folder-body">
+                  <header class="job-h">
+                    <h3><span class="co">{e.company}</span> <span class="ti">{e.title}</span></h3>
+                    <p class="where">{e.place}</p>
+                  </header>
+                  <p class="blurb">{e.blurb}</p>
+                  <ol class="notes">
+                    {e.bullets.map((b, bi) => (
+                      <li style={`--r:${tilt(150 + i * 20 + bi, 0.45)}deg`}>
+                        <span class="n" style={`--cut:${cookie(200 + bi, 9, 2.6)};--bg:${pick(TILE, bi + i)}`} aria-hidden="true">{bi + 1}</span>
+                        <div>
+                          <strong class="head">{b.head}</strong>
+                          <p>{b.text}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </article>
+            ))}
+
+            <div class="diploma reveal" data-pf-education style={`--cut:${cutPoly(170, { nx: 8, ny: 2, j: 2.4, jc: 4 })}`}>
+              <div class="dip-in">
+                <span class="dip-k">Education</span>
+                {profile.education.map((ed) => (
+                  <p><strong class="dip-school">{ed.school}</strong><br /><span>{ed.degree}, {ed.start} - {ed.end}</span></p>
+                ))}
+                <span class="dip-seal" style={`--cut:${cookie(171, 14, 3)}`} aria-hidden="true"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ CASE STUDIES -->
+      <section class="sheet s-cases" id="case-studies" data-pf-section="case-studies" aria-labelledby="h-cases">
+        <div class="edge" aria-hidden="true"></div>
+        <div class="wrap">
+          <SecHead n="03" title="Case studies" id="h-cases" sub={`${featured.length} big jobs, glued down properly.`} seed={3} tone="dark" />
+          <div class="cards">
+            {featured.map((c, i) => (
+              <article class="case reveal" data-pf-case={c.id} style={`--bg:${pick(PASTEL, i)};--b1:${pick(PASTEL, i + 2)};--b2:${pick(PASTEL, i + 4)};--r:${tilt(220 + i, 1.1)}deg;--cut:${cutPoly(230 + i, { nx: 6, ny: 5, j: 2.2, jc: 4 })}`}>
+                <div class="case-in">
+                  <p class="case-top"><span class="num" style={`--cut:${cookie(240 + i, 10, 2.8)}`} aria-hidden="true">{String(i + 1).padStart(2, '0')}</span><span class="meta">{c.org} / {c.period} / {c.role}</span></p>
+                  <h3>{c.title}</h3>
+                  <p class="kick">{c.kicker}</p>
+                  <dl class="pa">
+                    <div><dt>Problem</dt><dd>{c.problem}</dd></div>
+                    <div><dt>Approach</dt><dd>{c.approach}</dd></div>
+                  </dl>
+                  <ul class="impact" aria-label="Impact">
+                    {c.impact.map((im, k) => <li style={`--r:${tilt(250 + i * 5 + k, 1.6)}deg;--cut:${cutPoly(260 + i * 5 + k, { nx: 3, ny: 1, j: 1.8 })}`}><span>{im}</span></li>)}
+                  </ul>
+                  <ul class="ctags" aria-label="Tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {more.length > 0 && (
+            <div class="more">
+              <h3 class="more-h"><span>Earlier scraps</span></h3>
+              <div class="cards cards--more">
+                {more.map((c, i) => (
+                  <article class="case case--more reveal" data-pf-case={c.id} style={`--bg:${pick(PASTEL, i + 3)};--b1:${pick(PASTEL, i + 5)};--b2:${pick(PASTEL, i + 1)};--r:${tilt(270 + i, 1.1)}deg;--cut:${cutPoly(280 + i, { nx: 6, ny: 4, j: 2.2, jc: 4 })}`}>
+                    <div class="case-in">
+                      <p class="case-top"><span class="num" style={`--cut:${cookie(290 + i, 10, 2.8)}`} aria-hidden="true">{String(featured.length + i + 1).padStart(2, '0')}</span><span class="meta">{c.org} / {c.period} / {c.role}</span></p>
+                      <h3>{c.title}</h3>
+                      <p class="kick">{c.kicker}</p>
+                      <dl class="pa">
+                        <div><dt>Problem</dt><dd>{c.problem}</dd></div>
+                        <div><dt>Approach</dt><dd>{c.approach}</dd></div>
+                      </dl>
+                      <ul class="impact" aria-label="Impact">
+                        {c.impact.map((im, k) => <li style={`--r:${tilt(300 + i * 5 + k, 1.6)}deg;--cut:${cutPoly(310 + i * 5 + k, { nx: 3, ny: 1, j: 1.8 })}`}><span>{im}</span></li>)}
+                      </ul>
+                      <ul class="ctags" aria-label="Tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      <!-- ============================================================ PROJECTS -->
+      <section class="sheet s-projects" id="projects" data-pf-section="projects" aria-labelledby="h-projects">
+        <div class="edge" aria-hidden="true"></div>
+        <div class="bunting" aria-hidden="true"></div>
+        <div class="wrap">
+          <SecHead n="04" title="Projects" id="h-projects" sub="Pinned to the string, one per tag." seed={4} />
+          <ul class="tagrow">
+            {profile.projects.map((pr, i) => (
+              <li class="tagwrap reveal" style={`--r:${tilt(320 + i, 2.6)}deg;--bg:${pick(PASTEL, i + 1)}`}>
+                <i class="string" aria-hidden="true"></i>
+                <article class="ptag" data-pf-project={pr.name}>
+                  <span class="eyelet" aria-hidden="true"></span>
+                  <p class="yr">{pr.year}</p>
+                  <h3>{pr.title}</h3>
+                  <p class="desc">{pr.blurb}</p>
+                  <ul class="stack" aria-label="Stack">{pr.stack.map((s) => <li>{s}</li>)}</ul>
+                  <p class="plinks">
+                    <a class="pbtn" href={pr.repo} rel="noopener" style={`--cut:${cutPoly(330 + i, { nx: 3, ny: 1, j: 1.8 })}`}><span>Source on GitHub</span></a>
+                    {pr.live && <a class="pbtn pbtn-live" href={pr.live} rel="noopener" style={`--cut:${cutPoly(340 + i, { nx: 3, ny: 1, j: 1.8 })}`}><span>Live site</span></a>}
+                  </p>
+                </article>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============================================================ SKILLS -->
+      <section class="sheet s-skills" id="skills" data-pf-section="skills" aria-labelledby="h-skills">
+        <div class="edge" aria-hidden="true"></div>
+        <div class="wrap">
+          <SecHead n="05" title="Skills" id="h-skills" sub="From the scrap box, sorted by colour." seed={5} />
+          <ul class="strips">
+            {profile.skills.map((g, gi) => {
+              const fam: string[] = (g as { familiar?: readonly string[] }).familiar ? [...(g as { familiar?: readonly string[] }).familiar!] : [];
+              return (
+                <li class="strip reveal" style={`--bg:${pick(STRIP, gi)};--r:${tilt(350 + gi, 0.7)}deg;--cut:${cutPoly(360 + gi, { nx: 12, ny: 3, j: 3.4, jc: 5 })}`}>
+                  <h3>{g.group}</h3>
+                  <ul class="chips">
+                    {g.items.map((it, k) => (
+                      <li style={`--bg:${pick(CHIPBG, gi + k)};--r:${tilt(400 + gi * 20 + k, 3)}deg;--cut:${cutPoly(410 + gi * 20 + k, { nx: 2, ny: 1, j: 2.6, jc: 3.6 })}`}><span>{it}</span></li>
+                    ))}
+                    {fam.map((it, k) => (
+                      <li class="fam" style={`--r:${tilt(500 + gi * 5 + k, 3)}deg;--cut:${cutPoly(510 + gi * 5 + k, { nx: 2, ny: 1, j: 2.6, jc: 3.6 })}`}><span>{it} <em>(familiar)</em></span></li>
+                    ))}
+                  </ul>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============================================================ BEYOND CODE -->
+      <section class="sheet s-beyond" id="beyond-code" data-pf-section="beyond-code" aria-labelledby="h-beyond">
+        <div class="edge" aria-hidden="true"></div>
+        <div class="wrap">
+          <SecHead n="06" title="Beyond code" id="h-beyond" sub="The off-duty scrapbook: trips, rides, books and friends." seed={6} />
+          <div class="board-bar">
+            <p class="hint" id="drag-hint"><span class="hint-fine">Drag the photos around. Keyboard: arrow keys pick a photo, Shift + arrows move it, Home puts it back.</span><span class="hint-coarse">Tap-friendly grid on touch screens.</span></p>
+            <button class="btn tidy" type="button" data-tidy hidden style={`--bg:var(--yellow);--cut:${cutPoly(600, { nx: 4, ny: 1, j: 2.2 })}`}><span>Tidy up</span></button>
+          </div>
+          <div class="board" data-board>
+            {groups.map((g, gi) => (
+              <section class="spage reveal" aria-labelledby={`g-${g.category}`} data-spage style={`--bg:${pick(['var(--paper)', 'var(--butter)', 'var(--skyp)', 'var(--pink)', 'var(--mint)', 'var(--lilac)', 'var(--cream)', 'var(--butter)', 'var(--pink)'], gi)};--r:${tilt(610 + gi, 0.5)}deg;--cut:${cutPoly(620 + gi, { nx: 12, ny: 4, j: 2.6, jc: 4 })}`}>
+                <header class="spage-h">
+                  <h3 id={`g-${g.category}`}><span style={`--cut:${cutPoly(630 + gi, { nx: 5, ny: 1, j: 2 })}`}>{g.title}</span></h3>
+                  <p>{g.blurb}</p>
+                </header>
+                <div class="snaps">
+                  {g.photos.map((p, pi) => {
+                    const r = rng(700 + gi * 40 + pi);
+                    const rot = Math.round((r() - 0.5) * 9 * 10) / 10;
+                    const dy = Math.round((r() - 0.5) * 26);
+                    const k = pi % 5;
+                    return (
+                      <figure class={`snap ${p.orientation}`} data-snap style={`--r:${rot}deg;--dy:${dy}px;--ar:${p.img.thumbWidth}/${p.img.thumbHeight};--cut:${cutPoly(800 + gi * 40 + pi, { nx: 3, ny: 3, j: 1.6, jc: 2.6 })}`}>
+                        {k === 0 && <i class="tape tape-a" aria-hidden="true"></i>}
+                        {k === 3 && <i class="tape tape-b" aria-hidden="true"></i>}
+                        <div class="frame">
+                          <img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" draggable="false" style={`object-position:${p.focus}`} />
+                        </div>
+                        {p.caption && <figcaption><span>{p.caption}</span></figcaption>}
+                      </figure>
+                    );
+                  })}
+                </div>
+              </section>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ WRITING -->
+      <section class="sheet s-writing" id="writing" data-pf-section="writing" aria-labelledby="h-writing">
+        <div class="edge" aria-hidden="true"></div>
+        <div class="wrap">
+          <SecHead n="07" title="Writing" id="h-writing" sub="Notes pinned up for later." seed={7} />
+          <p class="wstatus" style={`--cut:${cutPoly(900, { nx: 8, ny: 1, j: 2.4, jc: 4 })}`}><span>{profile.writing.status}</span></p>
+          <p class="wplanned">Planned:</p>
+          <ul class="sticky">
+            {profile.writing.planned.map((t, i) => (
+              <li class="reveal" style={`--r:${tilt(910 + i, 4)}deg;--bg:${pick(['var(--yellow)', 'var(--coral)', 'var(--mint)', 'var(--skyp)'], i)}`}><span class="pin" aria-hidden="true"></span><p>{t}</p></li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <!-- ============================================================ CONTACT -->
+      <section class="sheet s-contact" id="contact" data-pf-section="contact" aria-labelledby="h-contact">
+        <div class="edge" aria-hidden="true"></div>
+        <i class="leaf lf-f" aria-hidden="true"></i><i class="leaf lf-g" aria-hidden="true"></i><i class="star st-a" aria-hidden="true"></i><i class="star st-b" aria-hidden="true"></i><i class="star st-c" aria-hidden="true"></i>
+        <div class="wrap">
+          <SecHead n="08" title="Contact" id="h-contact" sub="Send a letter. It will be read, I promise." seed={8} tone="dark" />
+          <p class="open">Open to interesting problems in GenAI agents, workflow systems and backend infrastructure.</p>
+          <div class="contact-grid">
+            <div class="letter reveal" style={`--cut:${cutPoly(950, { nx: 10, ny: 6, j: 2.4, jc: 4 })}`}>
+              <div class="letter-in">
+                <span class="postmark" style={`--cut:${cookie(951, 16, 2.4)}`} aria-hidden="true"><b>{year}</b></span>
+                <p class="dear">Dear {profile.firstName},</p>
+                <ContactForm submitLabel="Post it" labels={{ name: 'Your name', email: 'Your email', message: 'What is on your mind?' }} />
+              </div>
+            </div>
+            <div class="links">
+              <div class="mail" style={`--cut:${cutPoly(960, { nx: 6, ny: 1, j: 2.4, jc: 4 })}`}>
+                <p class="mail-k">Email</p>
+                <p class="mail-v"><Protected kind="email" class="mail-a" /></p>
+                <button class="btn copy" type="button" data-copy-email style={`--bg:var(--yellow);--cut:${cutPoly(961, { nx: 4, ny: 1, j: 2 })}`}><span data-copy-label>Copy email</span></button>
+                <p class="copy-status" role="status" aria-live="polite"></p>
+              </div>
+              <ul class="plist">
+                <li style={`--bg:var(--paper);--r:-1deg;--cut:${cutPoly(970, { nx: 5, ny: 1, j: 2.2 })}`}><span class="pl-k">Phone</span><Protected kind="phone" class="pl-a" /></li>
+                <li style={`--bg:var(--skyp);--r:1.2deg;--cut:${cutPoly(971, { nx: 5, ny: 1, j: 2.2 })}`}><span class="pl-k">LinkedIn</span><a class="pl-a" href={profile.contact.linkedin} rel="noopener me" data-pf-linkedin>abhishek-kumar-ld</a></li>
+                <li style={`--bg:var(--mint);--r:-0.8deg;--cut:${cutPoly(972, { nx: 5, ny: 1, j: 2.2 })}`}><span class="pl-k">GitHub</span><a class="pl-a" href={profile.contact.github} rel="noopener me" data-pf-github>{profile.handle}</a></li>
+                <li style={`--bg:var(--coral);--r:0.9deg;--cut:${cutPoly(973, { nx: 5, ny: 1, j: 2.2 })}`}><span class="pl-k">Resume</span><a class="pl-a" href={firstResume} data-pf-resume download>{profile.resume.label}</a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="edge edge-foot" aria-hidden="true"></div>
+      <div class="wrap">
+        <p class="foot-line">{meta.flavor.footer}</p>
+        <p class="foot-small">&copy; {year} {profile.name}. Built with Astro. A different art style every day - see the <a href={withBase('gallery/')}>gallery</a>.</p>
+      </div>
+    </footer>
+
+    <UtilityBar style={STYLE} />
+    <script>
+      import './client.ts';
+    </script>
+  </body>
+</html>

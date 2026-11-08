@@ -1,0 +1,12 @@
+---
+/** Section heading: numbered cookie sticker + a coloured paper label cut around the title + hand-written sub line. */
+import { cookie, cutPoly, tilt, pick } from '../cut';
+interface Props { n: string; title: string; sub?: string; id: string; seed?: number; tone?: 'light' | 'dark' }
+const { n, title, sub, id, seed = 1, tone = 'light' } = Astro.props;
+const LABEL = ['var(--yellow)', 'var(--coral)', 'var(--mint)', 'var(--skyp)', 'var(--lilac)', 'var(--orange)'];
+---
+<header class={`sh sh--${tone}`}>
+  <span class="sh-n" style={`--cut:${cookie(seed * 3, 11)};--bg:${pick(LABEL, seed + 2)}`} aria-hidden="true"><b>{n}</b></span>
+  <h2 id={id}><span class="sh-t" style={`--cut:${cutPoly(seed * 7, { nx: 7, ny: 1, j: 3, jc: 5 })};--bg:${pick(LABEL, seed)};--r:${tilt(seed, 1.4)}deg`}>{title}</span></h2>
+  {sub && <p class="sh-sub">{sub}</p>}
+</header>
