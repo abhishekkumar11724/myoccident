@@ -11,8 +11,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: npm }
+        with: { node-version: 24, cache: npm }
       - run: npm ci
+      # Photo variants (60 photos x 19 styles) take a while to render; reuse them while photos/recipes/fx are unchanged.
+      - uses: actions/cache@v4
+        with:
+          path: |
+            public/generated
+            src/generated/manifest
+          key: images-${{ hashFiles('photos/**', 'src/themes/*/recipe.mjs', 'scripts/fx/index.mjs', 'scripts/build-images.mjs', 'src/content/photos.ts') }}
+          restore-keys: images-
       - run: npm run build
         env:
           PUBLIC_WEB3FORMS_KEY: ${{ secrets.PUBLIC_WEB3FORMS_KEY }}
