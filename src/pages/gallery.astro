@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { THEMES, LAUNCH_DATE } from '@/themes/order';
-import { builtIds, themeMeta } from '@/themes/registry';
+import { builtIds } from '@/themes/registry';
 import { withBase, themeUrl } from '@/lib/urls';
 import { profile } from '@/content/profile';
 import ThemeHead from '@/components/ThemeHead.astro';
@@ -12,7 +12,6 @@ const previewDir = path.resolve('public/previews');
 const cards = THEMES.map((t, i) => ({
   ...t, day: i, built: builtIds.includes(t.id),
   preview: fs.existsSync(path.join(previewDir, `${t.id}.jpg`)) ? withBase(`previews/${t.id}.jpg`) : null,
-  meta: themeMeta(t.id),
 }));
 ---
 <!doctype html>

@@ -15,7 +15,7 @@ import { withBase, themeUrl, cleanUrl, galleryUrl } from '@/lib/urls';
 interface Props { style: string; variant?: 'theme' | 'clean'; label?: string }
 const { style, variant = 'theme', label = 'Clean view' } = Astro.props;
 const info = themeInfo(style);
-const meta = themeMeta(style);
+const meta = await themeMeta(style);
 const ids = THEMES.map((t) => t.id).filter((id) => builtIds.includes(id));
 const i = ids.indexOf(style);
 const prev = i >= 0 && ids.length > 1 ? ids[(i - 1 + ids.length) % ids.length] : null;

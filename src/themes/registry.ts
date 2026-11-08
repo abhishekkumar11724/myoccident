@@ -29,5 +29,9 @@ export interface ThemeMeta {
   flavor: { kicker: string; tagline: string; footer: string };
   credits: StyleCredit[];
 }
-const metas = import.meta.glob('./*/meta.ts', { eager: true, import: 'default' }) as Record<string, ThemeMeta>;
-export const themeMeta = (id: string): ThemeMeta | undefined => metas[`./${id}/meta.ts`];
+// Lazy on purpose: an isolated dev server (PF_ONLY) must never import another theme's half-written files.
+const metas = import.meta.glob('./*/meta.ts', { import: 'default' }) as Record<string, () => Promise<ThemeMeta>>;
+export const themeMeta = async (id: string): Promise<ThemeMeta | undefined> => {
+  const load = metas[`./${id}/meta.ts`];
+  return load ? await load() : undefined;
+};
