@@ -13,7 +13,7 @@ const attr = kind === 'email' ? { 'data-pf-email': '' } : { 'data-pf-phone': '' 
 const hasSlot = Astro.slots.has('default');
 ---
 <a href="#contact" class={cls} data-pf-protected={kind} data-v={v} data-d={display} data-fill={(!hasSlot || fill) ? 'true' : 'false'} rel="nofollow" {...attr}>
-  {hasSlot ? <slot /> : <span class="pf-reveal">{kind === 'email' ? 'Email (needs JavaScript)' : 'Phone (needs JavaScript)'}</span>}
+  {hasSlot ? <slot /> : <span class="pf-reveal">{kind === 'email' ? 'abhishek.k.11724 [at] gmail [dot] com' : 'Phone: see the resume PDF'}</span>}
 </a>
 <script>
   document.querySelectorAll<HTMLAnchorElement>('a[data-pf-protected]').forEach((a) => {
@@ -22,5 +22,6 @@ const hasSlot = Astro.slots.has('default');
     const kind = a.dataset.pfProtected, val = atob(a.dataset.v || ''), disp = atob(a.dataset.d || '');
     a.href = (kind === 'email' ? 'mailto:' : 'tel:') + val;
     if (a.dataset.fill === 'true') a.textContent = disp;
+    a.removeAttribute('rel'); a.setAttribute('rel', 'nofollow');
   });
 </script>
