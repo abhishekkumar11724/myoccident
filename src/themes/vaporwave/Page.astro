@@ -1,0 +1,493 @@
+---
+/**
+ * Vaporwave theme: a pastel sunset desktop. A fixed scene (sky, striped sun, perspective grid, palms) sits behind
+ * opaque retro-OS windows: Notepad, Explorer, app windows, boxed software, a Setup Wizard, My Pictures, Inbox, Compose.
+ * Keep every data-pf-* hook and ALL content (docs/THEME_GUIDE.md).
+ */
+import { profile } from '@/content/profile';
+import { photoGroups, heroPhotos, photos } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import meta from './meta';
+import spriteRaw from './assets/sprite.svg?raw';
+import palmUrl from './assets/palm.svg?url';
+import columnUrl from './assets/column.svg?url';
+import './theme.css';
+
+const STYLE = 'vaporwave';
+const heroes = heroPhotos(STYLE);
+const hero = heroes[0] ?? photos(STYLE)[0];
+const aboutPhoto = heroes[1] ?? hero;
+const contactPhoto = heroes[2] ?? aboutPhoto;
+const groups = photoGroups(STYLE);
+const current = profile.experience[0];
+
+const pad = (n: number) => String(n).padStart(2, '0');
+const dash = (s: string) => s.replace(/ - /g, ' \u2013 ');
+const tone = (i: number) => ['pink', 'cyan', 'mint', 'lav', 'butter', 'peach'][i % 6];
+const hostOf = (u: string) => u.replace(/^https?:\/\//, '').replace(/\/$/, '');
+const pathOf = (e: (typeof profile.experience)[number]) =>
+  `C:\\Career\\${e.company}${profile.experience.filter((x) => x.company === e.company).length > 1 ? '\\' + e.start.replace(' ', '-') : ''}`;
+
+const nav = [
+  { id: 'about', label: 'About', icon: 'user' },
+  { id: 'experience', label: 'Experience', icon: 'case' },
+  { id: 'case-studies', label: 'Case studies', icon: 'computer' },
+  { id: 'projects', label: 'Projects', icon: 'disk' },
+  { id: 'skills', label: 'Skills', icon: 'gear' },
+  { id: 'beyond-code', label: 'Beyond code', icon: 'photo' },
+  { id: 'writing', label: 'Writing', icon: 'pencil' },
+  { id: 'contact', label: 'Contact', icon: 'mail' },
+];
+const sub = {
+  about: 'readme.txt \u2013 please read before installing',
+  experience: 'Browse the drive. Every folder is somewhere I shipped something.',
+  caseStudies: `${profile.caseStudies.length} programs running. Close none of them.`,
+  projects: 'Shrink-wrapped side projects from the software aisle.',
+  skills: 'Installed components. No reboot required.',
+  beyond: 'My Pictures: the other half of the hard drive.',
+  writing: 'Inbox (0). Drafts are slowly being reverbed.',
+  contact: 'Dial in. No modem noises, promise.',
+};
+const newestYear = Math.max(...profile.projects.map((p) => Number(p.year)));
+---
+<!doctype html>
+<html lang="en" class="vw" data-scene="sunset">
+  <head>
+    <ThemeHead style={STYLE} themeColor="#e6dbff" />
+    <meta name="robots" content="index,follow" />
+    <script is:inline>try{var s=localStorage.getItem('pf-vw-scene');if(s==='midnight'||s==='sunset')document.documentElement.dataset.scene=s;if(localStorage.getItem('pf-vw-motion')==='off')document.documentElement.classList.add('vw-paused')}catch(e){}</script>
+  </head>
+  <body>
+    <div class="vw-sprite" aria-hidden="true" set:html={spriteRaw} />
+    <a class="vw-skip" href="#main">Skip to content</a>
+
+    <!-- ===== the dream: fixed scene behind everything ===== -->
+    <div class="vw-scene" aria-hidden="true">
+      <div class="vw-sky"></div>
+      <div class="vw-stars"></div>
+      <div class="vw-cloud c1"></div><div class="vw-cloud c2"></div><div class="vw-cloud c3"></div>
+      <div class="vw-sun"><div class="vw-sun-disc"></div></div>
+      <div class="vw-floor"><div class="vw-grid"><div class="vw-grid-in"></div></div></div>
+      <img class="vw-palm l" src={palmUrl} alt="" width="220" height="380" />
+      <img class="vw-palm r" src={palmUrl} alt="" width="220" height="380" />
+    </div>
+
+    <!-- ===== taskbar (docked to the top) ===== -->
+    <header class="vw-task">
+      <details class="vw-start" data-start>
+        <summary class="vw-btn vw-startbtn"><svg class="vw-i" aria-hidden="true"><use href="#i-start" /></svg><b>Start</b></summary>
+        <div class="vw-startmenu">
+          <div class="vw-startban" aria-hidden="true"><span>{profile.firstName}<em>95</em></span></div>
+          <div class="vw-startlist">
+            <p class="vw-startwho">{profile.name}<small>{profile.role}</small></p>
+            <ul>
+              {nav.map((n) => <li><a href={`#${n.id}`}><svg class="vw-i" aria-hidden="true"><use href={`#i-${n.icon}`} /></svg>{n.label}</a></li>)}
+            </ul>
+            <hr />
+            <ul>
+              <li><a href={withBase(profile.resume.href)} data-pf-resume download><svg class="vw-i" aria-hidden="true"><use href="#i-resume" /></svg>Resume (PDF)</a></li>
+              <li><a href={profile.contact.linkedin} rel="noopener me"><svg class="vw-i" aria-hidden="true"><use href="#i-in" /></svg>LinkedIn</a></li>
+              <li><a href={profile.contact.github} rel="noopener me"><svg class="vw-i" aria-hidden="true"><use href="#i-code" /></svg>GitHub</a></li>
+            </ul>
+            <hr />
+            <ul><li><a href="#end"><svg class="vw-i" aria-hidden="true"><use href="#i-moon" /></svg>Shut down&hellip;</a></li></ul>
+          </div>
+        </div>
+      </details>
+
+      <nav class="vw-tasks" aria-label="Sections">
+        {nav.map((n) => <a class="vw-btn vw-taskbtn" href={`#${n.id}`} data-nav={n.id} title={n.label}><svg class="vw-i" aria-hidden="true"><use href={`#i-${n.icon}`} /></svg><span>{n.label}</span></a>)}
+      </nav>
+
+      <div class="vw-tray">
+        <button class="vw-btn vw-traybtn" type="button" data-scene-toggle aria-pressed="false" title="Switch scene: sunset or midnight">
+          <svg class="vw-i vw-ico-sun" aria-hidden="true"><use href="#i-sun" /></svg><svg class="vw-i vw-ico-moon" aria-hidden="true"><use href="#i-moon" /></svg>
+          <span class="vw-sr">Scene: <b data-scene-label>sunset</b>. Toggle sunset and midnight.</span>
+        </button>
+        <button class="vw-btn vw-traybtn" type="button" data-motion-toggle aria-pressed="false" title="Pause or resume the background animation">
+          <svg class="vw-i vw-ico-pause" aria-hidden="true"><use href="#i-pause" /></svg><svg class="vw-i vw-ico-play" aria-hidden="true"><use href="#i-play" /></svg>
+          <span class="vw-sr">Background animation: <b data-motion-label>on</b>. Toggle.</span>
+        </button>
+        <span class="vw-clock" title="Local time in India (IST)"><svg class="vw-i" aria-hidden="true"><use href="#i-clock" /></svg><time data-clock>--:--</time></span>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ================= HERO ================= -->
+      <section class="vw-hero" id="hero" data-pf-section="hero">
+        <div class="vw-wrap vw-hero-grid">
+          <ul class="vw-desk" aria-label="Quick links">
+            <li><a class="vw-dicon" href={withBase(profile.resume.href)} data-pf-resume download><svg class="vw-i" aria-hidden="true"><use href="#i-resume" /></svg><span>Resume.pdf</span></a></li>
+            <li><a class="vw-dicon" href={profile.contact.linkedin} rel="noopener me" data-pf-linkedin><svg class="vw-i" aria-hidden="true"><use href="#i-in" /></svg><span>LinkedIn</span></a></li>
+            <li><a class="vw-dicon" href={profile.contact.github} rel="noopener me" data-pf-github><svg class="vw-i" aria-hidden="true"><use href="#i-code" /></svg><span>GitHub</span></a></li>
+            <li><Protected kind="email" class="vw-dicon"><svg class="vw-i" aria-hidden="true"><use href="#i-mail" /></svg><span>Email</span></Protected></li>
+          </ul>
+
+          <div class="vw-hero-main">
+            <p class="vw-badge"><svg class="vw-i" aria-hidden="true"><use href="#i-sparkle" /></svg>{meta.flavor.kicker}</p>
+            <h1 class="vw-name"><span>Abhishek</span> <span>Kumar</span></h1>
+            <p class="vw-role"><span>{profile.role}</span><span class="vw-role-loc">{profile.location}</span></p>
+
+            <div class="vw-win vw-note">
+              <div class="vw-tb" data-tone="lav"><svg class="vw-i" aria-hidden="true"><use href="#i-doc" /></svg><span class="vw-tb-t">hello.txt &ndash; Notepad</span><span class="vw-tb-c" aria-hidden="true"><i></i><i></i><i></i></span></div>
+              <div class="vw-body">
+                <p class="vw-lead">{profile.tagline}</p>
+                <p class="vw-aside">{meta.flavor.tagline}</p>
+                <p class="vw-cta">
+                  <a class="vw-btn vw-primary" href={withBase(profile.resume.href)} data-pf-resume download><svg class="vw-i" aria-hidden="true"><use href="#i-down" /></svg>{profile.resume.label}</a>
+                  <a class="vw-btn" href="#contact"><svg class="vw-i" aria-hidden="true"><use href="#i-mail" /></svg>Say hello</a>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="vw-hero-art">
+            <img class="vw-col" src={columnUrl} alt="" width="120" height="520" aria-hidden="true" />
+            {hero && (
+              <figure class="vw-win vw-viewer">
+                <div class="vw-tb" data-tone="pink"><svg class="vw-i" aria-hidden="true"><use href="#i-photo" /></svg><span class="vw-tb-t">me.bmp &ndash; Image Viewer</span><span class="vw-tb-c" aria-hidden="true"><i></i><i></i><i></i></span></div>
+                <div class="vw-menubar" aria-hidden="true"><span>File</span><span>Edit</span><span>View</span><span>Help</span></div>
+                <div class="vw-frame"><img class="vw-portrait" src={hero.img.src} width={hero.img.width} height={hero.img.height} alt={hero.alt} style={`object-position:${hero.focus}`} fetchpriority="high" decoding="async" /></div>
+                <figcaption class="vw-status"><span>{hero.caption}</span><span>{profile.location}</span></figcaption>
+              </figure>
+            )}
+            <aside class="vw-toast" aria-label="Currently">
+              <svg class="vw-i" aria-hidden="true"><use href="#i-info" /></svg>
+              <p><b>Now running</b>{current.title}, {current.company}<small>since {current.start}</small></p>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      <div class="vw-ticker" aria-hidden="true">
+        <div class="vw-ticker-track">
+          {[0, 1].map(() => (
+            <ul>{profile.interests.map((t) => <li><svg class="vw-i" aria-hidden="true"><use href="#i-sparkle" /></svg>{t}</li>)}</ul>
+          ))}
+        </div>
+      </div>
+
+      <!-- ================= ABOUT ================= -->
+      <section class="vw-sec" id="about" data-pf-section="about">
+        <div class="vw-wrap">
+          <header class="vw-head"><p class="vw-path" aria-hidden="true"><svg class="vw-i"><use href="#i-user" /></svg>C:\ABHISHEK\ABOUT</p><h2>About</h2><p class="vw-subhead">{sub.about}</p></header>
+
+          <div class="vw-about-grid">
+            <div class="vw-win vw-readme">
+              <div class="vw-tb" data-tone="butter"><svg class="vw-i" aria-hidden="true"><use href="#i-doc" /></svg><span class="vw-tb-t">about_me.txt &ndash; Notepad</span><span class="vw-tb-c" aria-hidden="true"><i></i><i></i><i></i></span></div>
+              <div class="vw-menubar" aria-hidden="true"><span>File</span><span>Edit</span><span>Search</span><span>Help</span></div>
+              <div class="vw-body vw-readme-body">
+                <figure class="vw-idcard">
+                  <img src={aboutPhoto.img.src} width={aboutPhoto.img.width} height={aboutPhoto.img.height} alt={aboutPhoto.alt} style={`object-position:${aboutPhoto.focus}`} loading="lazy" decoding="async" />
+                  <figcaption>{profile.name}<small>{profile.focus}</small></figcaption>
+                </figure>
+                <div class="vw-prose">
+                  <p class="vw-bigp">{profile.summary}</p>
+                  {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+                  <ul class="vw-chips" aria-label="Interests">{profile.interests.map((i) => <li><svg class="vw-i" aria-hidden="true"><use href="#i-star" /></svg>{i}</li>)}</ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="vw-win vw-sysprops">
+              <div class="vw-tb" data-tone="cyan"><svg class="vw-i" aria-hidden="true"><use href="#i-chip" /></svg><span class="vw-tb-t">System Properties</span><span class="vw-tb-c" aria-hidden="true"><i></i><i></i><i></i></span></div>
+              <div class="vw-tabs" aria-hidden="true"><span class="on">General</span><span>Performance</span><span>Devices</span></div>
+              <div class="vw-body">
+                <p class="vw-sysl">Performance, as measured in production</p>
+                <ul class="vw-stats">
+                  {profile.stats.map((s) => <li><strong>{s.value}</strong><span>{s.label}</span></li>)}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= EXPERIENCE ================= -->
+      <section class="vw-sec" id="experience" data-pf-section="experience">
+        <div class="vw-wrap">
+          <header class="vw-head"><p class="vw-path" aria-hidden="true"><svg class="vw-i"><use href="#i-case" /></svg>C:\CAREER</p><h2>Experience</h2><p class="vw-subhead">{sub.experience}</p></header>
+
+          <div class="vw-win vw-explorer" data-explorer>
+            <div class="vw-tb" data-tone="pink"><svg class="vw-i" aria-hidden="true"><use href="#i-folder-open" /></svg><span class="vw-tb-t">C:\Career &ndash; Explorer</span><span class="vw-tb-c" aria-hidden="true"><i></i><i></i><i></i></span></div>
+            <div class="vw-menubar" aria-hidden="true"><span>File</span><span>Edit</span><span>View</span><span>Go</span><span>Help</span></div>
+            <div class="vw-addr"><span class="vw-addr-l">Address</span><output class="vw-addr-f" data-addr>{pathOf(current)}</output></div>
+            <div class="vw-ex-body">
+              <div class="vw-tree" data-tree>
+                <p class="vw-tree-h" aria-hidden="true"><svg class="vw-i"><use href="#i-computer" /></svg>Career</p>
+                {profile.experience.map((e, i) => (
+                  <a class="vw-leaf" href={`#exp-${e.id}`} data-tab={e.id} data-path={pathOf(e)}>
+                    <svg class="vw-i" aria-hidden="true"><use href="#i-folder" /></svg>
+                    <span><b>{e.company}</b><small>{e.title}</small><small>{e.start} &ndash; {e.end}</small></span>
+                  </a>
+                ))}
+              </div>
+              <div class="vw-ex-main">
+                {profile.experience.map((e, i) => (
+                  <article class="vw-pane" id={`exp-${e.id}`} data-pane={e.id}>
+                    <header class="vw-pane-head">
+                      <h3>{e.title}<span class="vw-at"> @ {e.company}</span></h3>
+                      <p class="vw-meta"><span>{e.start} &ndash; {e.end}</span><span>{e.place}</span></p>
+                      <p class="vw-blurb">{e.blurb}</p>
+                    </header>
+                    <div class="vw-list">
+                      <div class="vw-listhead" aria-hidden="true"><span>Name</span><span>Details</span></div>
+                      {e.bullets.map((b) => (
+                        <div class="vw-row">
+                          <h4 class="vw-fname"><svg class="vw-i" aria-hidden="true"><use href="#i-doc" /></svg><span>{b.head}</span></h4>
+                          <p>{b.text}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <p class="vw-status"><span>{e.bullets.length} object(s)</span><span>{e.company}, {e.place}</span></p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div class="vw-win vw-diploma" id="education">
+            <div class="vw-tb" data-tone="mint"><svg class="vw-i" aria-hidden="true"><use href="#i-cap" /></svg><span class="vw-tb-t">D:\Education</span><span class="vw-tb-c" aria-hidden="true"><i></i><i></i><i></i></span></div>
+            <div class="vw-body">
+              {profile.education.map((e) => (
+                <div class="vw-edu" data-pf-education>
+                  <svg class="vw-i vw-edu-i" aria-hidden="true"><use href="#i-cap" /></svg>
+                  <div>
+                    <h3>{e.school}</h3>
+                    <p>{e.degree}</p>
+                    <p class="vw-meta"><span>{e.start} &ndash; {e.end}</span><span>{e.short}</span></p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= CASE STUDIES ================= -->
+      <section class="vw-sec" id="case-studies" data-pf-section="case-studies">
+        <div class="vw-wrap">
+          <header class="vw-head"><p class="vw-path" aria-hidden="true"><svg class="vw-i"><use href="#i-computer" /></svg>C:\PROGRAMS</p><h2>Case studies</h2><p class="vw-subhead">{sub.caseStudies}</p></header>
+          <div class="vw-cases">
+            {profile.caseStudies.map((c, i) => (
+              <article class="vw-win vw-case" data-pf-case={c.id}>
+                <div class="vw-tb" data-tone={tone(i)}><svg class="vw-i" aria-hidden="true"><use href="#i-computer" /></svg><span class="vw-tb-t">{c.id}.exe</span><span class="vw-tb-c" aria-hidden="true"><i></i><i></i><i></i></span></div>
+                <div class="vw-body">
+                  <p class="vw-meta"><span>{c.org}</span><span>{c.period}</span><span>{c.role}</span></p>
+                  <h3>{c.title}</h3>
+                  <p class="vw-kick">{c.kicker}</p>
+                  <div class="vw-gb"><h4>Problem</h4><p>{c.problem}</p></div>
+                  <div class="vw-gb"><h4>Approach</h4><p>{c.approach}</p></div>
+                  <div class="vw-lcd"><h4><svg class="vw-i" aria-hidden="true"><use href="#i-chip" /></svg>Impact</h4><ul>{c.impact.map((x) => <li>{x}</li>)}</ul></div>
+                </div>
+                <ul class="vw-status vw-tags" aria-label="Tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PROJECTS ================= -->
+      <section class="vw-sec" id="projects" data-pf-section="projects">
+        <div class="vw-wrap">
+          <header class="vw-head"><p class="vw-path" aria-hidden="true"><svg class="vw-i"><use href="#i-disk" /></svg>C:\SOFTWARE</p><h2>Projects</h2><p class="vw-subhead">{sub.projects}</p></header>
+          <div class="vw-shelf">
+            {profile.projects.map((p, i) => (
+              <article class={`vw-box art-${i % 6}`} data-pf-project={p.name}>
+                <div class="vw-spine" aria-hidden="true"><span>{p.title}</span></div>
+                <div class="vw-boxmain">
+                  <div class="vw-cover" aria-hidden="true">
+                    {Number(p.year) === newestYear && <span class="vw-burst">Newest</span>}
+                    <span class="vw-cover-y">&copy; {p.year}</span>
+                  </div>
+                  <div class="vw-boxbody">
+                    <h3>{p.title}</h3>
+                    <p>{p.blurb}</p>
+                    <ul class="vw-stack" aria-label="Stack">{p.stack.map((s) => <li>{s}</li>)}</ul>
+                    <p class="vw-links">
+                      <a class="vw-btn" href={p.repo} rel="noopener"><svg class="vw-i" aria-hidden="true"><use href="#i-code" /></svg>Source</a>
+                      {p.live && <a class="vw-btn vw-primary" href={p.live} rel="noopener"><svg class="vw-i" aria-hidden="true"><use href="#i-globe" /></svg>Live site</a>}
+                    </p>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SKILLS ================= -->
+      <section class="vw-sec" id="skills" data-pf-section="skills">
+        <div class="vw-wrap">
+          <header class="vw-head"><p class="vw-path" aria-hidden="true"><svg class="vw-i"><use href="#i-gear" /></svg>C:\SETUP</p><h2>Skills</h2><p class="vw-subhead">{sub.skills}</p></header>
+          <div class="vw-win vw-wizard">
+            <div class="vw-tb" data-tone="lav"><svg class="vw-i" aria-hidden="true"><use href="#i-gear" /></svg><span class="vw-tb-t">Setup &ndash; Skills Pack</span><span class="vw-tb-c" aria-hidden="true"><i></i><i></i><i></i></span></div>
+            <div class="vw-wiz">
+              <aside class="vw-wiz-art" aria-hidden="true"><span class="vw-wiz-sun"></span><span class="vw-wiz-grid"></span><b>Skills<br />Setup</b></aside>
+              <div class="vw-wiz-main">
+                <h3>Select components</h3>
+                <p class="vw-lede">Ticked items are installed and in daily use. Half-ticked items are ones I am familiar with.</p>
+                <div class="vw-groups">
+                  {profile.skills.map((g) => (
+                    <section class="vw-group">
+                      <h4>{g.group}</h4>
+                      <ul>
+                        {g.items.map((it) => <li><span class="vw-cb on" aria-hidden="true"><svg class="vw-i"><use href="#i-check" /></svg></span>{it}</li>)}
+                        {((g as any).familiar ?? []).map((it: string) => <li class="fam"><span class="vw-cb part" aria-hidden="true"></span>{it} <em>(familiar)</em></li>)}
+                      </ul>
+                    </section>
+                  ))}
+                </div>
+                <div class="vw-progress" role="img" aria-label="Install progress: 100 percent"><span style="width:100%"></span><b>100%</b></div>
+                <p class="vw-wiz-btns"><a class="vw-btn" href="#experience">Review changes</a><a class="vw-btn vw-primary" href="#contact">Finish<svg class="vw-i" aria-hidden="true"><use href="#i-right" /></svg></a></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= BEYOND CODE ================= -->
+      <section class="vw-sec" id="beyond-code" data-pf-section="beyond-code">
+        <div class="vw-wrap">
+          <header class="vw-head"><p class="vw-path" aria-hidden="true"><svg class="vw-i"><use href="#i-photo" /></svg>C:\MY PICTURES</p><h2>Beyond code</h2><p class="vw-subhead">{sub.beyond}</p></header>
+          <div class="vw-win vw-pics">
+            <div class="vw-tb" data-tone="cyan"><svg class="vw-i" aria-hidden="true"><use href="#i-photo" /></svg><span class="vw-tb-t">My Pictures</span><span class="vw-tb-c" aria-hidden="true"><i></i><i></i><i></i></span></div>
+            <div class="vw-menubar" aria-hidden="true"><span>File</span><span>Edit</span><span>View</span><span>Help</span></div>
+            <div class="vw-pics-body">
+              <nav class="vw-folders" aria-label="Photo folders">
+                <p class="vw-tree-h" aria-hidden="true"><svg class="vw-i"><use href="#i-computer" /></svg>My Pictures</p>
+                {groups.map((g) => <a href={`#pics-${g.category}`}><svg class="vw-i" aria-hidden="true"><use href="#i-folder" /></svg><span>{g.title}</span><small>{g.photos.length}</small></a>)}
+              </nav>
+              <div class="vw-pics-main" data-gallery>
+                {groups.map((g) => (
+                  <section class="vw-folder" id={`pics-${g.category}`} aria-labelledby={`pg-${g.category}`}>
+                    <header>
+                      <svg class="vw-i" aria-hidden="true"><use href="#i-folder-open" /></svg>
+                      <h3 id={`pg-${g.category}`}>{g.title}</h3>
+                      <span class="vw-count">{g.photos.length} object(s)</span>
+                    </header>
+                    <p class="vw-blurb">{g.blurb}</p>
+                    <ul class="vw-masonry">
+                      {g.photos.map((p) => (
+                        <li>
+                          <figure>
+                            <a class="vw-shot" href={p.original.src} data-full={p.img.src} data-orig={p.original.src} data-cap={p.caption ?? ''} data-alt={p.alt} data-w={p.img.width} data-h={p.img.height}>
+                              <img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" />
+                            </a>
+                            {p.caption && <figcaption>{p.caption}</figcaption>}
+                          </figure>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            </div>
+            <p class="vw-status"><span>{photos(STYLE).length} object(s) in {groups.length} folders</span><span>Click a picture to open the viewer</span></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= WRITING ================= -->
+      <section class="vw-sec" id="writing" data-pf-section="writing">
+        <div class="vw-wrap">
+          <header class="vw-head"><p class="vw-path" aria-hidden="true"><svg class="vw-i"><use href="#i-pencil" /></svg>C:\MAIL</p><h2>Writing</h2><p class="vw-subhead">{sub.writing}</p></header>
+          <div class="vw-win vw-inbox">
+            <div class="vw-tb" data-tone="peach"><svg class="vw-i" aria-hidden="true"><use href="#i-inbox" /></svg><span class="vw-tb-t">Inbox &ndash; DreamMail</span><span class="vw-tb-c" aria-hidden="true"><i></i><i></i><i></i></span></div>
+            <div class="vw-mail">
+              <ul class="vw-mailboxes" aria-hidden="true">
+                <li class="on"><svg class="vw-i"><use href="#i-inbox" /></svg>Inbox<b>{profile.writing.posts.length}</b></li>
+                <li><svg class="vw-i"><use href="#i-pencil" /></svg>Drafts<b>{profile.writing.planned.length}</b></li>
+                <li><svg class="vw-i"><use href="#i-mail" /></svg>Sent<b>0</b></li>
+              </ul>
+              <div class="vw-mail-main">
+                <p class="vw-notice"><svg class="vw-i" aria-hidden="true"><use href="#i-info" /></svg><span>{profile.writing.status}</span></p>
+                {profile.writing.posts.length > 0 && (
+                  <ul class="vw-posts">
+                    {profile.writing.posts.map((po) => <li><a href={po.href}><b>{po.title}</b><span>{po.date}</span><small>{po.summary}</small></a></li>)}
+                  </ul>
+                )}
+                <div class="vw-mailtable" role="group" aria-label="Planned posts">
+                  <div class="vw-listhead" aria-hidden="true"><span>From</span><span>Subject</span><span>Status</span></div>
+                  {profile.writing.planned.map((t) => (
+                    <div class="vw-mailrow"><span class="vw-from"><svg class="vw-i" aria-hidden="true"><use href="#i-pencil" /></svg>{profile.firstName}</span><span class="vw-subj">{t}</span><span class="vw-draft">Draft</span></div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= CONTACT ================= -->
+      <section class="vw-sec" id="contact" data-pf-section="contact">
+        <div class="vw-wrap">
+          <header class="vw-head"><p class="vw-path" aria-hidden="true"><svg class="vw-i"><use href="#i-mail" /></svg>C:\CONTACT</p><h2>Contact</h2><p class="vw-subhead">{sub.contact}</p></header>
+          <div class="vw-contact-grid">
+            <div class="vw-win vw-book">
+              <div class="vw-tb" data-tone="mint"><svg class="vw-i" aria-hidden="true"><use href="#i-user" /></svg><span class="vw-tb-t">Address Book</span><span class="vw-tb-c" aria-hidden="true"><i></i><i></i><i></i></span></div>
+              <div class="vw-body">
+                <figure class="vw-idcard vw-idcard-s">
+                  <img src={contactPhoto.img.src} width={contactPhoto.img.width} height={contactPhoto.img.height} alt={contactPhoto.alt} style={`object-position:${contactPhoto.focus}`} loading="lazy" decoding="async" />
+                </figure>
+                <p class="vw-lede">Open to interesting problems in GenAI agents, workflow systems and backend infrastructure.</p>
+                <ul class="vw-contacts">
+                  <li><svg class="vw-i" aria-hidden="true"><use href="#i-mail" /></svg><b>Email</b><Protected kind="email" class="vw-clink" /></li>
+                  <li><svg class="vw-i" aria-hidden="true"><use href="#i-phone" /></svg><b>Phone</b><Protected kind="phone" class="vw-clink" /></li>
+                  <li><svg class="vw-i" aria-hidden="true"><use href="#i-in" /></svg><b>LinkedIn</b><a class="vw-clink" href={profile.contact.linkedin} rel="noopener me" data-pf-linkedin>{hostOf(profile.contact.linkedin)}</a></li>
+                  <li><svg class="vw-i" aria-hidden="true"><use href="#i-code" /></svg><b>GitHub</b><a class="vw-clink" href={profile.contact.github} rel="noopener me" data-pf-github>{hostOf(profile.contact.github)}</a></li>
+                  <li><svg class="vw-i" aria-hidden="true"><use href="#i-resume" /></svg><b>Resume</b><a class="vw-clink" href={withBase(profile.resume.href)} data-pf-resume download>PDF, updated {profile.resume.updated}</a></li>
+                </ul>
+              </div>
+              <p class="vw-status"><span>Status: online</span><span>{profile.location}</span></p>
+            </div>
+
+            <div class="vw-win vw-compose">
+              <div class="vw-tb" data-tone="pink"><svg class="vw-i" aria-hidden="true"><use href="#i-mail" /></svg><span class="vw-tb-t">New Message</span><span class="vw-tb-c" aria-hidden="true"><i></i><i></i><i></i></span></div>
+              <div class="vw-menubar" aria-hidden="true"><span>File</span><span>Edit</span><span>Insert</span><span>Help</span></div>
+              <div class="vw-body">
+                <ContactForm class="vw-form" submitLabel="Send message" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="vw-foot" id="end">
+      <div class="vw-checker" aria-hidden="true"></div>
+      <div class="vw-wrap vw-foot-in">
+        <img class="vw-foot-col" src={columnUrl} alt="" width="120" height="520" aria-hidden="true" />
+        <div>
+          <p class="vw-shutdown">It is now safe to turn off your computer.</p>
+          <p class="vw-foot-line">{meta.flavor.footer}</p>
+          <p class="vw-foot-small">&copy; {new Date().getFullYear()} {profile.name}. Built with Astro, hand-drawn pixels and a lot of reverb. A different art style every day &ndash; <a href={withBase('gallery/')}>see the gallery</a>.</p>
+        </div>
+      </div>
+    </footer>
+
+    <dialog class="vw-vdlg" data-viewer aria-label="Picture viewer">
+      <div class="vw-win">
+        <div class="vw-tb" data-tone="pink"><svg class="vw-i" aria-hidden="true"><use href="#i-photo" /></svg><span class="vw-tb-t" data-v-title>picture.bmp</span>
+          <form method="dialog" class="vw-tb-x"><button aria-label="Close picture viewer"><i aria-hidden="true"></i></button></form>
+        </div>
+        <div class="vw-vstage" data-v-stage></div>
+        <div class="vw-status vw-vbar">
+          <span class="vw-vcap" data-v-cap></span>
+          <span class="vw-vbtns">
+            <button class="vw-btn" type="button" data-v-prev>Prev</button>
+            <button class="vw-btn" type="button" data-v-mode aria-pressed="false">Real colours</button>
+            <button class="vw-btn" type="button" data-v-next>Next</button>
+          </span>
+        </div>
+      </div>
+    </dialog>
+
+    <UtilityBar style={STYLE} />
+    <script>import './client.ts';</script>
+  </body>
+</html>

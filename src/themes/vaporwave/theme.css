@@ -1,0 +1,588 @@
+/* ==========================================================================
+   VAPORWAVE: a pastel sunset desktop.
+   fixed scene (sky / sun / grid / palms)  +  opaque retro-OS windows on top.
+   Text always sits on cream (#fff8ee) or lilac (#e6dbff) in deep-grape ink (#2a1457).
+   ========================================================================== */
+
+@font-face { font-family: 'Syncopate'; src: url(./assets/syncopate-700.woff2) format('woff2'); font-weight: 700; font-display: swap; }
+@font-face { font-family: 'DotGothic16'; src: url(./assets/dotgothic16-400.woff2) format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Quicksand'; src: url(./assets/quicksand-vf.woff2) format('woff2'); font-weight: 300 700; font-display: swap; }
+@font-face { font-family: 'Instrument Serif'; src: url(./assets/instrument-serif-italic.woff2) format('woff2'); font-weight: 400; font-style: italic; font-display: swap; }
+
+:root {
+  color-scheme: light;
+  --ink: #2a1457; --ink2: #4a2f9a; --paper: #fff8ee; --face: #e6dbff; --hi: #ffffff; --lo: #9a86d6; --link: #6a1fd0;
+  --pink: #ff71ce; --cyan: #01cdfe; --mint: #05ffa1; --lav: #b967ff; --butter: #fffb96; --peach: #ffb48a; --lcd: #1a0b3a;
+  --f-disp: 'Syncopate', 'Eurostile', 'Arial Black', sans-serif;
+  --f-pix: 'DotGothic16', 'MS Gothic', 'Courier New', monospace;
+  --f-body: 'Quicksand', 'Nunito', 'Trebuchet MS', system-ui, sans-serif;
+  --f-serif: 'Instrument Serif', 'Times New Roman', serif;
+  --tb-h: 46px;
+  --gut: clamp(14px, 3vw, 32px);
+  --hz: clamp(300px, 58svh, 780px);
+
+  /* scene: sunset */
+  --sky: linear-gradient(180deg, #9f8cff 0%, #d6a2ff 26%, #ff9fd9 52%, #ffc7b0 78%, #fff0c4 100%);
+  --floor: linear-gradient(180deg, #ffd6f0 0%, #e2b8ff 36%, #a98cff 100%);
+  --gridV: rgba(255, 255, 255, .95); --gridH: #ff4fc0;
+  --sun1: #fffb96; --sun2: #ffc073; --sun3: #ff5fc4; --sun4: #b967ff;
+  --glow: rgba(255, 236, 196, .95);
+  --cloud: rgba(255, 255, 255, .8);
+  --sun-s: clamp(240px, 54vmin, 600px);
+  --palm-h: clamp(210px, 42vh, 430px);
+
+  /* theme the shared UtilityBar */
+  --pf-bar-bg: #e6dbff; --pf-bar-bg-solid: #2a1457; --pf-bar-fg: #2a1457; --pf-bar-accent: #ff71ce; --pf-bar-border: #2a1457; --pf-bar-radius: 0px;
+  --pf-bar-font: 'DotGothic16', 'MS Gothic', 'Courier New', monospace;
+  --pf-bar-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 #9a86d6, 4px 4px 0 #2a1457;
+  --pf-dialog-bg: #fff8ee; --pf-dialog-fg: #2a1457; --pf-dialog-accent: #6a1fd0; --pf-dialog-radius: 0px;
+  --pf-dialog-font: 'Quicksand', system-ui, sans-serif;
+}
+html[data-scene='midnight'] {
+  --sky: linear-gradient(180deg, #0c0431 0%, #25106a 34%, #6d2aa8 62%, #ff5fb0 90%, #ffb27a 100%);
+  --floor: linear-gradient(180deg, #6a1f9a 0%, #2c1070 42%, #14073f 100%);
+  --gridV: rgba(1, 205, 254, .9); --gridH: #ff4fc0;
+  --sun1: #ffeab0; --sun2: #ffa8dc; --sun3: #c76bff; --sun4: #6a3fd8;
+  --glow: rgba(255, 113, 206, .95);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { background: #d6a2ff; -webkit-text-size-adjust: 100%; scrollbar-color: var(--lav) var(--face); }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+html, body { overflow-x: clip; }
+body {
+  margin: 0; color: var(--ink); background: transparent; padding-bottom: 0;
+  font: 500 17px/1.6 var(--f-body); font-synthesis: none; -webkit-font-smoothing: antialiased;
+}
+main { display: block; }
+section[id], footer[id] { scroll-margin-top: calc(var(--tb-h) + 12px); }
+::selection { background: var(--pink); color: var(--ink); }
+a { color: var(--link); text-underline-offset: 3px; }
+a:hover { color: var(--ink); background: rgba(255, 113, 206, .28); }
+img { max-width: 100%; }
+:focus-visible { outline: 3px dotted var(--ink); outline-offset: 3px; box-shadow: 0 0 0 6px var(--cyan); border-radius: 0; }
+.vw-sr, .vw-sprite { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+.vw-skip { position: fixed; left: 8px; top: -80px; z-index: 100; padding: 10px 16px; background: var(--ink); color: #fff; font: 400 16px var(--f-pix); }
+.vw-skip:focus { top: 8px; }
+.vw-wrap { width: min(1200px, 100% - 2 * var(--gut)); margin-inline: auto; }
+.vw-i { width: 18px; height: 18px; flex: none; shape-rendering: crispEdges; image-rendering: pixelated; vertical-align: -3px; }
+
+/* ==========================================================================
+   SCENE (fixed, decorative)
+   ========================================================================== */
+.vw-scene { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; background: #d6a2ff; contain: strict; }
+.vw-sky { position: absolute; left: 0; right: 0; top: 0; height: calc(var(--hz) + 4px); background: var(--sky); transition: opacity .6s; }
+.vw-stars {
+  position: absolute; left: 0; right: 0; top: 0; height: var(--hz); opacity: 0; transition: opacity .8s;
+  background:
+    radial-gradient(2px 2px at 8% 12%, #fff, transparent 60%), radial-gradient(2px 2px at 17% 38%, #fff, transparent 60%), radial-gradient(1.5px 1.5px at 26% 18%, #fff, transparent 60%),
+    radial-gradient(2px 2px at 34% 6%, #fff, transparent 60%), radial-gradient(2px 2px at 45% 30%, #ffd6f5, transparent 60%), radial-gradient(1.5px 1.5px at 53% 14%, #fff, transparent 60%),
+    radial-gradient(2px 2px at 62% 40%, #fff, transparent 60%), radial-gradient(2px 2px at 71% 9%, #fff, transparent 60%), radial-gradient(1.5px 1.5px at 79% 26%, #cfeeff, transparent 60%),
+    radial-gradient(2px 2px at 88% 15%, #fff, transparent 60%), radial-gradient(2px 2px at 94% 44%, #fff, transparent 60%), radial-gradient(1.5px 1.5px at 12% 52%, #fff, transparent 60%),
+    radial-gradient(2px 2px at 39% 48%, #fff, transparent 60%), radial-gradient(1.5px 1.5px at 67% 22%, #fff, transparent 60%), radial-gradient(2px 2px at 84% 6%, #ffd6f5, transparent 60%);
+}
+html[data-scene='midnight'] .vw-stars { opacity: 1; }
+html[data-scene='midnight'] .vw-cloud { opacity: 0; }
+
+.vw-cloud { position: absolute; left: 0; width: var(--cw, 180px); height: calc(var(--cw, 180px) * .2); border-radius: 99px; background: var(--cloud); transform: translateX(var(--cx, 20vw)); animation: vw-drift var(--cd, 120s) linear infinite; animation-delay: var(--cl, 0s); transition: opacity .6s; }
+.vw-cloud::before, .vw-cloud::after { content: ''; position: absolute; background: var(--cloud); border-radius: 50%; }
+.vw-cloud::before { width: 38%; height: 190%; left: 18%; bottom: 30%; }
+.vw-cloud::after { width: 30%; height: 150%; left: 50%; bottom: 30%; }
+.vw-cloud.c1 { top: 11%; --cw: 220px; --cx: 8vw; --cd: 130s; --cl: -40s; }
+.vw-cloud.c2 { top: 26%; --cw: 150px; --cx: 62vw; --cd: 100s; --cl: -70s; opacity: .7; }
+.vw-cloud.c3 { top: 36%; --cw: 190px; --cx: 85vw; --cd: 150s; --cl: -10s; opacity: .55; }
+@keyframes vw-drift { from { transform: translateX(-25vw); } to { transform: translateX(115vw); } }
+
+.vw-sun { position: absolute; left: 34%; top: calc(var(--hz) - var(--sun-s) * .62); width: var(--sun-s); height: var(--sun-s); margin-left: calc(var(--sun-s) / -2); }
+.vw-sun-disc {
+  width: 100%; height: 100%; border-radius: 50%;
+  background: linear-gradient(180deg, var(--sun1) 0%, var(--sun2) 22%, var(--sun3) 52%, var(--sun4) 100%);
+  -webkit-mask-image: linear-gradient(180deg, #000 0 33%, transparent 33% 35%, #000 35% 40%, transparent 40% 43%, #000 43% 47.5%, transparent 47.5% 51.5%, #000 51.5% 55%, transparent 55% 60%, #000 60% 62.5%, transparent 62.5% 69%, #000 69%);
+  mask-image: linear-gradient(180deg, #000 0 33%, transparent 33% 35%, #000 35% 40%, transparent 40% 43%, #000 43% 47.5%, transparent 47.5% 51.5%, #000 51.5% 55%, transparent 55% 60%, #000 60% 62.5%, transparent 62.5% 69%, #000 69%);
+  animation: vw-breathe 9s ease-in-out infinite alternate;
+}
+@keyframes vw-breathe { from { opacity: .88; transform: scale(1); } to { opacity: 1; transform: scale(1.025); } }
+
+.vw-floor { position: absolute; left: 0; right: 0; top: var(--hz); bottom: 0; background: var(--floor); overflow: hidden; perspective: 460px; perspective-origin: 50% 0; transition: opacity .6s; }
+.vw-floor::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 4px; z-index: 2; background: #fff; box-shadow: 0 0 24px 10px var(--glow); }
+.vw-floor::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 46%; z-index: 1; background: linear-gradient(180deg, var(--glow), transparent); opacity: .5; }
+.vw-grid { position: absolute; left: -70%; right: -70%; top: 0; height: 260%; transform-origin: 50% 0; transform: rotateX(70deg); }
+.vw-grid-in {
+  position: absolute; left: 0; right: 0; top: -84px; bottom: 0;
+  background-image: linear-gradient(var(--gridH) 3px, transparent 3px), linear-gradient(90deg, var(--gridV) 3px, transparent 3px);
+  background-size: 84px 84px; animation: vw-grid 3.6s linear infinite;
+}
+@keyframes vw-grid { to { transform: translateY(84px); } }
+
+.vw-palm { position: absolute; height: var(--palm-h); width: auto; top: calc(var(--hz) + 70px - var(--palm-h)); opacity: .96; }
+.vw-palm.l { left: -9%; }
+.vw-palm.r { right: -4%; transform: scaleX(-1); height: calc(var(--palm-h) * .82); top: calc(var(--hz) + 60px - var(--palm-h) * .82); }
+
+/* ==========================================================================
+   OS PRIMITIVES: buttons, windows, title bars, status bars
+   ========================================================================== */
+.vw-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 0 16px; cursor: pointer;
+  font: 400 16px/1 var(--f-pix); letter-spacing: .02em; color: var(--ink); text-decoration: none; white-space: nowrap;
+  background: var(--face); border: 1px solid var(--ink); border-radius: 0;
+  box-shadow: inset 2px 2px 0 var(--hi), inset -2px -2px 0 var(--lo), 3px 3px 0 var(--ink);
+  transition: transform .08s, box-shadow .08s, background-color .15s;
+}
+.vw-btn:hover { background: #f4eeff; color: var(--ink); }
+.vw-btn:active, .vw-btn.is-on { box-shadow: inset 2px 2px 0 var(--lo), inset -2px -2px 0 var(--hi); transform: translate(3px, 3px); }
+.vw-primary { background: var(--pink); }
+.vw-primary:hover { background: #ff93da; }
+.vw-btn .vw-i { width: 18px; height: 18px; vertical-align: 0; }
+
+.vw-win { position: relative; min-width: 0; padding: 4px; background: var(--face); border: 1px solid var(--ink); box-shadow: inset 2px 2px 0 var(--hi), inset -2px -2px 0 var(--lo), 7px 7px 0 rgba(42, 20, 87, .32); }
+.vw-tb {
+  --t1: #ff71ce; --t2: #ffc2ea; display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 4px 0 8px;
+  background: linear-gradient(90deg, var(--t1), var(--t2)); color: var(--ink); border: 1px solid var(--ink); font: 400 16px/1 var(--f-pix);
+}
+.vw-tb[data-tone='pink'] { --t1: #ff71ce; --t2: #ffc2ea; }
+.vw-tb[data-tone='cyan'] { --t1: #01cdfe; --t2: #a6f0ff; }
+.vw-tb[data-tone='mint'] { --t1: #05ffa1; --t2: #b5ffe0; }
+.vw-tb[data-tone='lav'] { --t1: #b967ff; --t2: #e3c6ff; }
+.vw-tb[data-tone='butter'] { --t1: #ffe66d; --t2: #fffbc0; }
+.vw-tb[data-tone='peach'] { --t1: #ff9f6e; --t2: #ffd9bf; }
+.vw-tb-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vw-tb-c { display: flex; gap: 3px; }
+.vw-tb-c i, .vw-tb-x button { position: relative; display: block; width: 24px; height: 22px; padding: 0; background: var(--face); border: 1px solid var(--ink); box-shadow: inset 1px 1px 0 var(--hi), inset -1px -1px 0 var(--lo); cursor: pointer; }
+.vw-tb-c i::before, .vw-tb-x button i { content: ''; position: absolute; }
+.vw-tb-c i:nth-child(1)::before { left: 6px; bottom: 5px; width: 9px; height: 2px; background: var(--ink); }
+.vw-tb-c i:nth-child(2)::before { inset: 4px 6px; border: 1px solid var(--ink); border-top-width: 2px; }
+.vw-tb-c i:nth-child(3)::before, .vw-tb-x button i { inset: 4px; background: linear-gradient(45deg, transparent 43%, var(--ink) 43% 57%, transparent 57%), linear-gradient(-45deg, transparent 43%, var(--ink) 43% 57%, transparent 57%); }
+.vw-tb-x { margin: 0; }
+.vw-tb-x button:hover { background: var(--pink); }
+.vw-body { margin-top: 4px; padding: clamp(16px, 2.4vw, 28px); background: var(--paper); border: 1px solid var(--ink); box-shadow: inset 2px 2px 0 var(--lo), inset -2px -2px 0 #fff; }
+.vw-menubar { display: flex; flex-wrap: wrap; gap: 2px; padding: 3px 2px; font: 400 16px/1 var(--f-pix); color: var(--ink); }
+.vw-menubar span { padding: 4px 9px; }
+.vw-menubar span::first-letter { text-decoration: underline; }
+.vw-status { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 4px 0 0; padding: 6px 10px; font: 400 16px/1.25 var(--f-pix); color: var(--ink); background: var(--face); border: 1px solid var(--ink); box-shadow: inset 1px 1px 0 var(--lo), inset -1px -1px 0 #fff; }
+.vw-meta { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.vw-meta span { padding: 3px 10px; font: 400 16px/1.3 var(--f-pix); background: var(--face); border: 1px solid var(--ink); box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 var(--lo); }
+.vw-meta span:first-child { background: var(--butter); }
+
+/* sunken list header (details view) */
+.vw-listhead { display: grid; gap: 6px 18px; padding: 6px 14px; font: 400 16px/1 var(--f-pix); color: var(--ink); background: var(--face); border: 1px solid var(--ink); box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 var(--lo); text-transform: uppercase; letter-spacing: .08em; }
+
+/* ==========================================================================
+   TASKBAR (docked to the top) + START MENU
+   ========================================================================== */
+.vw-task {
+  position: sticky; top: 0; z-index: 60; display: flex; align-items: center; gap: 6px; height: var(--tb-h); padding: 0 8px;
+  background: var(--face); border-bottom: 2px solid var(--ink); box-shadow: inset 0 2px 0 var(--hi), 0 4px 0 rgba(42, 20, 87, .22);
+}
+.vw-start { position: relative; flex: none; }
+.vw-startbtn { list-style: none; min-height: 36px; padding: 0 14px; background: var(--pink); font-size: 16px; }
+.vw-startbtn::-webkit-details-marker { display: none; }
+.vw-start[open] > .vw-startbtn { box-shadow: inset 2px 2px 0 var(--lo), inset -2px -2px 0 var(--hi); background: #ff93da; }
+.vw-startmenu {
+  position: absolute; left: 0; top: calc(100% + 8px); z-index: 70; display: flex; width: min(330px, calc(100vw - 16px));
+  background: var(--face); border: 1px solid var(--ink); box-shadow: inset 2px 2px 0 var(--hi), inset -2px -2px 0 var(--lo), 7px 7px 0 rgba(42, 20, 87, .35); padding: 4px;
+}
+.vw-startban { flex: none; width: 46px; display: flex; align-items: flex-end; justify-content: center; padding: 12px 0; background: linear-gradient(0deg, var(--lav), var(--ink) 80%); }
+.vw-startban span { writing-mode: vertical-rl; transform: rotate(180deg); font: 700 20px/1 var(--f-disp); letter-spacing: .12em; text-transform: uppercase; color: #fff; white-space: nowrap; }
+.vw-startban em { font-style: normal; color: var(--pink); margin-left: .35em; }
+.vw-startlist { flex: 1; min-width: 0; padding: 4px 0; }
+.vw-startlist ul { list-style: none; margin: 0; padding: 0; }
+.vw-startlist hr { margin: 4px 6px; border: 0; border-top: 1px solid var(--lo); border-bottom: 1px solid #fff; }
+.vw-startwho { margin: 2px 12px 8px; font: 400 16px/1.2 var(--f-pix); }
+.vw-startwho small { display: block; margin-top: 2px; font: 500 13px/1.3 var(--f-body); color: var(--ink2); }
+.vw-startlist a { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 0 14px; color: var(--ink); text-decoration: none; font: 400 16px/1 var(--f-pix); }
+.vw-startlist a .vw-i { width: 22px; height: 22px; }
+.vw-startlist a:hover, .vw-startlist a:focus-visible { background: var(--ink); color: #fff; box-shadow: none; outline-offset: -3px; outline-color: #fff; }
+
+.vw-tasks { flex: 1; min-width: 0; display: flex; gap: 4px; overflow: hidden; padding: 4px 6px 6px 2px; margin: -4px 0 -6px; }
+.vw-taskbtn { min-height: 36px; padding: 0 12px; font-size: 16px; box-shadow: inset 2px 2px 0 var(--hi), inset -2px -2px 0 var(--lo); }
+.vw-taskbtn.is-on { background: #fff; color: var(--ink); box-shadow: inset 2px 2px 0 var(--lo), inset -2px -2px 0 var(--hi), inset 0 0 0 4px var(--face); transform: none; }
+.vw-tray { flex: none; display: flex; align-items: center; gap: 4px; margin-left: auto; padding: 4px 4px 6px 0; margin-bottom: -2px; }
+.vw-traybtn { width: 40px; min-height: 36px; padding: 0; box-shadow: inset 2px 2px 0 var(--hi), inset -2px -2px 0 var(--lo); }
+.vw-traybtn:active { transform: none; }
+.vw-ico-moon, .vw-ico-play { display: none; }
+html[data-scene='midnight'] .vw-ico-sun { display: none; }
+html[data-scene='midnight'] .vw-ico-moon { display: inline; }
+html.vw-paused .vw-ico-pause { display: none; }
+html.vw-paused .vw-ico-play { display: inline; }
+.vw-clock { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 10px; background: var(--paper); border: 1px solid var(--ink); box-shadow: inset 2px 2px 0 var(--lo), inset -2px -2px 0 #fff; font: 400 16px/1 var(--f-pix); white-space: nowrap; }
+.vw-clock .vw-i { width: 16px; height: 16px; }
+@media (max-width: 1320px) {
+  .vw-taskbtn { padding: 0; width: 44px; }
+  .vw-taskbtn span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .vw-taskbtn.is-on { width: auto; padding: 0 12px; }
+  .vw-taskbtn.is-on span { position: static; width: auto; height: auto; overflow: visible; clip: auto; }
+}
+@media (max-width: 760px) {
+  .vw-taskbtn:not(.is-on) { display: none; }
+  .vw-tasks { justify-content: flex-start; }
+  .vw-clock .vw-i { display: none; }
+  .vw-task { gap: 4px; padding: 0 6px; }
+}
+@media (max-width: 440px) { .vw-taskbtn.is-on .vw-i { display: none; } .vw-taskbtn.is-on { padding: 0 8px; } .vw-clock { padding: 0 6px; } }
+
+/* ==========================================================================
+   HERO
+   ========================================================================== */
+.vw-hero { display: flex; align-items: center; min-height: calc(100svh - var(--tb-h)); padding: clamp(24px, 5vh, 56px) 0 clamp(40px, 7vh, 72px); }
+.vw-hero-grid {
+  display: grid; width: min(1260px, 100% - 2 * var(--gut)); gap: clamp(12px, 2.2vh, 22px) clamp(18px, 3vw, 44px);
+  grid-template-columns: 104px minmax(0, 1fr) minmax(0, 470px);
+  grid-template-areas: 'desk badge badge' 'desk name name' 'desk role role' 'desk note art';
+  align-items: start;
+}
+.vw-hero-main { display: contents; }
+.vw-badge { grid-area: badge; justify-self: start; display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 7px 14px; font: 400 16px/1.2 var(--f-pix); background: var(--paper); border: 1px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); }
+.vw-name {
+  grid-area: name; margin: 0; display: flex; flex-wrap: wrap; gap: 0 .5em; text-transform: uppercase; letter-spacing: .05em;
+  font: 700 clamp(1.8rem, 6.15vw, 5.7rem)/1.02 var(--f-disp); animation: vw-in .8s .05s both;
+}
+.vw-name span { display: block; color: #fff; -webkit-text-stroke: .045em var(--ink); paint-order: stroke fill; text-shadow: .045em .05em 0 var(--pink), .09em .1em 0 var(--cyan), .135em .15em 0 var(--ink); }
+.vw-role { grid-area: role; display: flex; flex-wrap: wrap; align-items: stretch; gap: 10px; margin: 0; padding-top: .35em; }
+.vw-role span { display: inline-flex; align-items: center; padding: 9px 15px; border: 1px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); }
+.vw-role span:first-child { background: var(--cyan); font: 700 clamp(.74rem, 1.35vw, 1rem)/1.2 var(--f-disp); letter-spacing: .26em; text-transform: uppercase; }
+.vw-role-loc { background: var(--butter); font: 400 16px/1.2 var(--f-pix); }
+
+.vw-desk { grid-area: desk; list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; align-self: start; }
+.vw-dicon { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 96px; min-height: 44px; padding: 8px 4px; color: #fff; text-align: center; text-decoration: none; font: 400 16px/1.1 var(--f-pix); border: 1px dotted transparent; }
+.vw-dicon span { padding: 2px 8px; background: var(--ink); box-shadow: 2px 2px 0 rgba(42, 20, 87, .35); }
+.vw-dicon .vw-i { width: 46px; height: 46px; vertical-align: 0; filter: drop-shadow(2px 2px 0 rgba(42, 20, 87, .45)); }
+.vw-dicon:hover { background: rgba(255, 255, 255, .3); border-color: var(--ink); color: #fff; }
+.vw-dicon:hover span { background: var(--pink); color: var(--ink); }
+.vw-dicon:focus-visible { outline-color: #fff; box-shadow: 0 0 0 5px var(--ink); }
+
+.vw-note { grid-area: note; max-width: 640px; animation: vw-in .8s .2s both; }
+.vw-note .vw-body { padding: clamp(18px, 2.4vw, 30px); }
+.vw-lead { margin: 0 0 6px; font: 700 clamp(1.2rem, 2.1vw, 1.55rem)/1.35 var(--f-body); }
+.vw-aside { margin: 0 0 20px; font: italic 400 clamp(1.3rem, 2.3vw, 1.7rem)/1.2 var(--f-serif); color: var(--ink2); }
+.vw-cta { display: flex; flex-wrap: wrap; gap: 14px 16px; margin: 0; }
+
+.vw-hero-art { grid-area: art; position: relative; justify-self: end; width: 100%; max-width: 470px; padding-bottom: 30px; }
+.vw-col { position: absolute; right: 0; bottom: -40px; height: 108%; width: auto; max-width: none; z-index: 0; opacity: .95; filter: drop-shadow(5px 5px 0 rgba(42, 20, 87, .22)); }
+.vw-viewer { position: relative; z-index: 1; margin: 0; width: calc(100% - 78px); transform: rotate(1.6deg); animation: vw-in-r .8s .35s both, vw-float 7s 1.15s ease-in-out infinite alternate; }
+.vw-frame { margin-top: 4px; padding: 6px; background: var(--paper); border: 1px solid var(--ink); box-shadow: inset 2px 2px 0 var(--lo), inset -2px -2px 0 #fff; }
+.vw-portrait { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1.04; object-fit: cover; background: var(--face); }
+.vw-toast { position: absolute; z-index: 2; left: -14%; bottom: -4px; display: flex; align-items: flex-start; gap: 10px; max-width: 270px; padding: 10px 14px; background: #fffbe6; border: 1px solid var(--ink); box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 var(--lo), 5px 5px 0 rgba(42, 20, 87, .4); animation: vw-in .8s .6s both; }
+.vw-toast .vw-i { width: 24px; height: 24px; margin-top: 2px; }
+.vw-toast p { margin: 0; font: 600 15px/1.3 var(--f-body); }
+.vw-toast b { display: block; font: 400 16px/1.2 var(--f-pix); text-transform: uppercase; letter-spacing: .1em; color: var(--ink2); margin-bottom: 2px; }
+.vw-toast small { display: block; font: 400 16px/1.3 var(--f-pix); color: var(--ink2); }
+@keyframes vw-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes vw-float { from { transform: translateY(0) rotate(1.6deg); } to { transform: translateY(-9px) rotate(1.6deg); } }
+@keyframes vw-in-r { from { opacity: 0; transform: translateY(14px) rotate(1.6deg); } to { opacity: 1; transform: rotate(1.6deg); } }
+
+/* ticker */
+.vw-ticker { overflow: hidden; background: var(--ink); color: var(--butter); border-block: 3px solid #fff; box-shadow: 0 -3px 0 var(--ink), 0 3px 0 var(--ink); }
+.vw-ticker-track { display: flex; width: max-content; animation: vw-tick 55s linear infinite; }
+.vw-ticker ul { display: flex; margin: 0; padding: 0; list-style: none; }
+.vw-ticker li { display: flex; align-items: center; gap: 12px; padding: 13px 28px; font: 400 16px/1 var(--f-pix); text-transform: uppercase; letter-spacing: .16em; white-space: nowrap; }
+@keyframes vw-tick { to { transform: translateX(-50%); } }
+
+/* ==========================================================================
+   SECTIONS: banner header
+   ========================================================================== */
+.vw-sec { padding: clamp(44px, 7vw, 92px) 0 clamp(6px, 1.4vw, 18px); }
+.vw-head { display: inline-block; max-width: 100%; margin: 0 0 clamp(22px, 3.4vw, 40px); padding-bottom: 16px; background: var(--paper); border: 1px solid var(--ink); box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 var(--lo), 7px 7px 0 var(--ink); }
+.vw-path { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; padding: 6px 16px; color: #fff; font: 400 16px/1.2 var(--f-pix); letter-spacing: .08em; background: linear-gradient(90deg, var(--ink), var(--ink2) 60%, var(--lav)); }
+.vw-head h2 { margin: 0; padding: 0 clamp(16px, 2.6vw, 30px); font: 700 clamp(1.5rem, 3.7vw, 2.8rem)/1.12 var(--f-disp); letter-spacing: .07em; text-transform: uppercase; overflow-wrap: anywhere; }
+.vw-head h2::after { content: ''; display: block; width: min(240px, 60%); height: 7px; margin-top: 10px; background: repeating-linear-gradient(90deg, var(--pink) 0 12px, var(--cyan) 12px 24px); border: 1px solid var(--ink); }
+.vw-subhead { margin: 10px clamp(16px, 2.6vw, 30px) 0; font: italic 400 clamp(1.2rem, 2vw, 1.5rem)/1.25 var(--f-serif); color: var(--ink2); }
+
+/* ---------- about ---------- */
+.vw-about-grid { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: clamp(22px, 3vw, 44px); align-items: start; }
+.vw-readme-body { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr); gap: clamp(18px, 2.6vw, 32px); margin-top: 0; }
+.vw-idcard { margin: 0; align-self: start; padding: 8px 8px 10px; background: #fff; border: 1px solid var(--ink); box-shadow: 5px 5px 0 var(--lav); transform: rotate(-2deg); }
+.vw-idcard img { display: block; width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; background: var(--face); }
+.vw-idcard figcaption { padding-top: 8px; font: 400 16px/1.2 var(--f-pix); text-align: center; }
+.vw-idcard small { display: block; margin-top: 3px; font: 600 12.5px/1.3 var(--f-body); color: var(--ink2); }
+.vw-prose p { margin: 0 0 14px; }
+.vw-bigp { font-size: clamp(1.08rem, 1.55vw, 1.25rem); font-weight: 700; line-height: 1.55; }
+.vw-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; padding: 0; list-style: none; }
+.vw-chips li { display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; min-height: 36px; font: 400 16px/1 var(--f-pix); background: var(--face); border: 1px solid var(--ink); box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 var(--lo), 2px 2px 0 var(--ink); }
+.vw-chips .vw-i { width: 16px; height: 16px; }
+.vw-tabs { display: flex; gap: 2px; padding: 6px 6px 0; margin-bottom: -1px; position: relative; z-index: 1; }
+.vw-tabs span { padding: 5px 12px; font: 400 16px/1 var(--f-pix); background: var(--face); border: 1px solid var(--ink); border-bottom: 0; }
+.vw-tabs .on { background: var(--paper); padding-bottom: 7px; margin-top: -2px; }
+.vw-sysprops .vw-body { margin-top: 0; }
+.vw-sysl { margin: 0 0 14px; font: 400 16px/1.3 var(--f-pix); color: var(--ink2); text-transform: uppercase; letter-spacing: .06em; }
+.vw-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+.vw-stats li { padding: 14px 14px 12px; background: var(--lcd); border: 1px solid var(--ink); box-shadow: inset 2px 2px 0 #000, inset -2px -2px 0 #4b3a9a; }
+.vw-stats strong { display: block; margin-bottom: 4px; color: var(--mint); font: 700 clamp(1.3rem, 2.5vw, 1.95rem)/1.1 var(--f-disp); letter-spacing: .02em; text-shadow: 0 0 14px rgba(5, 255, 161, .45); }
+.vw-stats span { display: block; color: #f3eaff; font: 600 14.5px/1.3 var(--f-body); }
+
+/* ---------- experience / explorer ---------- */
+.vw-addr { display: flex; align-items: center; gap: 10px; padding: 4px 6px 6px; font: 400 16px/1 var(--f-pix); }
+.vw-addr-f { flex: 1; min-width: 0; display: block; padding: 6px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 16px/1.2 var(--f-pix); background: #fff; border: 1px solid var(--ink); box-shadow: inset 2px 2px 0 var(--lo); }
+.vw-ex-body { display: grid; grid-template-columns: 270px minmax(0, 1fr); gap: 4px; margin-top: 2px; }
+.vw-tree, .vw-folders, .vw-mailboxes { display: flex; flex-direction: column; gap: 3px; padding: 10px 6px; background: #fff; border: 1px solid var(--ink); box-shadow: inset 2px 2px 0 var(--lo); }
+.vw-tree-h { display: flex; align-items: center; gap: 8px; margin: 0 4px 6px; padding-bottom: 8px; font: 400 16px/1 var(--f-pix); border-bottom: 1px dotted var(--lo); }
+.vw-leaf { display: flex; align-items: flex-start; gap: 10px; min-height: 48px; padding: 9px 10px; color: var(--ink); text-decoration: none; border: 1px dotted transparent; }
+.vw-leaf .vw-i { width: 22px; height: 22px; margin-top: 1px; }
+.vw-leaf b { display: block; font: 400 16px/1.2 var(--f-pix); }
+.vw-leaf small { display: block; margin-top: 2px; font: 600 13px/1.3 var(--f-body); color: var(--ink2); }
+.vw-leaf:hover { background: var(--face); color: var(--ink); }
+.vw-leaf.is-on { background: var(--ink); color: #fff; border-color: #fff; }
+.vw-leaf.is-on small { color: #e9dcff; }
+.vw-leaf.is-on:hover { background: var(--ink); color: #fff; }
+.vw-leaf:focus-visible { outline-offset: -4px; }
+.vw-ex-main { min-width: 0; padding: clamp(16px, 2.4vw, 28px); background: var(--paper); border: 1px solid var(--ink); box-shadow: inset 2px 2px 0 var(--lo), inset -2px -2px 0 #fff; }
+.vw-pane + .vw-pane { margin-top: 40px; padding-top: 32px; border-top: 3px double var(--lo); }
+.vw-explorer.is-ready .vw-pane { display: none; }
+.vw-explorer.is-ready .vw-pane.is-on { display: block; animation: vw-in .35s both; }
+.vw-explorer.is-ready .vw-pane + .vw-pane { margin-top: 0; padding-top: 0; border: 0; }
+.vw-pane-head h3 { margin: 0 0 12px; font: 700 clamp(1.02rem, 1.8vw, 1.35rem)/1.3 var(--f-disp); letter-spacing: .04em; text-transform: uppercase; overflow-wrap: anywhere; }
+.vw-at { color: #7a2fd0; }
+.vw-blurb { margin: 12px 0 18px; font: italic 400 1.4rem/1.25 var(--f-serif); color: var(--ink2); }
+.vw-list .vw-listhead, .vw-row { grid-template-columns: minmax(150px, 240px) minmax(0, 1fr); }
+.vw-row { display: grid; gap: 6px 22px; padding: 14px; border-bottom: 1px dotted var(--lo); transition: background-color .15s; }
+.vw-row:nth-child(even) { background: rgba(230, 219, 255, .38); }
+.vw-row:hover { background: rgba(255, 113, 206, .16); }
+.vw-fname { margin: 0; display: flex; align-items: flex-start; gap: 9px; font: 400 16px/1.25 var(--f-pix); }
+.vw-fname .vw-i { margin-top: 1px; }
+.vw-row p { margin: 0; font-size: 16.5px; line-height: 1.55; }
+.vw-pane .vw-status { margin-top: 16px; }
+.vw-diploma { max-width: 780px; margin-top: clamp(26px, 3.4vw, 44px); }
+.vw-edu { display: flex; align-items: center; gap: 20px; }
+.vw-edu-i { width: 64px; height: 64px; }
+.vw-edu h3 { margin: 0 0 4px; font: italic 400 clamp(1.4rem, 2.5vw, 1.95rem)/1.15 var(--f-serif); }
+.vw-edu p { margin: 0 0 10px; font-weight: 600; }
+
+/* ---------- case studies ---------- */
+.vw-cases { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(26px, 3.4vw, 46px) clamp(22px, 3vw, 44px); align-items: start; }
+.vw-cases .vw-case:nth-child(even) { margin-top: clamp(0px, 3.4vw, 48px); }
+.vw-case .vw-body { margin-bottom: 0; }
+.vw-case h3 { margin: 14px 0 4px; font: 700 clamp(1rem, 1.55vw, 1.22rem)/1.3 var(--f-disp); letter-spacing: .05em; text-transform: uppercase; overflow-wrap: anywhere; }
+.vw-kick { margin: 0 0 12px; font: italic 400 1.45rem/1.2 var(--f-serif); color: var(--ink2); }
+.vw-gb { position: relative; margin: 20px 0 0; padding: 18px 14px 12px; border: 1px solid var(--lo); box-shadow: 1px 1px 0 #fff, inset 1px 1px 0 #fff; }
+.vw-gb h4 { position: absolute; top: -11px; left: 10px; margin: 0; padding: 0 8px; background: var(--paper); font: 400 16px/1.2 var(--f-pix); letter-spacing: .1em; text-transform: uppercase; color: var(--ink2); }
+.vw-gb p { margin: 0; font-size: 16.5px; }
+.vw-lcd { margin-top: 20px; padding: 12px 14px 14px; background: var(--lcd); border: 1px solid var(--ink); box-shadow: inset 2px 2px 0 #000, inset -2px -2px 0 #4b3a9a; }
+.vw-lcd h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; color: var(--pink); font: 400 16px/1.2 var(--f-pix); letter-spacing: .1em; text-transform: uppercase; }
+.vw-lcd ul { margin: 0; padding: 0; list-style: none; }
+.vw-lcd li { position: relative; padding: 3px 0 3px 24px; color: var(--mint); font: 400 20px/1.35 var(--f-pix); text-shadow: 0 0 10px rgba(5, 255, 161, .35); }
+.vw-lcd li::before { content: '>'; position: absolute; left: 0; color: var(--pink); text-shadow: none; }
+.vw-tags { list-style: none; justify-content: flex-start; gap: 6px; }
+.vw-tags li { padding: 2px 9px; background: var(--paper); border: 1px solid var(--lo); }
+
+/* ---------- projects: boxed software ---------- */
+.vw-shelf { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(26px, 3.2vw, 44px) clamp(20px, 2.6vw, 36px); align-items: stretch; }
+.vw-box { --spine: var(--pink); --art: none; display: flex; min-width: 0; background: var(--paper); border: 1px solid var(--ink); box-shadow: inset 0 0 0 3px #fff, 8px 8px 0 rgba(42, 20, 87, .34); transition: transform .2s, box-shadow .2s; }
+.vw-box:hover { transform: translateY(-5px) rotate(-.5deg); box-shadow: inset 0 0 0 3px #fff, 12px 14px 0 rgba(42, 20, 87, .3); }
+.vw-spine { flex: none; display: flex; justify-content: center; align-items: center; width: 44px; padding: 12px 0; background: var(--spine); border-right: 1px solid var(--ink); overflow: hidden; }
+.vw-spine span { writing-mode: vertical-rl; transform: rotate(180deg); max-height: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 11.5px/1 var(--f-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--ink); }
+.vw-boxmain { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 3px 3px 3px 0; }
+.vw-cover { position: relative; height: 128px; flex: none; overflow: hidden; background: var(--art), var(--spine); border-bottom: 1px solid var(--ink); }
+.vw-cover-y { position: absolute; left: 8px; bottom: 8px; padding: 3px 9px; background: var(--paper); border: 1px solid var(--ink); font: 400 16px/1.2 var(--f-pix); }
+.vw-burst { position: absolute; right: 8px; top: 8px; padding: 4px 10px; background: var(--butter); border: 1px solid var(--ink); font: 400 16px/1.2 var(--f-pix); text-transform: uppercase; letter-spacing: .08em; transform: rotate(6deg); box-shadow: 2px 2px 0 var(--ink); }
+.vw-boxbody { flex: 1; display: flex; flex-direction: column; padding: 16px 16px 18px; }
+.vw-boxbody h3 { margin: 0 0 8px; font: 700 .98rem/1.32 var(--f-disp); letter-spacing: .04em; text-transform: uppercase; overflow-wrap: anywhere; }
+.vw-boxbody p { margin: 0 0 12px; font-size: 16px; line-height: 1.5; }
+.vw-stack { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 16px; padding: 0; list-style: none; }
+.vw-stack li { padding: 3px 9px; font: 400 16px/1.3 var(--f-pix); background: var(--face); border: 1px solid var(--ink); }
+.vw-boxbody .vw-links { display: flex; flex-wrap: wrap; gap: 10px 12px; margin: auto 0 0; }
+.vw-links .vw-btn { min-height: 42px; padding: 0 14px; }
+.art-0 { --spine: #ff71ce; --art: radial-gradient(circle at 50% 100%, var(--sun1) 0 30%, #ff5fc4 31% 48%, transparent 49%), linear-gradient(180deg, #9f8cff, #ffb0de 85%); }
+.art-1 { --spine: #01cdfe; --art: linear-gradient(180deg, rgba(255, 113, 206, .5), transparent 70%), conic-gradient(var(--ink) 25%, #fff 0 50%, var(--ink) 0 75%, #fff 0) 0 0 / 34px 34px; }
+.art-2 { --spine: #05ffa1; --art: repeating-radial-gradient(circle at 50% 130%, #01cdfe 0 12px, #a6f0ff 12px 24px); }
+.art-3 { --spine: #b967ff; --art: radial-gradient(circle at 20% 30%, #fffb96 0 9px, transparent 10px), radial-gradient(circle at 78% 62%, #05ffa1 0 12px, transparent 13px), repeating-linear-gradient(45deg, #ff71ce 0 16px, #ffd0ee 16px 32px); }
+.art-4 { --spine: #fffb96; --art: repeating-linear-gradient(180deg, rgba(5, 255, 161, .14) 0 2px, transparent 2px 6px), linear-gradient(180deg, #1a0b3a, #2a1457); }
+.art-4::after { content: '> _'; position: absolute; left: 14px; top: 12px; color: var(--mint); font: 400 30px/1 var(--f-pix); text-shadow: 0 0 12px rgba(5, 255, 161, .6); }
+.art-5 { --spine: #ffb48a; --art: radial-gradient(circle at 18% 30%, #05ffa1, transparent 42%), radial-gradient(circle at 82% 70%, #ff71ce, transparent 46%), radial-gradient(circle at 60% 20%, #fffb96, transparent 30%), linear-gradient(135deg, #b967ff, #01cdfe); }
+.art-4 .vw-cover::after { content: '> _'; }
+
+/* ---------- skills: setup wizard ---------- */
+.vw-wiz { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 4px; margin-top: 4px; }
+.vw-wiz-art { position: relative; overflow: hidden; min-height: 220px; background: linear-gradient(180deg, #8f7bff 0%, #ff9fd9 62%, #ffd3b6 62.1%); border: 1px solid var(--ink); }
+.vw-wiz-sun { position: absolute; left: 50%; top: 40%; width: 150px; height: 150px; margin-left: -75px; border-radius: 50%; background: linear-gradient(180deg, #fffb96, #ff71ce); -webkit-mask-image: linear-gradient(180deg, #000 0 56%, transparent 56% 60%, #000 60% 68%, transparent 68% 74%, #000 74%); mask-image: linear-gradient(180deg, #000 0 56%, transparent 56% 60%, #000 60% 68%, transparent 68% 74%, #000 74%); }
+.vw-wiz-grid { position: absolute; left: 0; right: 0; top: 62%; bottom: 0; background: linear-gradient(#e0b9ff, #a98cff); }
+.vw-wiz-grid::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .9) 0 2px, transparent 2px 22px), repeating-linear-gradient(180deg, #ff4fc0 0 2px, transparent 2px 14px); }
+.vw-wiz-art b { position: absolute; left: 14px; top: 16px; color: #fff; font: 700 21px/1.2 var(--f-disp); letter-spacing: .08em; text-transform: uppercase; -webkit-text-stroke: 1px var(--ink); paint-order: stroke fill; text-shadow: 3px 3px 0 var(--ink); }
+.vw-wiz-main { min-width: 0; padding: clamp(18px, 2.4vw, 30px); background: var(--paper); border: 1px solid var(--ink); box-shadow: inset 2px 2px 0 var(--lo), inset -2px -2px 0 #fff; }
+.vw-wiz-main h3 { margin: 0 0 6px; font: 700 clamp(1.05rem, 1.8vw, 1.35rem)/1.25 var(--f-disp); letter-spacing: .05em; text-transform: uppercase; }
+.vw-lede { margin: 0 0 22px; font-size: 16.5px; font-weight: 600; }
+.vw-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(235px, 1fr)); gap: 26px 22px; }
+.vw-group { position: relative; padding: 20px 14px 10px; border: 1px solid var(--lo); box-shadow: 1px 1px 0 #fff, inset 1px 1px 0 #fff; }
+.vw-group h4 { position: absolute; top: -12px; left: 10px; margin: 0; padding: 0 8px; background: var(--paper); font: 400 16px/1.2 var(--f-pix); letter-spacing: .04em; max-width: calc(100% - 20px); }
+.vw-group ul { margin: 0; padding: 0; list-style: none; }
+.vw-group li { display: flex; align-items: center; gap: 10px; padding: 4px 0; font: 600 16.5px/1.3 var(--f-body); }
+.vw-group em { font: 400 16px/1.2 var(--f-pix); font-style: normal; color: var(--ink2); }
+.vw-cb { flex: none; display: grid; place-items: center; width: 20px; height: 20px; background: #fff; border: 1px solid var(--ink); box-shadow: inset 1px 1px 0 var(--lo); }
+.vw-cb .vw-i { width: 16px; height: 16px; vertical-align: 0; }
+.vw-cb.part::after { content: ''; width: 10px; height: 10px; background: var(--lo); }
+.vw-progress { position: relative; margin-top: 26px; height: 30px; padding: 3px; background: #fff; border: 1px solid var(--ink); box-shadow: inset 2px 2px 0 var(--lo); }
+.vw-progress span { display: block; height: 100%; background: repeating-linear-gradient(90deg, var(--lav) 0 14px, transparent 14px 17px); }
+.vw-progress b { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); padding: 2px 8px; background: var(--paper); border: 1px solid var(--ink); font: 400 16px/1.2 var(--f-pix); }
+.vw-wiz-btns { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 14px; margin: 22px 0 0; }
+
+/* ---------- beyond code: my pictures ---------- */
+.vw-pics-body { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 4px; margin-top: 2px; }
+.vw-folders { position: sticky; top: calc(var(--tb-h) + 14px); align-self: start; max-height: calc(100svh - var(--tb-h) - 130px); overflow: auto; }
+.vw-folders a { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 6px 10px; color: var(--ink); text-decoration: none; font: 400 16px/1.2 var(--f-pix); border: 1px dotted transparent; }
+.vw-folders a span { flex: 1; min-width: 0; }
+.vw-folders small { padding: 1px 7px; font: 400 16px/1.4 var(--f-pix); background: var(--face); border: 1px solid var(--lo); }
+.vw-folders a:hover { background: var(--face); }
+.vw-folders a.is-on { background: var(--ink); color: #fff; }
+.vw-folders a.is-on small { color: var(--ink); background: var(--butter); }
+.vw-pics-main { min-width: 0; padding: clamp(14px, 2vw, 26px); background: var(--paper); border: 1px solid var(--ink); box-shadow: inset 2px 2px 0 var(--lo), inset -2px -2px 0 #fff; }
+.vw-folder + .vw-folder { margin-top: clamp(30px, 4.4vw, 54px); }
+.vw-folder > header { display: flex; align-items: center; gap: 10px; padding-bottom: 8px; border-bottom: 3px dashed var(--lav); }
+.vw-folder h3 { flex: 1; margin: 0; font: 700 clamp(1rem, 1.7vw, 1.2rem)/1.2 var(--f-disp); letter-spacing: .06em; text-transform: uppercase; }
+.vw-count { font: 400 16px/1 var(--f-pix); color: var(--ink2); }
+.vw-folder .vw-blurb { margin: 10px 0 0; font-size: 1.3rem; }
+.vw-masonry { columns: 3 190px; column-gap: 16px; margin: 16px 0 0; padding: 0; list-style: none; }
+.vw-masonry li { break-inside: avoid; margin: 0 0 16px; }
+.vw-masonry figure { margin: 0; padding: 5px 5px 6px; background: #fff; border: 1px solid var(--ink); box-shadow: 4px 4px 0 rgba(42, 20, 87, .3); transition: transform .18s, box-shadow .18s; }
+.vw-masonry li:hover figure, .vw-masonry li:focus-within figure { transform: translateY(-3px) rotate(-.6deg); box-shadow: 6px 8px 0 rgba(255, 113, 206, .55); }
+.vw-shot { display: block; position: relative; line-height: 0; cursor: zoom-in; }
+.vw-shot img { display: block; width: 100%; height: auto; background: var(--face); }
+.vw-shot::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 60%, rgba(255, 113, 206, .0)); transition: background .2s; }
+.vw-masonry figcaption { padding: 7px 3px 1px; font: 400 16px/1.25 var(--f-pix); color: var(--ink2); }
+.vw-pics > .vw-status { margin-top: 4px; }
+
+/* viewer dialog */
+.vw-vdlg { width: min(980px, 96vw); max-width: none; max-height: 96svh; padding: 0; border: 0; background: transparent; overflow: visible; color: var(--ink); }
+.vw-vdlg::backdrop { background: rgba(26, 11, 58, .72); }
+.vw-vdlg .vw-win { box-shadow: inset 2px 2px 0 var(--hi), inset -2px -2px 0 var(--lo), 10px 10px 0 rgba(0, 0, 0, .35); }
+.vw-vstage { display: grid; place-items: center; height: min(72svh, 820px); margin-top: 4px; background: var(--lcd); border: 1px solid var(--ink); overflow: hidden; }
+.vw-vstage img { max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+.vw-vbar { align-items: center; }
+.vw-vcap { flex: 1; min-width: 160px; }
+.vw-vbtns { display: flex; flex-wrap: wrap; gap: 8px; }
+.vw-vbtns .vw-btn { min-height: 40px; padding: 0 14px; }
+.vw-vbtns .vw-btn[aria-pressed='true'] { background: var(--mint); }
+
+/* ---------- writing: inbox ---------- */
+.vw-mail { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 4px; margin-top: 4px; }
+.vw-mailboxes { margin: 0; list-style: none; align-self: stretch; }
+.vw-mailboxes li { display: flex; align-items: center; gap: 9px; min-height: 42px; padding: 6px 10px; font: 400 16px/1 var(--f-pix); }
+.vw-mailboxes li.on { background: var(--ink); color: #fff; }
+.vw-mailboxes b { margin-left: auto; padding: 1px 7px; font: 400 16px/1.4 var(--f-pix); background: var(--butter); color: var(--ink); border: 1px solid var(--ink); }
+.vw-mail-main { min-width: 0; padding: clamp(16px, 2.2vw, 28px); background: var(--paper); border: 1px solid var(--ink); box-shadow: inset 2px 2px 0 var(--lo), inset -2px -2px 0 #fff; }
+.vw-notice { display: flex; align-items: center; gap: 12px; margin: 0 0 22px; padding: 14px 16px; background: #fff; border: 1px solid var(--ink); box-shadow: 4px 4px 0 var(--cyan); font: 700 18px/1.35 var(--f-body); }
+.vw-notice .vw-i { width: 28px; height: 28px; }
+.vw-posts { margin: 0 0 22px; padding: 0; list-style: none; }
+.vw-mailtable .vw-listhead, .vw-mailrow { grid-template-columns: 150px minmax(0, 1fr) 84px; }
+.vw-mailrow { display: grid; align-items: center; gap: 10px 18px; padding: 12px 14px; border-bottom: 1px dotted var(--lo); }
+.vw-mailrow:nth-child(odd) { background: rgba(230, 219, 255, .38); }
+.vw-from { display: flex; align-items: center; gap: 8px; font: 400 16px/1.2 var(--f-pix); }
+.vw-subj { font-weight: 700; font-size: 17px; line-height: 1.4; }
+.vw-draft { justify-self: start; padding: 2px 9px; font: 400 16px/1.4 var(--f-pix); background: var(--butter); border: 1px solid var(--ink); }
+
+/* ---------- contact ---------- */
+.vw-contact-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: clamp(22px, 3vw, 44px); align-items: start; }
+.vw-book .vw-body { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 8px 22px; align-items: center; }
+.vw-idcard-s { padding: 6px; }
+.vw-book .vw-lede { margin: 0; font-size: 17px; }
+.vw-contacts { grid-column: 1 / -1; margin: 14px 0 0; padding: 0; list-style: none; }
+.vw-contacts li { display: grid; grid-template-columns: 22px 84px minmax(0, 1fr); align-items: center; gap: 10px; min-height: 52px; padding: 8px 4px; border-bottom: 1px dotted var(--lo); }
+.vw-contacts b { font: 400 16px/1.2 var(--f-pix); }
+.vw-clink { display: block; min-height: 28px; padding: 3px 4px; overflow-wrap: anywhere; font-weight: 700; font-size: 16.5px; color: var(--link); }
+.vw-clink .pf-reveal { overflow-wrap: anywhere; }
+.vw-compose .vw-body { padding: clamp(16px, 2.4vw, 28px); }
+.vw-form { max-width: none; gap: 16px; }
+.vw-form .pf-label { font: 400 16px/1.2 var(--f-pix); letter-spacing: .04em; color: var(--ink); }
+.vw-form .pf-input { min-height: 46px; padding: 10px 12px; color: var(--ink); font: 500 17px/1.4 var(--f-body); background: #fff; border: 1px solid var(--ink); border-radius: 0; box-shadow: inset 2px 2px 0 var(--lo); }
+.vw-form .pf-input:focus-visible { outline: 3px dotted var(--ink); box-shadow: inset 2px 2px 0 var(--lo), 0 0 0 5px var(--cyan); }
+.vw-form .pf-textarea { resize: vertical; min-height: 140px; }
+.vw-form .pf-submit { display: inline-flex; align-items: center; min-height: 46px; padding: 0 22px; color: var(--ink); font: 400 16px/1 var(--f-pix); background: var(--pink); border: 1px solid var(--ink); border-radius: 0; box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 #c0399a, 3px 3px 0 var(--ink); transition: transform .08s, box-shadow .08s; }
+.vw-form .pf-submit:hover { background: #ff93da; }
+.vw-form .pf-submit:active { transform: translate(3px, 3px); box-shadow: inset 2px 2px 0 #c0399a, inset -2px -2px 0 #fff; }
+.vw-form .pf-status { min-height: 1.4em; font: 400 16px/1.4 var(--f-pix); color: var(--ink2); }
+
+/* ---------- footer ---------- */
+.vw-foot { margin-top: clamp(52px, 8vw, 110px); background: var(--lcd); color: #f1e6ff; padding-bottom: 120px; }
+.vw-checker { height: 30px; background: conic-gradient(var(--ink) 25%, #fff 0 50%, var(--ink) 0 75%, #fff 0) 0 0 / 30px 30px; border-block: 3px solid var(--ink); }
+.vw-foot-in { display: flex; align-items: flex-end; gap: clamp(20px, 4vw, 56px); padding-top: clamp(34px, 5vw, 56px); }
+.vw-foot-col { flex: none; height: clamp(150px, 20vw, 220px); width: auto; opacity: .92; }
+.vw-shutdown { margin: 0 0 14px; color: #ffa14a; font: 400 clamp(1.4rem, 3.2vw, 2.4rem)/1.2 var(--f-pix); }
+.vw-foot-line { margin: 0 0 16px; font: italic 400 clamp(1.3rem, 2.4vw, 1.7rem)/1.25 var(--f-serif); color: #ffd7f0; }
+.vw-foot-small { margin: 0; max-width: 62ch; font-size: 15px; line-height: 1.55; color: #e6dbff; }
+.vw-foot a { color: #7ee8ff; }
+.vw-foot a:hover { background: rgba(255, 255, 255, .15); color: #fff; }
+.vw-foot :focus-visible { outline-color: #fff; box-shadow: 0 0 0 5px var(--lav); }
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+@media (max-width: 1100px) {
+  .vw-hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 380px); grid-template-areas: 'badge badge' 'name name' 'role role' 'note art' 'desk desk'; }
+  .vw-desk { flex-direction: row; flex-wrap: wrap; gap: 8px 14px; padding-top: 6px; }
+  .vw-toast { left: -6%; }
+  .vw-palm.l { left: -14%; } .vw-palm.r { right: -9%; }
+  .vw-ex-body { grid-template-columns: 230px minmax(0, 1fr); }
+  .vw-shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .vw-hero { min-height: 0; }
+  .vw-hero-grid { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'badge' 'name' 'role' 'note' 'art' 'desk'; }
+  .vw-hero-art { justify-self: center; max-width: 420px; margin-top: 8px; }
+  .vw-viewer { width: 100%; transform: rotate(1deg); animation-name: vw-in-r; }
+  .vw-toast { left: 6px; right: auto; bottom: -8px; }
+  .vw-col { display: none; }
+  .vw-about-grid, .vw-contact-grid { grid-template-columns: minmax(0, 1fr); }
+  .vw-cases { grid-template-columns: minmax(0, 1fr); }
+  .vw-cases .vw-case:nth-child(even) { margin-top: 0; }
+  .vw-palm { display: none; }
+  .vw-sun { left: 50%; }
+}
+@media (max-width: 760px) {
+  body { font-size: 16.5px; }
+  .vw-ex-body, .vw-pics-body, .vw-mail, .vw-wiz { grid-template-columns: minmax(0, 1fr); }
+  .vw-tree, .vw-mailboxes { flex-direction: row; flex-wrap: wrap; }
+  .vw-tree .vw-tree-h { display: none; }
+  .vw-tree .vw-leaf { flex: 1 1 100%; }
+  .vw-folders { position: static; flex-direction: row; flex-wrap: wrap; max-height: none; overflow: visible; }
+  .vw-folders .vw-tree-h { display: none; }
+  .vw-folders a { flex: 0 1 auto; }
+  .vw-mailboxes li { flex: 1 1 auto; }
+  .vw-wiz-art { min-height: 120px; }
+  .vw-wiz-sun { width: 100px; height: 100px; margin-left: -50px; top: 24%; }
+  .vw-row, .vw-list .vw-listhead { grid-template-columns: minmax(0, 1fr); }
+  .vw-list .vw-listhead { display: none; }
+  .vw-mailtable .vw-listhead { display: none; }
+  .vw-mailrow { grid-template-columns: minmax(0, 1fr) auto; }
+  .vw-mailrow .vw-from { grid-column: 1 / -1; }
+  .vw-readme-body { grid-template-columns: minmax(0, 1fr); }
+  .vw-idcard { max-width: 200px; }
+  .vw-shelf { grid-template-columns: minmax(0, 1fr); }
+  .vw-masonry { columns: 2 130px; column-gap: 10px; }
+  .vw-masonry li { margin-bottom: 10px; }
+  .vw-vstage { height: 64svh; }
+  .vw-foot-in { flex-direction: column; align-items: flex-start; }
+  .vw-foot-col { height: 120px; }
+  .vw-book .vw-body { grid-template-columns: 96px minmax(0, 1fr); gap: 8px 14px; }
+  .vw-contacts li { grid-template-columns: 22px minmax(0, 1fr); }
+  .vw-contacts .vw-clink { grid-column: 2; }
+  .vw-edu { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .vw-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .vw-stats li { padding: 10px; }
+  .vw-dicon { width: 80px; }
+  .vw-desk { gap: 4px 6px; }
+  .vw-win { box-shadow: inset 2px 2px 0 var(--hi), inset -2px -2px 0 var(--lo), 5px 5px 0 rgba(42, 20, 87, .32); }
+  .vw-head { box-shadow: inset 2px 2px 0 #fff, inset -2px -2px 0 var(--lo), 5px 5px 0 var(--ink); }
+  .vw-vbar { gap: 8px; }
+}
+@media (max-width: 420px) {
+  .vw-name { font-size: clamp(1.7rem, 10vw, 2.4rem); letter-spacing: .03em; }
+  .vw-role span:first-child { letter-spacing: .14em; }
+  .vw-stats strong { font-size: 1.2rem; }
+  .vw-masonry { columns: 2 120px; }
+  .vw-viewer { margin-inline: 0; }
+}
+
+/* ==========================================================================
+   MOTION OFF: user preference OR the tray pause button
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .vw-cloud { transform: translateX(var(--cx, 20vw)); }
+  .vw-ticker-track { width: auto; flex-wrap: wrap; justify-content: center; }
+  .vw-ticker ul { flex-wrap: wrap; justify-content: center; }
+  .vw-ticker ul + ul { display: none; }
+  .vw-box:hover, .vw-masonry li:hover figure, .vw-masonry li:focus-within figure { transform: none; }
+  .vw-btn:active, .vw-form .pf-submit:active { transform: none; }
+}
+html.vw-paused *, html.vw-paused *::before, html.vw-paused *::after { animation: none !important; }
+html.vw-paused .vw-cloud { transform: translateX(var(--cx, 20vw)); }
+html.vw-paused .vw-ticker-track { width: auto; flex-wrap: wrap; justify-content: center; }
+html.vw-paused .vw-ticker ul { flex-wrap: wrap; justify-content: center; }
+html.vw-paused .vw-ticker ul + ul { display: none; }
