@@ -1,0 +1,494 @@
+---
+/**
+ * Psychedelic theme: a 1967 Fillmore bill. Every chapter is a full-bleed colour-field poster joined to the next by a
+ * melting drip; chapters are renamed as a concert set list (real names always shown). Display lettering is SVG
+ * (stretched to fill its box, "melted" by a static displacement filter) with a plain-text accessible name; every
+ * fact sits on a solid cream panel. Keep every data-pf-* hook and ALL content (docs/THEME_GUIDE.md).
+ */
+import { profile } from '@/content/profile';
+import { photoGroups, heroPhotos, photos } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import meta from './meta';
+import './theme.css';
+
+const STYLE = 'psychedelic';
+const heroes = heroPhotos(STYLE);
+const all = photos(STYLE);
+const hero = heroes[1] ?? heroes[0] ?? all[0];
+const aboutPhoto = heroes[2] ?? heroes[0] ?? hero;
+const encorePhoto = heroes[0] ?? hero;
+const groups = photoGroups(STYLE);
+const pad = (n: number) => String(n).padStart(2, '0');
+const lastName = profile.name.split(' ').slice(1).join(' ');
+const guests = (profile.skills.find((g) => /genai/i.test(g.group))?.items ?? []).slice(0, 5);
+
+/* ---------------------------------------------------------------- set list */
+const nav = [
+  { id: 'about', name: 'About', set: 'Opening act', sub: "Who is on stage before the numbers kick in." },
+  { id: 'experience', name: 'Experience', set: 'The main set', sub: 'Three stages, newest first. Every bullet is a track.' },
+  { id: 'case-studies', name: 'Case studies', set: 'Greatest hits', sub: 'The singles: the problem, the move, what changed.' },
+  { id: 'projects', name: 'Projects', set: 'B-sides', sub: 'Builds that never needed a record label.' },
+  { id: 'skills', name: 'Skills', set: 'The gear', sub: "Everything that is plugged into the amp." },
+  { id: 'beyond-code', name: 'Beyond code', set: 'The trip', sub: `Off stage: rides, hills, books, dogs and street food. ${groups.length} stops on the itinerary.` },
+  { id: 'writing', name: 'Writing', set: 'Liner notes', sub: 'The small print, still being written.' },
+  { id: 'contact', name: 'Contact', set: 'Book the band', sub: 'Open to interesting problems in GenAI agents, workflow systems and backend infrastructure.' },
+];
+const sec = Object.fromEntries(nav.map((n, i) => [n.id, { ...n, no: pad(i + 1) }])) as Record<string, (typeof nav)[number] & { no: string }>;
+
+/* ---------------------------------------------------------------- display lettering (SVG, stretched to fill) */
+const CH = 70, PAD = 24, LH = 90;
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+function lettering(id: string, lines: string[], label: string, scheme: 'sun' | 'paper' | 'ink', cls = ''): string {
+  const up = lines.map((l) => l.toUpperCase());
+  const W = Math.max(...up.map((l) => l.length)) * CH;
+  const vbW = W + PAD * 2, vbH = PAD * 2 + 76 + (up.length - 1) * LH;
+  const texts = up.map((l, i) => `<text x="${PAD}" y="${PAD + 72 + i * LH}" textLength="${W}" lengthAdjust="spacingAndGlyphs">${esc(l)}</text>`).join('');
+  return `<svg class="lt lt-${scheme} ${cls}" viewBox="0 0 ${vbW} ${vbH}" preserveAspectRatio="xMinYMid meet" role="img" aria-label="${esc(label)}" focusable="false"><defs><g id="lt-${id}">${texts}</g></defs><g filter="url(#melt)"><use href="#lt-${id}" class="e2"/><use href="#lt-${id}" class="e1"/><use href="#lt-${id}" class="mn"/></g></svg>`;
+}
+
+/* ---------------------------------------------------------------- melting drip between fields */
+function wave(base: number, amp: number, phase: number, freq: number, W = 1440, H = 130) {
+  const pts: [number, number][] = [];
+  for (let x = 0; x <= W; x += 40) pts.push([x, base + amp * Math.sin(phase + (x / W) * freq * Math.PI * 2) + (amp * 0.35) * Math.sin(phase * 2.3 + (x / W) * freq * 5.1)]);
+  let d = `M0 ${H} L${pts[0][0]} ${pts[0][1].toFixed(1)}`;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const mx = (pts[i][0] + pts[i + 1][0]) / 2, my = (pts[i][1] + pts[i + 1][1]) / 2;
+    d += ` Q${pts[i][0]} ${pts[i][1].toFixed(1)} ${mx} ${my.toFixed(1)}`;
+  }
+  return d + ` L${W} ${pts[pts.length - 1][1].toFixed(1)} L${W} ${H}Z`;
+}
+function drip(seed: number, c1: string, c2: string, c3: string, next: string) {
+  const p = seed * 1.7;
+  return `<svg class="drip" viewBox="0 0 1440 130" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path d="${wave(34, 11, p, 2.2)}" fill="${c1}"/><path d="${wave(58, 11, p + 1.3, 2.7)}" fill="${c2}"/><path d="${wave(82, 10, p + 2.6, 2.4)}" fill="${c3}"/><path d="${wave(106, 9, p + 3.9, 3.1)}" fill="${next}"/></svg>`;
+}
+const C = { violet: '#2a0d63', turq: '#10d9c4', indigo: '#25107a', pink: '#ff2e93', yellow: '#ffd91f', purple: '#7a3cff', night: '#14062f', cobalt: '#2f5bff', orange: '#ff7a12', paper: '#fff3d1', ink: '#1c0838' };
+
+/* ---------------------------------------------------------------- ornaments */
+const mandala = (() => {
+  const s: string[] = [];
+  for (const r of [12, 26, 44, 60, 78, 94]) s.push(`<circle cx="100" cy="100" r="${r}"/>`);
+  for (let i = 0; i < 24; i++) s.push(`<ellipse cx="100" cy="30" rx="6.5" ry="20" transform="rotate(${i * 15} 100 100)"/>`);
+  for (let i = 0; i < 12; i++) s.push(`<path d="M100 4 Q110 22 100 46 Q90 22 100 4Z" transform="rotate(${i * 30} 100 100)"/>`);
+  for (let i = 0; i < 12; i++) s.push(`<circle cx="100" cy="64" r="3.2" transform="rotate(${i * 30 + 15} 100 100)"/>`);
+  return s.join('');
+})();
+const daisy = Array.from({ length: 8 }, (_, i) => `<ellipse cx="50" cy="24" rx="13" ry="23" transform="rotate(${i * 45} 50 50)"/>`).join('');
+// flower / seal outlines in objectBoundingBox units (clip-paths for photo frames)
+function lobed(lobes: number, amp: number, steps = 144) {
+  let d = '';
+  for (let i = 0; i < steps; i++) {
+    const a = (i / steps) * Math.PI * 2, r = 0.5 - amp + amp * Math.cos(lobes * a);
+    d += `${i ? 'L' : 'M'}${(0.5 + r * Math.cos(a)).toFixed(4)} ${(0.5 + r * Math.sin(a)).toFixed(4)}`;
+  }
+  return d + 'Z';
+}
+
+/* ---------------------------------------------------------------- photo frames */
+const SHAPES = {
+  portrait: ['arch', 'oval-v', 'arch', 'flower', 'leaf'],
+  landscape: ['oval', 'stadium', 'seal', 'oval'],
+  square: ['circle', 'flower', 'seal', 'leaf', 'circle'],
+};
+const shapeFor = (p: { img: { thumbWidth: number; thumbHeight: number } }, i: number) => {
+  const ar = p.img.thumbWidth / p.img.thumbHeight;
+  const list = ar < 0.88 ? SHAPES.portrait : ar > 1.18 ? SHAPES.landscape : SHAPES.square;
+  return list[i % list.length];
+};
+const ro = (p: { focus: string; original: { thumb: string } }) => `--o:url('${p.original.thumb}');--fp:${p.focus}`;
+const jobCols = ['pink', 'turq', 'orange'];
+---
+<!doctype html>
+<html lang="en" class="ps">
+  <head>
+    <ThemeHead style={STYLE} themeColor="#2a0d63" />
+    <meta name="robots" content="index,follow" />
+    <script is:inline>document.documentElement.classList.add('js')</script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <span class="font-warm" aria-hidden="true">Aa</span>
+
+    <!-- shared SVG defs: melt filter, lettering gradients, photo clip-paths, ornaments -->
+    <svg class="defs" width="0" height="0" aria-hidden="true" focusable="false">
+      <defs>
+        <filter id="melt" x="-4%" y="-10%" width="108%" height="120%" color-interpolation-filters="sRGB">
+          <feTurbulence type="fractalNoise" baseFrequency="0.010 0.026" numOctaves="2" seed="7" result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="12" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+        <linearGradient id="g-sun" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6a8" /><stop offset=".35" stop-color="#ffd91f" /><stop offset=".7" stop-color="#ff8a1a" /><stop offset="1" stop-color="#ff2e93" /></linearGradient>
+        <linearGradient id="g-paper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffdf2" /><stop offset=".55" stop-color="#fff3d1" /><stop offset="1" stop-color="#ffd978" /></linearGradient>
+        <linearGradient id="g-ink" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6a2cff" /><stop offset="1" stop-color="#1c0838" /></linearGradient>
+        <clipPath id="cp-flower" clipPathUnits="objectBoundingBox"><path d={lobed(10, 0.055)} /></clipPath>
+        <clipPath id="cp-seal" clipPathUnits="objectBoundingBox"><path d={lobed(26, 0.022)} /></clipPath>
+        <symbol id="mandala" viewBox="0 0 200 200"><g fill="none" stroke="currentColor" stroke-width="1.3" set:html={mandala} /></symbol>
+        <symbol id="daisy" viewBox="0 0 100 100"><g stroke="#1c0838" stroke-width="3" fill="currentColor" set:html={daisy} /><circle cx="50" cy="50" r="13" fill="#1c0838" stroke="none" /><circle cx="50" cy="50" r="7" fill="#ffd91f" stroke="none" /></symbol>
+        <symbol id="paisley" viewBox="0 0 100 140">
+          <path d="M46 136C10 134 0 96 20 66 36 42 50 34 52 20 54 6 76 0 90 12 98 20 94 32 84 32 76 32 72 24 78 20 70 18 64 26 66 38 70 62 100 80 94 108 90 126 70 138 46 136Z" fill="currentColor" stroke="#1c0838" stroke-width="3.5" stroke-linejoin="round" />
+          <path d="M46 122C26 120 18 98 30 82 38 70 52 64 58 78 64 92 66 112 46 122Z" fill="none" stroke="#1c0838" stroke-width="3" />
+          <circle cx="44" cy="97" r="5" fill="#1c0838" />
+          <circle cx="62" cy="56" r="3.2" fill="#1c0838" /><circle cx="76" cy="76" r="3.2" fill="#1c0838" /><circle cx="82" cy="98" r="3.2" fill="#1c0838" /><circle cx="74" cy="117" r="3.2" fill="#1c0838" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <!-- ===================================================== NAV: the set list -->
+    <header class="nav" id="top">
+      <div class="nav-in">
+        <a class="nav-brand" href="#hero" aria-label={`${profile.name}, back to top`}>
+          <svg class="nav-sun" viewBox="0 0 100 100" aria-hidden="true" focusable="false" style="color:#ff7a12"><use href="#daisy" /></svg>
+          <span>{profile.firstName}</span>
+        </a>
+        <nav class="nav-list" aria-label="Set list">
+          <ol>
+            {nav.map((n, i) => (
+              <li><a href={`#${n.id}`} data-nav={n.id}><b aria-hidden="true">{pad(i + 1)}</b><span class="n-real">{n.name}</span><span class="n-set">{n.set}</span></a></li>
+            ))}
+          </ol>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- ===================================================== HERO: tonight's bill -->
+      <section class="sec f-violet hero" id="hero" data-pf-section="hero" data-sec>
+        <div class="orn orn-hero" aria-hidden="true">
+          <i class="rays anim"></i>
+          <i class="blob b1 anim"></i><i class="blob b2 anim"></i><i class="blob b3 anim"></i>
+        </div>
+        <div class="wrap hero-grid">
+          <div class="hero-copy">
+            <p class="billing"><span aria-hidden="true" class="star">&#10022;</span> {meta.flavor.kicker} <span aria-hidden="true" class="star">&#10022;</span></p>
+            <h1 class="h1"><Fragment set:html={lettering('hero', [profile.firstName, lastName], profile.name, 'sun', 'lt-hero')} /></h1>
+            <p class="ribbon"><span>{profile.role}</span><i aria-hidden="true"></i><span>{profile.location}</span></p>
+            <p class="lead">{profile.tagline}</p>
+            <p class="cta">
+              <a class="btn btn-main" href={withBase(profile.resume.href)} data-pf-resume download>{profile.resume.label}</a>
+              <a class="btn" href="#contact">Get in touch</a>
+            </p>
+            <p class="guests"><b>Also on the bill</b>{guests.map((g) => <span>{g}</span>)}</p>
+          </div>
+
+          <div class="hero-art">
+            <div class="halo" aria-hidden="true"><i class="rings anim"></i></div>
+            <svg class="deco d-paisley" viewBox="0 0 100 140" aria-hidden="true" focusable="false" style="color:#ff2e93"><use href="#paisley" /></svg>
+            <svg class="deco d-daisy" viewBox="0 0 100 100" aria-hidden="true" focusable="false" style="color:#ffd91f"><use href="#daisy" /></svg>
+            <svg class="deco d-daisy2" viewBox="0 0 100 100" aria-hidden="true" focusable="false" style="color:#10d9c4"><use href="#daisy" /></svg>
+            <figure class="arch">
+              <div class="arch-pic">
+                {hero && <img src={hero.img.src} width={hero.img.width} height={hero.img.height} alt={hero.alt} fetchpriority="high" decoding="async" style={`object-position:${hero.focus}`} />}
+              </div>
+              {hero?.caption && <figcaption>{hero.caption}</figcaption>}
+            </figure>
+          </div>
+        </div>
+
+        <div class="wrap">
+          <h2 class="sr-only">Key numbers</h2>
+          <ul class="suns" aria-label="Key numbers">
+            {profile.stats.map((s, i) => (
+              <li class={`sun s${i % 6}`}><strong>{s.value}</strong><span>{s.label}</span></li>
+            ))}
+          </ul>
+        </div>
+        <Fragment set:html={drip(1, C.pink, C.orange, C.yellow, C.turq)} />
+      </section>
+
+      <!-- ===================================================== ABOUT -->
+      <section class="sec f-turq" id="about" data-pf-section="about" data-sec data-tone="light">
+        <div class="orn" aria-hidden="true"><svg class="mand m-a anim" viewBox="0 0 200 200" style="color:#1c0838"><use href="#mandala" /></svg><svg class="mand m-b anim" viewBox="0 0 200 200" style="color:#fff3d1"><use href="#mandala" /></svg></div>
+        <div class="wrap">
+          <header class="sh rv">
+            <p class="sh-set"><span>Track {sec.about.no}</span><b>{sec.about.set}</b></p>
+            <h2><Fragment set:html={lettering('about', ['About'], 'About', 'paper')} /></h2>
+            <p class="sh-sub">{sec.about.sub}</p>
+          </header>
+          <div class="about-grid">
+            <div class="about-art rv">
+              <svg class="deco d-paisley2" viewBox="0 0 100 140" aria-hidden="true" focusable="false" style="color:#ff7a12"><use href="#paisley" /></svg>
+              <figure class="arch arch-sm">
+                <div class="arch-pic">{aboutPhoto && <img src={aboutPhoto.img.src} width={aboutPhoto.img.width} height={aboutPhoto.img.height} alt={aboutPhoto.alt} loading="lazy" decoding="async" style={`object-position:${aboutPhoto.focus}`} />}</div>
+              </figure>
+              <aside class="pass" aria-label="Backstage pass">
+                <p class="pass-top">All access</p>
+                <p class="pass-name">{profile.name}</p>
+                <p>{profile.role}</p>
+                <p>{profile.location}</p>
+              </aside>
+            </div>
+            <div class="about-text rv">
+              <div class="paper">
+                <p class="about-lead">{profile.summary}</p>
+                {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+                <h3 class="mini">Off-duty set</h3>
+                <ul class="stickers" aria-label="Interests">{profile.interests.map((i) => <li>{i}</li>)}</ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Fragment set:html={drip(2, C.pink, C.orange, C.yellow, C.indigo)} />
+      </section>
+
+      <!-- ===================================================== EXPERIENCE -->
+      <section class="sec f-indigo" id="experience" data-pf-section="experience" data-sec data-tone="dark">
+        <div class="orn" aria-hidden="true"><i class="blob b4 anim"></i><i class="blob b5 anim"></i></div>
+        <div class="wrap">
+          <header class="sh rv">
+            <p class="sh-set"><span>Track {sec.experience.no}</span><b>{sec.experience.set}</b></p>
+            <h2><Fragment set:html={lettering('exp', ['Experience'], 'Experience', 'sun')} /></h2>
+            <p class="sh-sub">{sec.experience.sub}</p>
+          </header>
+
+          {profile.experience.map((e, i) => (
+            <article class={`job jc-${jobCols[i % 3]} rv`}>
+              <header class="job-head">
+                <div class="job-date" aria-label={`${e.start} to ${e.end}`}><b>{e.start}</b><i aria-hidden="true">to</i><b>{e.end}</b></div>
+                <div class="job-id">
+                  <h3>{e.title}, <span>{e.company}</span></h3>
+                  <p class="job-place">{e.place}</p>
+                  <p class="job-blurb">{e.blurb}</p>
+                </div>
+              </header>
+              <ol class="tracks">
+                {e.bullets.map((b, j) => (
+                  <li class="track">
+                    <span class="disc" aria-hidden="true">{pad(j + 1)}</span>
+                    <h4>{b.head}</h4>
+                    <p>{b.text}</p>
+                  </li>
+                ))}
+              </ol>
+            </article>
+          ))}
+
+          <div class="edu rv" id="education">
+            {profile.education.map((e) => (
+              <div class="edu-card" data-pf-education>
+                <p class="edu-tag">Education</p>
+                <h3>{e.school}</h3>
+                <p>{e.degree}</p>
+                <p class="edu-dates">{e.start} - {e.end}</p>
+              </div>
+            ))}
+            <p class="edu-note" aria-hidden="true">The rehearsal years</p>
+          </div>
+        </div>
+        <Fragment set:html={drip(3, C.orange, C.yellow, C.turq, C.pink)} />
+      </section>
+
+      <!-- ===================================================== CASE STUDIES -->
+      <section class="sec f-pink" id="case-studies" data-pf-section="case-studies" data-sec data-tone="dark">
+        <div class="orn" aria-hidden="true"><svg class="mand m-c anim" viewBox="0 0 200 200" style="color:#fff3d1"><use href="#mandala" /></svg><i class="tiedye"></i></div>
+        <div class="wrap">
+          <header class="sh rv">
+            <p class="sh-set"><span>Track {sec['case-studies'].no}</span><b>{sec['case-studies'].set}</b></p>
+            <h2><Fragment set:html={lettering('cases', ['Case studies'], 'Case studies', 'sun', 'lt-pinkfield')} /></h2>
+            <p class="sh-sub">{sec['case-studies'].sub}</p>
+          </header>
+          <div class="cases">
+            {profile.caseStudies.map((c, i) => (
+              <article class={`case cv-${i % 6}${c.featured ? '' : ' case-minor'} rv`} data-pf-case={c.id}>
+                <div class="case-cover">
+                  <span class="case-no" aria-hidden="true">{c.featured ? `No. ${pad(i + 1)}` : 'B-side'}</span>
+                  <p class="case-meta"><span>{c.org}</span><span>{c.period}</span><span>{c.role}</span></p>
+                </div>
+                <div class="case-body">
+                  <h3>{c.title}</h3>
+                  <p class="case-kick">{c.kicker}</p>
+                  <dl class="pa">
+                    <div><dt>Problem</dt><dd>{c.problem}</dd></div>
+                    <div><dt>Approach</dt><dd>{c.approach}</dd></div>
+                  </dl>
+                  <ul class="impact" aria-label="Impact">{c.impact.map((x) => <li>{x}</li>)}</ul>
+                  <ul class="tags" aria-label="Tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+        <Fragment set:html={drip(4, C.orange, C.turq, C.paper, C.yellow)} />
+      </section>
+
+      <!-- ===================================================== PROJECTS -->
+      <section class="sec f-yellow" id="projects" data-pf-section="projects" data-sec data-tone="light">
+        <div class="orn" aria-hidden="true"><i class="rays rays-y anim"></i></div>
+        <div class="wrap">
+          <header class="sh rv">
+            <p class="sh-set"><span>Track {sec.projects.no}</span><b>{sec.projects.set}</b></p>
+            <h2><Fragment set:html={lettering('proj', ['Projects'], 'Projects', 'ink')} /></h2>
+            <p class="sh-sub">{sec.projects.sub}</p>
+          </header>
+          <ul class="tickets">
+            {profile.projects.map((p, i) => (
+              <li class={`ticket tk-${i % 2} rv`} data-pf-project={p.name}>
+                <div class="stub" aria-hidden="true"><span>{p.year}</span></div>
+                <div class="tk-main">
+                  <p class="tk-year">Released {p.year}</p>
+                  <h3>{p.title}</h3>
+                  <p>{p.blurb}</p>
+                  <ul class="chips" aria-label="Stack">{p.stack.map((s) => <li>{s}</li>)}</ul>
+                  <p class="tk-links">
+                    <a class="btn btn-sm" href={p.repo} rel="noopener">Source on GitHub<span class="sr-only"> for {p.title}</span></a>
+                    {p.live && <a class="btn btn-sm btn-alt" href={p.live} rel="noopener">Live site<span class="sr-only"> for {p.title}</span></a>}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <Fragment set:html={drip(5, C.pink, C.orange, C.turq, C.purple)} />
+      </section>
+
+      <!-- ===================================================== SKILLS -->
+      <section class="sec f-purple" id="skills" data-pf-section="skills" data-sec data-tone="dark">
+        <div class="orn" aria-hidden="true"><svg class="deco d-paisley3" viewBox="0 0 100 140" style="color:#ffd91f"><use href="#paisley" /></svg><svg class="deco d-paisley4" viewBox="0 0 100 140" style="color:#10d9c4"><use href="#paisley" /></svg><svg class="mand m-d anim" viewBox="0 0 200 200" style="color:#ff2e93"><use href="#mandala" /></svg></div>
+        <div class="wrap">
+          <header class="sh rv">
+            <p class="sh-set"><span>Track {sec.skills.no}</span><b>{sec.skills.set}</b></p>
+            <h2><Fragment set:html={lettering('skills', ['Skills'], 'Skills', 'sun', 'lt-purplefield')} /></h2>
+            <p class="sh-sub">{sec.skills.sub}</p>
+          </header>
+          <div class="rack">
+            {profile.skills.map((g, i) => (
+              <section class={`amp amp-${i % 6} rv`} aria-labelledby={`sk-${i}`}>
+                <h3 id={`sk-${i}`}>{g.group}</h3>
+                <ul class="chips">
+                  {g.items.map((it) => <li>{it}</li>)}
+                  {((g as any).familiar ?? []).map((f: string) => <li class="fam">{f} <small>(familiar)</small></li>)}
+                </ul>
+              </section>
+            ))}
+          </div>
+        </div>
+        <Fragment set:html={drip(6, C.pink, C.orange, C.yellow, C.night)} />
+      </section>
+
+      <!-- ===================================================== BEYOND CODE -->
+      <section class="sec f-night" id="beyond-code" data-pf-section="beyond-code" data-sec data-tone="dark">
+        <div class="orn" aria-hidden="true"><i class="stars"></i><i class="blob b6 anim"></i><i class="blob b7 anim"></i></div>
+        <div class="wrap">
+          <header class="sh rv">
+            <p class="sh-set"><span>Track {sec['beyond-code'].no}</span><b>{sec['beyond-code'].set}</b></p>
+            <h2><Fragment set:html={lettering('beyond', ['Beyond code'], 'Beyond code', 'sun', 'lt-nightfield')} /></h2>
+            <p class="sh-sub">{sec['beyond-code'].sub} <span class="hint">Hover or tap a photo to come down to the original.</span></p>
+          </header>
+
+          {groups.map((g, gi) => (
+            <div class={`stop st-${gi % 5}`}>
+              <header class="stop-head">
+                <p class="stop-no">Stop {pad(gi + 1)} of {pad(groups.length)}</p>
+                <h3>{g.title}</h3>
+                <p class="stop-blurb">{g.blurb}</p>
+                <p class="stop-n">{g.photos.length} {g.photos.length === 1 ? 'photo' : 'photos'}</p>
+              </header>
+              <ul class="gallery">
+                {g.photos.map((p, i) => {
+                  const shape = shapeFor(p, i + gi);
+                  return (
+                    <li class={`fr s-${shape}`} style={`--r:${(i * 53 + gi * 31) % 360}deg`}>
+                      <figure>
+                        <div class="frame" style={ro(p)}>
+                          <div class="pic"><img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} /></div>
+                        </div>
+                        {p.caption && <figcaption>{p.caption}</figcaption>}
+                      </figure>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <Fragment set:html={drip(7, C.cobalt, C.turq, C.yellow, C.orange)} />
+      </section>
+
+      <!-- ===================================================== WRITING -->
+      <section class="sec f-orange" id="writing" data-pf-section="writing" data-sec data-tone="light">
+        <div class="orn" aria-hidden="true"><svg class="mand m-e anim" viewBox="0 0 200 200" style="color:#1c0838"><use href="#mandala" /></svg></div>
+        <div class="wrap">
+          <header class="sh rv">
+            <p class="sh-set"><span>Track {sec.writing.no}</span><b>{sec.writing.set}</b></p>
+            <h2><Fragment set:html={lettering('writing', ['Writing'], 'Writing', 'paper')} /></h2>
+            <p class="sh-sub">{sec.writing.sub}</p>
+          </header>
+          <div class="liner rv">
+            <div class="paper liner-card">
+              {profile.writing.posts.length ? (
+                <>
+                  <h3 class="mini">Out now</h3>
+                  <ul class="posts">{profile.writing.posts.map((p) => <li><a href={p.href}>{p.title}</a> <span>{p.date}</span></li>)}</ul>
+                </>
+              ) : (
+                <p class="soon"><span aria-hidden="true">&#10022;</span> Coming soon <span aria-hidden="true">&#10022;</span></p>
+              )}
+              <p class="liner-status">{profile.writing.status}</p>
+              <h3 class="mini">Upcoming tracks</h3>
+              <ol class="planned">
+                {profile.writing.planned.map((t, i) => <li><span class="disc" aria-hidden="true">{pad(i + 1)}</span><span class="pl-t">{t}</span><em>TBA</em></li>)}
+              </ol>
+            </div>
+          </div>
+        </div>
+        <Fragment set:html={drip(8, C.pink, C.yellow, C.paper, C.turq)} />
+      </section>
+
+      <!-- ===================================================== CONTACT -->
+      <section class="sec f-turq2" id="contact" data-pf-section="contact" data-sec data-tone="light">
+        <div class="orn" aria-hidden="true"><i class="rays rays-w anim"></i></div>
+        <div class="wrap">
+          <header class="sh rv">
+            <p class="sh-set"><span>Track {sec.contact.no}</span><b>{sec.contact.set}</b></p>
+            <h2><Fragment set:html={lettering('contact', ['Contact'], 'Contact', 'paper', 'lt-turqfield')} /></h2>
+            <p class="sh-sub">{sec.contact.sub}</p>
+          </header>
+          <div class="contact-grid">
+            <div class="paper chan rv">
+              <h3 class="mini">Channels</h3>
+              <ul class="channels">
+                <li><span class="k">Email</span><Protected kind="email" /></li>
+                <li><span class="k">Phone</span><Protected kind="phone" /></li>
+                <li><span class="k">LinkedIn</span><a href={profile.contact.linkedin} rel="noopener me" data-pf-linkedin>LinkedIn profile</a></li>
+                <li><span class="k">GitHub</span><a href={profile.contact.github} rel="noopener me" data-pf-github>GitHub profile</a></li>
+                <li><span class="k">Resume</span><a href={withBase(profile.resume.href)} download>{profile.resume.label}</a></li>
+              </ul>
+            </div>
+            <div class="paper send rv">
+              <h3 class="mini">Request a song</h3>
+              <ContactForm submitLabel="Send it up to the stage" labels={{ name: 'Your name', email: 'Your email', message: 'Your message' }} />
+            </div>
+          </div>
+        </div>
+        <Fragment set:html={drip(9, C.pink, C.orange, C.yellow, C.violet)} />
+      </section>
+    </main>
+
+    <!-- ===================================================== ENCORE: the hero again -->
+    <footer class="sec f-violet encore" data-tone="dark" data-sec>
+      <div class="orn" aria-hidden="true"><i class="rays anim"></i><i class="blob b1 anim"></i><i class="blob b3 anim"></i></div>
+      <div class="wrap encore-grid">
+        <div class="encore-art" aria-hidden="true">
+          <i class="rings anim"></i>
+          <div class="disc-pic">{encorePhoto && <img src={encorePhoto.img.thumb} width={encorePhoto.img.thumbWidth} height={encorePhoto.img.thumbHeight} alt="" loading="lazy" decoding="async" style={`object-position:${encorePhoto.focus}`} />}</div>
+        </div>
+        <div class="encore-copy">
+          <h2 class="enc-h"><Fragment set:html={lettering('encore', ['Encore!'], 'Encore', 'sun')} /></h2>
+          <p class="enc-name">{profile.name}</p>
+          <p class="enc-role">{profile.role} &middot; {profile.focus}</p>
+          <p class="enc-line">{meta.flavor.footer}</p>
+          <p class="cta">
+            <a class="btn btn-main" href={withBase(profile.resume.href)} download>{profile.resume.label}</a>
+            <a class="btn" href="#contact">Get in touch</a>
+            <a class="btn btn-ghost" href="#top">Back to the top</a>
+          </p>
+        </div>
+      </div>
+      <p class="fine wrap">&copy; {new Date().getFullYear()} {profile.name} &middot; {meta.flavor.tagline} &middot; <a href={withBase('gallery/')}>See the other styles</a></p>
+    </footer>
+
+    <UtilityBar style={STYLE} />
+    <script>import './client.ts';</script>
+  </body>
+</html>
