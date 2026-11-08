@@ -1,0 +1,26 @@
+---
+/**
+ * Email / phone link that is NOT present in the HTML as plain text (decoded in the browser) so basic scrapers
+ * miss it.  <Protected kind="email" class="btn">Email me</Protected>
+ * With no slot content the decoded address/number is shown once JS runs.  Adds data-pf-email / data-pf-phone.
+ */
+import { profile } from '@/content/profile';
+interface Props { kind: 'email' | 'phone'; class?: string; fill?: boolean }
+const { kind, class: cls, fill = false } = Astro.props;
+const v = kind === 'email' ? profile.contact.emailB64 : profile.contact.phoneB64;
+const display = kind === 'phone' ? profile.contact.phoneDisplayB64 : profile.contact.emailB64;
+const attr = kind === 'email' ? { 'data-pf-email': '' } : { 'data-pf-phone': '' };
+const hasSlot = Astro.slots.has('default');
+---
+<a href="#contact" class={cls} data-pf-protected={kind} data-v={v} data-d={display} data-fill={(!hasSlot || fill) ? 'true' : 'false'} rel="nofollow" {...attr}>
+  {hasSlot ? <slot /> : <span class="pf-reveal">{kind === 'email' ? 'Email (needs JavaScript)' : 'Phone (needs JavaScript)'}</span>}
+</a>
+<script>
+  document.querySelectorAll<HTMLAnchorElement>('a[data-pf-protected]').forEach((a) => {
+    if (a.dataset.done) return;
+    a.dataset.done = '1';
+    const kind = a.dataset.pfProtected, val = atob(a.dataset.v || ''), disp = atob(a.dataset.d || '');
+    a.href = (kind === 'email' ? 'mailto:' : 'tel:') + val;
+    if (a.dataset.fill === 'true') a.textContent = disp;
+  });
+</script>

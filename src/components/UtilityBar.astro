@@ -1,0 +1,124 @@
+---
+/**
+ * The ONE piece of chrome every page carries: style name, "About this style", Clean view, Gallery, prev/next day.
+ * Put <UtilityBar style="your-id" /> right before </body>. Reserve ~72px of bottom padding so it never hides content.
+ *
+ * Re-colour it from your theme CSS with custom properties on :root / body (all optional):
+ *   --pf-bar-bg  --pf-bar-fg  --pf-bar-accent  --pf-bar-border  --pf-bar-radius  --pf-bar-font  --pf-bar-shadow
+ *   --pf-dialog-bg --pf-dialog-fg --pf-dialog-accent --pf-dialog-radius --pf-dialog-font
+ * Do not hide it, shrink it below 12px text, or cover it (z-index is max).
+ */
+import { themeInfo, THEMES } from '@/themes/order';
+import { builtIds, themeMeta } from '@/themes/registry';
+import { withBase, themeUrl, cleanUrl, galleryUrl } from '@/lib/urls';
+
+interface Props { style: string; variant?: 'theme' | 'clean'; label?: string }
+const { style, variant = 'theme', label = 'Clean view' } = Astro.props;
+const info = themeInfo(style);
+const meta = themeMeta(style);
+const ids = THEMES.map((t) => t.id).filter((id) => builtIds.includes(id));
+const i = ids.indexOf(style);
+const prev = i >= 0 && ids.length > 1 ? ids[(i - 1 + ids.length) % ids.length] : null;
+const next = i >= 0 && ids.length > 1 ? ids[(i + 1) % ids.length] : null;
+const nameOf = (id: string) => themeInfo(id)?.name ?? id;
+---
+<nav class="pf-bar" data-pf-bar aria-label="Portfolio style controls">
+  {variant === 'theme' ? (
+    <>
+      {prev && <a class="pf-bar-btn pf-bar-arrow" href={themeUrl(prev)} rel="prev" aria-label={`Previous style: ${nameOf(prev)}`} title={`Previous: ${nameOf(prev)}`}>&larr;</a>}
+      <span class="pf-bar-name" title={info?.blurb}>{info?.name ?? style}</span>
+      <button class="pf-bar-btn" type="button" data-pf-about-open aria-haspopup="dialog">About this style</button>
+      <a class="pf-bar-btn" href={cleanUrl()} data-pf-clean>Clean view</a>
+      <a class="pf-bar-btn" href={galleryUrl()}>Gallery</a>
+      {next && <a class="pf-bar-btn pf-bar-arrow" href={themeUrl(next)} rel="next" aria-label={`Next style: ${nameOf(next)}`} title={`Next: ${nameOf(next)}`}>&rarr;</a>}
+    </>
+  ) : (
+    <>
+      <span class="pf-bar-name">{label}</span>
+      <a class="pf-bar-btn" href={withBase('')} data-pf-today>Today's style</a>
+      <a class="pf-bar-btn" href={galleryUrl()}>Gallery</a>
+    </>
+  )}
+</nav>
+
+{variant === 'theme' && (
+  <dialog class="pf-dialog" data-pf-about aria-labelledby="pf-about-title">
+    <form method="dialog" class="pf-dialog-close"><button aria-label="Close">&times;</button></form>
+    <h2 id="pf-about-title">{info?.name ?? style} <small>{info?.era}</small></h2>
+    {meta ? (
+      <>
+        <p>{meta.about.origin}</p>
+        <h3>Defining traits</h3>
+        <ul>{meta.about.traits.map((t) => <li>{t}</li>)}</ul>
+        <h3>On this site</h3>
+        <p>{meta.about.inThisSite}</p>
+        {meta.about.furtherReading?.length ? (
+          <>
+            <h3>Further reading</h3>
+            <ul>{meta.about.furtherReading.map((r) => <li><a href={r.url} rel="noopener" target="_blank">{r.label}</a></li>)}</ul>
+          </>
+        ) : null}
+        <h3>Credits</h3>
+        <ul class="pf-credits">
+          {meta.credits.map((c) => (
+            <li><strong>{c.name}</strong> - {c.kind}, {c.license}{c.note ? ` (${c.note})` : ''}{c.url ? <> - <a href={c.url} rel="noopener" target="_blank">source</a></> : null}</li>
+          ))}
+        </ul>
+      </>
+    ) : (
+      <p>{info?.blurb}</p>
+    )}
+  </dialog>
+)}
+
+<style is:global>
+  .pf-bar {
+    position: fixed; z-index: 2147483000; left: 50%; bottom: max(10px, env(safe-area-inset-bottom)); transform: translateX(-50%);
+    display: flex; align-items: center; gap: 2px; padding: 4px; max-width: calc(100vw - 16px);
+    background: var(--pf-bar-bg, rgba(17, 17, 17, .92)); color: var(--pf-bar-fg, #fff);
+    border: 1px solid var(--pf-bar-border, rgba(255, 255, 255, .25)); border-radius: var(--pf-bar-radius, 999px);
+    box-shadow: var(--pf-bar-shadow, 0 6px 24px rgba(0, 0, 0, .35)); font: 500 13px/1.2 var(--pf-bar-font, system-ui, -apple-system, 'Segoe UI', sans-serif);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); text-transform: none; letter-spacing: normal; filter: none; mix-blend-mode: normal; animation: none;
+  }
+  .pf-bar * { box-sizing: border-box; }
+  .pf-bar-name { padding: 0 10px; font-weight: 700; white-space: nowrap; }
+  .pf-bar-btn {
+    appearance: none; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; text-decoration: none;
+    padding: 8px 11px; border-radius: calc(var(--pf-bar-radius, 999px) - 2px); white-space: nowrap; min-height: 32px; display: inline-flex; align-items: center;
+  }
+  .pf-bar-btn:hover, .pf-bar-btn:focus-visible { background: var(--pf-bar-accent, #fff); color: var(--pf-bar-bg-solid, #111); outline: none; }
+  .pf-bar-btn:focus-visible { box-shadow: 0 0 0 2px var(--pf-bar-accent, #fff); }
+  .pf-bar-arrow { padding: 8px 10px; font-size: 15px; }
+  @media (max-width: 600px) {
+    .pf-bar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+    .pf-bar-name { display: none; }
+    .pf-bar-btn { padding: 8px 9px; font-size: 12px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .pf-bar, .pf-bar * { transition: none !important; animation: none !important; } }
+
+  .pf-dialog {
+    width: min(640px, calc(100vw - 24px)); max-height: min(80vh, 760px); overflow: auto; padding: 22px 24px 20px; border: 1px solid var(--pf-bar-border, rgba(255,255,255,.25));
+    background: var(--pf-dialog-bg, #151515); color: var(--pf-dialog-fg, #f2f2f2); border-radius: var(--pf-dialog-radius, 14px);
+    font: 400 15px/1.55 var(--pf-dialog-font, system-ui, -apple-system, 'Segoe UI', sans-serif); text-transform: none; letter-spacing: normal; text-align: left; filter: none; animation: none;
+  }
+  .pf-dialog::backdrop { background: rgba(0, 0, 0, .55); }
+  .pf-dialog h2 { margin: 0 0 .5rem; font-size: 1.35rem; line-height: 1.2; font-family: inherit; text-transform: none; }
+  .pf-dialog h2 small { font-size: .7em; opacity: .65; font-weight: 400; margin-left: .4em; }
+  .pf-dialog h3 { margin: 1.1rem 0 .3rem; font-size: .8rem; letter-spacing: .08em; text-transform: uppercase; opacity: .7; font-family: inherit; }
+  .pf-dialog p { margin: 0 0 .6rem; } .pf-dialog ul { margin: 0; padding-left: 1.2rem; } .pf-dialog li { margin: .15rem 0; }
+  .pf-dialog a { color: var(--pf-dialog-accent, #8ab4ff); }
+  .pf-credits { font-size: .86rem; }
+  .pf-dialog-close { position: absolute; top: 8px; right: 10px; margin: 0; }
+  .pf-dialog-close button { background: transparent; color: inherit; border: 0; font-size: 28px; line-height: 1; cursor: pointer; padding: 4px 10px; border-radius: 8px; }
+  .pf-dialog-close button:hover, .pf-dialog-close button:focus-visible { background: rgba(127,127,127,.3); outline: none; }
+</style>
+<script>
+  const dlg = document.querySelector<HTMLDialogElement>('dialog[data-pf-about]');
+  const open = document.querySelector<HTMLButtonElement>('[data-pf-about-open]');
+  open?.addEventListener('click', () => dlg?.showModal());
+  dlg?.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+  // remember where Clean view was entered from so "Today's style" can go back
+  document.querySelector<HTMLAnchorElement>('[data-pf-clean]')?.addEventListener('click', () => { try { sessionStorage.setItem('pf-from', location.pathname); } catch {} });
+  const back = document.querySelector<HTMLAnchorElement>('[data-pf-today]');
+  if (back) { try { const f = sessionStorage.getItem('pf-from'); if (f) { back.href = f; back.textContent = 'Back to style'; } } catch {} }
+</script>

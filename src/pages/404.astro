@@ -1,0 +1,8 @@
+---
+import { withBase } from '@/lib/urls';
+import { profile } from '@/content/profile';
+import ThemeHead from '@/components/ThemeHead.astro';
+---
+<!doctype html>
+<html lang="en"><head><ThemeHead style="" title={`Not found - ${profile.name}`} /><style>html{background:#111;color:#eee;font:18px system-ui,sans-serif}body{display:grid;place-items:center;min-height:100vh;margin:0;text-align:center}a{color:#8ab4ff}</style></head>
+<body><main><h1>404</h1><p>That page wandered off. <a href={withBase('')}>Today's style</a> - <a href={withBase('gallery/')}>Gallery</a> - <a href={withBase('clean/')}>Clean view</a></p></main></body></html>

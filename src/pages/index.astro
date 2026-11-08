@@ -1,0 +1,40 @@
+---
+/**
+ * Entry point (the URL on the resume). Picks today's style (IST calendar day) and redirects to /s/<style>/.
+ *   ?style=<id>  opens that style     ?clean  opens Clean view     ?gallery  opens the gallery
+ * With JavaScript off, visitors get the Clean view.
+ */
+import { builtIds } from '@/themes/registry';
+import { LAUNCH_DATE } from '@/themes/order';
+import { withBase } from '@/lib/urls';
+import { profile } from '@/content/profile';
+import ThemeHead from '@/components/ThemeHead.astro';
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style="" title={`${profile.name} - ${profile.role}`} />
+    <noscript><meta http-equiv="refresh" content={`0; url=${withBase('clean/')}`} /></noscript>
+    <style>html{background:#111;color:#eee;font:16px system-ui,sans-serif}body{display:grid;place-items:center;min-height:100vh;margin:0}a{color:#8ab4ff}</style>
+    <script is:inline define:vars={{ ids: builtIds, base: withBase(''), launch: LAUNCH_DATE }}>
+      (function () {
+        var q = new URLSearchParams(location.search), to;
+        if (q.has('clean')) to = base + 'clean/';
+        else if (q.has('gallery')) to = base + 'gallery/';
+        else if (q.get('style') && ids.indexOf(q.get('style')) >= 0) to = base + 's/' + q.get('style') + '/';
+        else {
+          var IST = 5.5 * 3600 * 1000, day = function (ms) { return Math.floor((ms + IST) / 86400000); };
+          var n = day(Date.now()) - day(Date.parse(launch + 'T00:00:00+05:30'));
+          to = base + 's/' + ids[((n % ids.length) + ids.length) % ids.length] + '/';
+        }
+        location.replace(to);
+      })();
+    </script>
+  </head>
+  <body>
+    <main>
+      <h1>{profile.name}</h1>
+      <p>Loading today's style... <a href={withBase('clean/')}>Open the clean view</a> or <a href={withBase('gallery/')}>browse all styles</a>.</p>
+    </main>
+  </body>
+</html>

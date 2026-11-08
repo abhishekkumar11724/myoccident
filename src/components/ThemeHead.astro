@@ -1,0 +1,26 @@
+---
+/** Shared <head> basics. Put inside your theme's <head>, then add your own <link>/<style> after it. */
+import { profile } from '@/content/profile';
+import { themeInfo } from '@/themes/order';
+import { withBase } from '@/lib/urls';
+interface Props { style: string; title?: string; description?: string; themeColor?: string }
+const { style, title, description, themeColor = '#111111' } = Astro.props;
+const info = themeInfo(style);
+const t = title ?? `${profile.name} - ${profile.role}${info ? ` (${info.name} edition)` : ''}`;
+const d = description ?? `${profile.tagline} Portfolio of ${profile.name}, ${profile.location}. A different art style every day.`;
+const site = Astro.site ? new URL(withBase(''), Astro.site).href : '';
+---
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{t}</title>
+<meta name="description" content={d} />
+<meta name="theme-color" content={themeColor} />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href={withBase('favicon.svg')} type="image/svg+xml" />
+{site && <link rel="canonical" href={site} />}
+<meta property="og:type" content="website" />
+<meta property="og:title" content={t} />
+<meta property="og:description" content={d} />
+{site && <meta property="og:url" content={site} />}
+<meta property="og:image" content={site ? `${site}og.jpg` : withBase('og.jpg')} />
+<meta name="twitter:card" content="summary_large_image" />

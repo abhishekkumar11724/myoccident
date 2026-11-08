@@ -1,0 +1,185 @@
+---
+/**
+ * BASELINE page = the "Clean view" AND the starting checklist for every theme.
+ * It shows every required hook (data-pf-* attributes) with plain, accessible markup.
+ * When you build a theme, `npm run new:theme -- <id>` copies this file; you then REPLACE THE LAYOUT AND
+ * STYLING ENTIRELY while keeping every data-pf-* hook and all of the content.
+ */
+import { profile } from '@/content/profile';
+import { photoGroups, heroPhotos, photos } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+
+const STYLE = '_template';
+const hero = heroPhotos(STYLE)[0] ?? photos(STYLE)[0];
+const groups = photoGroups(STYLE);
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style="clean" title={`${profile.name} - ${profile.role} (Clean view)`} themeColor="#ffffff" />
+    <meta name="robots" content="index,follow" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="top">
+      <a class="brand" href="#hero">{profile.name}</a>
+      <nav aria-label="Sections">
+        <a href="#about">About</a><a href="#experience">Experience</a><a href="#case-studies">Case studies</a><a href="#projects">Projects</a>
+        <a href="#skills">Skills</a><a href="#beyond-code">Beyond code</a><a href="#writing">Writing</a><a href="#contact">Contact</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero" id="hero" data-pf-section="hero">
+        <div>
+          <p class="kicker">{profile.role} - {profile.location}</p>
+          <h1>{profile.name}</h1>
+          <p class="lead">{profile.tagline}</p>
+          <p class="cta">
+            <a class="btn primary" href={withBase(profile.resume.href)} data-pf-resume download>{profile.resume.label}</a>
+            <a class="btn" href="#contact">Get in touch</a>
+          </p>
+        </div>
+        {hero && <img class="portrait" src={hero.img.src} width={hero.img.width} height={hero.img.height} alt={hero.alt} style={`object-position:${hero.focus}`} />}
+      </section>
+
+      <section id="about" data-pf-section="about">
+        <h2>About</h2>
+        <p>{profile.summary}</p>
+        {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+        <ul class="chips" aria-label="Interests">{profile.interests.map((i) => <li>{i}</li>)}</ul>
+        <ul class="stats">{profile.stats.map((s) => <li><strong>{s.value}</strong><span>{s.label}</span></li>)}</ul>
+      </section>
+
+      <section id="experience" data-pf-section="experience">
+        <h2>Experience</h2>
+        {profile.experience.map((e) => (
+          <article class="job">
+            <header><h3>{e.title}, {e.company}</h3><p class="meta">{e.start} - {e.end} - {e.place}</p></header>
+            <ul>{e.bullets.map((b) => <li><strong>{b.head}:</strong> {b.text}</li>)}</ul>
+          </article>
+        ))}
+        <h3 id="education">Education</h3>
+        {profile.education.map((e) => <p data-pf-education><strong>{e.school}</strong><br />{e.degree}, {e.start} - {e.end}</p>)}
+      </section>
+
+      <section id="case-studies" data-pf-section="case-studies">
+        <h2>Case studies</h2>
+        <div class="cards">
+          {profile.caseStudies.map((c) => (
+            <article class="card" data-pf-case={c.id}>
+              <p class="meta">{c.org} - {c.period} - {c.role}</p>
+              <h3>{c.title}</h3>
+              <p class="kick">{c.kicker}</p>
+              <p><strong>Problem.</strong> {c.problem}</p>
+              <p><strong>Approach.</strong> {c.approach}</p>
+              <ul>{c.impact.map((i) => <li>{i}</li>)}</ul>
+              <p class="tags">{c.tags.join(' - ')}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="projects" data-pf-section="projects">
+        <h2>Projects</h2>
+        <div class="cards">
+          {profile.projects.map((p) => (
+            <article class="card" data-pf-project={p.name}>
+              <p class="meta">{p.year}</p>
+              <h3>{p.title}</h3>
+              <p>{p.blurb}</p>
+              <p class="tags">{p.stack.join(' - ')}</p>
+              <p><a href={p.repo} rel="noopener">Source on GitHub</a>{p.live && <> - <a href={p.live} rel="noopener">Live site</a></>}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="skills" data-pf-section="skills">
+        <h2>Skills</h2>
+        <dl class="skills">
+          {profile.skills.map((g) => (
+            <><dt>{g.group}</dt><dd>{[...g.items, ...((g as any).familiar ?? []).map((f: string) => `${f} (familiar)`)].join(', ')}</dd></>
+          ))}
+        </dl>
+      </section>
+
+      <section id="beyond-code" data-pf-section="beyond-code">
+        <h2>Beyond code</h2>
+        <p>The personal half of the portfolio: trips, rides, books and friends.</p>
+        {groups.map((g) => (
+          <div class="group">
+            <h3>{g.title}</h3>
+            <div class="grid">
+              {g.photos.map((p) => (
+                <figure>
+                  <a href={p.original.src}><img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} /></a>
+                  {p.caption && <figcaption>{p.caption}</figcaption>}
+                </figure>
+              ))}
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <section id="writing" data-pf-section="writing">
+        <h2>Writing</h2>
+        <p>{profile.writing.status}</p>
+        <p>Planned:</p>
+        <ul>{profile.writing.planned.map((t) => <li>{t}</li>)}</ul>
+      </section>
+
+      <section id="contact" data-pf-section="contact">
+        <h2>Contact</h2>
+        <p>Open to interesting problems in GenAI agents, workflow systems and backend infrastructure.</p>
+        <ul class="links">
+          <li><Protected kind="email" /></li>
+          <li><Protected kind="phone" /></li>
+          <li><a href={profile.contact.linkedin} rel="noopener me" data-pf-linkedin>LinkedIn</a></li>
+          <li><a href={profile.contact.github} rel="noopener me" data-pf-github>GitHub</a></li>
+          <li><a href={withBase(profile.resume.href)} download>Resume (PDF)</a></li>
+        </ul>
+        <ContactForm />
+      </section>
+    </main>
+
+    <footer class="foot"><p>&copy; {new Date().getFullYear()} {profile.name}. Built with Astro. A different art style every day - see the <a href={withBase('gallery/')}>gallery</a>.</p></footer>
+    <UtilityBar style="clean" variant="clean" />
+  </body>
+</html>
+
+<style is:global>
+  :root { color-scheme: light; }
+  body { margin: 0; font: 400 17px/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #151515; background: #fff; padding-bottom: 84px; }
+  a { color: #0b4fd0; } a:hover { text-decoration-thickness: 2px; }
+  .skip { position: absolute; left: -999px; top: 0; background: #000; color: #fff; padding: .6rem 1rem; z-index: 99; } .skip:focus { left: 0; }
+  .top { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; align-items: center; justify-content: space-between; padding: .7rem clamp(1rem, 4vw, 3rem); background: rgba(255,255,255,.95); border-bottom: 1px solid #e5e5e5; }
+  .top .brand { font-weight: 800; color: #000; text-decoration: none; }
+  .top nav { display: flex; flex-wrap: wrap; gap: .3rem 1.1rem; font-size: .92rem; } .top nav a { color: #333; text-decoration: none; } .top nav a:hover { text-decoration: underline; }
+  main { max-width: 1060px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 2rem); }
+  section { padding: 3.2rem 0 1rem; scroll-margin-top: 4rem; }
+  h1 { font-size: clamp(2.4rem, 7vw, 4.2rem); line-height: 1.05; margin: .2rem 0 .8rem; letter-spacing: -.02em; }
+  h2 { font-size: 1.7rem; margin: 0 0 1rem; border-bottom: 2px solid #151515; padding-bottom: .4rem; }
+  h3 { font-size: 1.15rem; margin: 1.4rem 0 .4rem; }
+  .hero { display: grid; grid-template-columns: 1.3fr 1fr; gap: 2rem; align-items: center; padding-top: 3rem; }
+  .hero .portrait { width: 100%; height: auto; max-height: 520px; object-fit: cover; border-radius: 12px; }
+  .kicker, .meta, .tags { color: #555; font-size: .92rem; margin: 0 0 .3rem; } .lead { font-size: 1.3rem; max-width: 34rem; }
+  .btn { display: inline-block; padding: .65rem 1.1rem; border: 2px solid #151515; border-radius: 8px; text-decoration: none; color: #151515; font-weight: 600; margin: 0 .5rem .5rem 0; }
+  .btn.primary { background: #151515; color: #fff; } .btn:hover { background: #0b4fd0; border-color: #0b4fd0; color: #fff; }
+  .chips { list-style: none; display: flex; flex-wrap: wrap; gap: .5rem; padding: 0; } .chips li { border: 1px solid #bbb; border-radius: 999px; padding: .25rem .8rem; font-size: .92rem; }
+  .stats { list-style: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; padding: 0; margin: 1.5rem 0 0; }
+  .stats li { border-left: 4px solid #151515; padding-left: .8rem; } .stats strong { display: block; font-size: 1.7rem; } .stats span { font-size: .88rem; color: #555; }
+  .job { margin-bottom: 2rem; } .job header h3 { margin-bottom: 0; } .job ul { padding-left: 1.2rem; } .job li { margin: .45rem 0; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.2rem; }
+  .card { border: 1px solid #d5d5d5; border-radius: 12px; padding: 1.1rem 1.2rem; } .card h3 { margin-top: .2rem; } .card .kick { font-style: italic; margin: 0 0 .6rem; } .card ul { padding-left: 1.1rem; }
+  .skills dt { font-weight: 700; margin-top: 1rem; } .skills dd { margin: .2rem 0 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .8rem; } .grid figure { margin: 0; } .grid img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; display: block; background: #eee; } .grid figcaption { font-size: .82rem; color: #555; margin-top: .25rem; }
+  .links { list-style: none; display: flex; flex-wrap: wrap; gap: .6rem 1.6rem; padding: 0; margin: 0 0 1.5rem; }
+  .pf-input { border: 2px solid #151515; border-radius: 8px; background: #fff; color: inherit; } .pf-submit { border: 2px solid #151515; background: #151515; color: #fff; border-radius: 8px; font-weight: 600; }
+  .foot { text-align: center; color: #555; padding: 3rem 1rem 1rem; font-size: .9rem; }
+  @media (max-width: 760px) { .hero { grid-template-columns: 1fr; } .hero .portrait { max-height: 380px; } }
+</style>

@@ -1,0 +1,23 @@
+{
+  "name": "abhishek-portfolio",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "images": "node scripts/build-images.mjs",
+    "dev": "node scripts/build-images.mjs && astro dev",
+    "build": "node scripts/build-images.mjs && astro build",
+    "preview": "astro preview",
+    "check": "node scripts/check-theme.mjs",
+    "new:theme": "node scripts/new-theme.mjs"
+  },
+  "dependencies": {
+    "astro": "^7.4.7",
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.12",
+    "playwright-core": "^1.65.0",
+    "typescript": "^6.0.3"
+  }
+}

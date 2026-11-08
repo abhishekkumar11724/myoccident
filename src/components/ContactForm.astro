@@ -1,0 +1,58 @@
+---
+/**
+ * Contact form. Sends through Web3Forms when PUBLIC_WEB3FORMS_KEY is set (see README), otherwise opens the
+ * visitor's mail client with the message pre-filled.  Style it via the .pf-form* classes from your theme CSS:
+ *   .pf-form  .pf-field  .pf-label  .pf-input  .pf-textarea  .pf-submit  .pf-status
+ */
+import { profile } from '@/content/profile';
+interface Props { class?: string; submitLabel?: string; labels?: { name?: string; email?: string; message?: string } }
+const { class: cls = '', submitLabel = 'Send message', labels = {} } = Astro.props;
+const key = import.meta.env.PUBLIC_WEB3FORMS_KEY ?? '';
+const L = { name: 'Your name', email: 'Your email', message: 'Message', ...labels };
+---
+<form class={`pf-form ${cls}`.trim()} data-pf-contact data-key={key} data-v={profile.contact.emailB64} method="post" action="#contact" novalidate>
+  <div class="pf-field"><label class="pf-label" for="pf-name">{L.name}</label><input class="pf-input" id="pf-name" name="name" type="text" autocomplete="name" required /></div>
+  <div class="pf-field"><label class="pf-label" for="pf-email">{L.email}</label><input class="pf-input" id="pf-email" name="email" type="email" autocomplete="email" required /></div>
+  <div class="pf-field"><label class="pf-label" for="pf-message">{L.message}</label><textarea class="pf-input pf-textarea" id="pf-message" name="message" rows="5" required></textarea></div>
+  <input type="checkbox" name="botcheck" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0" aria-hidden="true" />
+  <button class="pf-submit" type="submit">{submitLabel}</button>
+  <p class="pf-status" role="status" aria-live="polite"></p>
+</form>
+<style is:global>
+  :where(.pf-form) { display: grid; gap: 1rem; max-width: 40rem; }
+  :where(.pf-field) { display: grid; gap: .35rem; }
+  :where(.pf-input) { font: inherit; padding: .65em .8em; width: 100%; box-sizing: border-box; }
+  :where(.pf-submit) { font: inherit; padding: .7em 1.2em; cursor: pointer; justify-self: start; }
+  :where(.pf-status) { min-height: 1.4em; margin: 0; }
+</style>
+<script>
+  document.querySelectorAll<HTMLFormElement>('form[data-pf-contact]').forEach((form) => {
+    const status = form.querySelector<HTMLElement>('.pf-status')!;
+    const btn = form.querySelector<HTMLButtonElement>('.pf-submit')!;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const name = String(fd.get('name') || '').trim(), email = String(fd.get('email') || '').trim(), message = String(fd.get('message') || '').trim();
+      if (!name || !/^\S+@\S+\.\S+$/.test(email) || !message) { status.textContent = 'Please fill in your name, a valid email and a message.'; return; }
+      if (fd.get('botcheck')) return;
+      const key = form.dataset.key;
+      if (!key) {
+        const to = atob(form.dataset.v || '');
+        const body = `${message}\n\n-- ${name} <${email}>`;
+        window.location.href = `mailto:${to}?subject=${encodeURIComponent('Portfolio message from ' + name)}&body=${encodeURIComponent(body)}`;
+        status.textContent = 'Opening your email app...';
+        return;
+      }
+      btn.disabled = true; status.textContent = 'Sending...';
+      try {
+        const r = await fetch('https://api.web3forms.com/submit', {
+          method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ access_key: key, name, email, message, subject: `Portfolio message from ${name}`, from_name: 'Portfolio' }),
+        });
+        const j = await r.json();
+        if (j.success) { status.textContent = 'Thanks! Your message is on its way.'; form.reset(); } else throw new Error(j.message || 'failed');
+      } catch { status.textContent = 'Could not send right now. Please email me directly instead.'; }
+      finally { btn.disabled = false; }
+    });
+  });
+</script>

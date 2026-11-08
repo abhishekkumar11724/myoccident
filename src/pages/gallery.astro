@@ -1,0 +1,73 @@
+---
+import fs from 'node:fs';
+import path from 'node:path';
+import { THEMES, LAUNCH_DATE } from '@/themes/order';
+import { builtIds, themeMeta } from '@/themes/registry';
+import { withBase, themeUrl } from '@/lib/urls';
+import { profile } from '@/content/profile';
+import ThemeHead from '@/components/ThemeHead.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+
+const previewDir = path.resolve('public/previews');
+const cards = THEMES.map((t, i) => ({
+  ...t, day: i, built: builtIds.includes(t.id),
+  preview: fs.existsSync(path.join(previewDir, `${t.id}.jpg`)) ? withBase(`previews/${t.id}.jpg`) : null,
+  meta: themeMeta(t.id),
+}));
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style="" title={`Style gallery - ${profile.name}`} themeColor="#0e0e10" />
+  </head>
+  <body>
+    <header class="gh">
+      <p class="eyebrow">{profile.name} - portfolio</p>
+      <h1>One portfolio, {THEMES.length} styles</h1>
+      <p>The site changes its art style every day. Pick any of them below, or <a href={withBase('')}>open today's</a>, or use the <a href={withBase('clean/')}>clean view</a>.</p>
+    </header>
+    <main>
+      <ul class="cards" id="cards">
+        {cards.map((c) => (
+          <li class:list={['card', { off: !c.built }]} data-id={c.id}>
+            <a href={c.built ? themeUrl(c.id) : undefined} aria-disabled={!c.built} aria-label={`${c.name}${c.built ? '' : ' (coming soon)'}`}>
+              <div class="thumb" style={c.preview ? undefined : `background:linear-gradient(135deg,${c.swatch[0]} 0 45%,${c.swatch[1]} 45% 75%,${c.swatch[2]} 75%)`}>
+                {c.preview && <img src={c.preview} alt="" loading="lazy" width="640" height="400" />}
+                <span class="badge today" hidden>Today</span>
+                {!c.built && <span class="badge soon">Coming soon</span>}
+              </div>
+              <div class="meta"><h2>{c.name}</h2><p class="era">{c.era}</p><p>{c.blurb}</p></div>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </main>
+    <footer class="gf"><p>Rotation starts {LAUNCH_DATE} (IST) and cycles through all {THEMES.length} styles in order.</p></footer>
+    <UtilityBar style="gallery" variant="clean" label="Style gallery" />
+    <script is:inline define:vars={{ ids: builtIds, launch: LAUNCH_DATE }}>
+      (function () {
+        var IST = 5.5 * 3600 * 1000, day = function (ms) { return Math.floor((ms + IST) / 86400000); };
+        var n = day(Date.now()) - day(Date.parse(launch + 'T00:00:00+05:30'));
+        var id = ids[((n % ids.length) + ids.length) % ids.length];
+        var el = document.querySelector('[data-id="' + id + '"] .today'); if (el) el.hidden = false;
+      })();
+    </script>
+  </body>
+</html>
+<style is:global>
+  html { background: #0e0e10; color: #ececf1; }
+  body { margin: 0; font: 400 16px/1.55 system-ui, -apple-system, 'Segoe UI', sans-serif; padding-bottom: 90px; }
+  a { color: #8ab4ff; }
+  .gh { max-width: 1180px; margin: 0 auto; padding: 3.5rem 1.25rem 1rem; } .gh h1 { font-size: clamp(2rem, 6vw, 3.6rem); line-height: 1.05; margin: .3rem 0 .8rem; letter-spacing: -.02em; }
+  .eyebrow { text-transform: uppercase; letter-spacing: .14em; font-size: .78rem; color: #9a9aa6; margin: 0; }
+  main { max-width: 1180px; margin: 0 auto; padding: 1rem 1.25rem; }
+  .cards { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.1rem; }
+  .card a { display: block; color: inherit; text-decoration: none; background: #17171b; border: 1px solid #2a2a31; border-radius: 14px; overflow: hidden; height: 100%; transition: transform .15s, border-color .15s; }
+  .card a:hover, .card a:focus-visible { transform: translateY(-3px); border-color: #8ab4ff; outline: none; }
+  .card.off a { opacity: .55; pointer-events: none; }
+  .thumb { position: relative; aspect-ratio: 8/5; background-size: cover; } .thumb img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+  .badge { position: absolute; top: 10px; left: 10px; padding: .2rem .6rem; border-radius: 999px; font-size: .74rem; font-weight: 700; background: #8ab4ff; color: #07101f; } .badge.soon { background: #333; color: #ddd; } .badge[hidden] { display: none; }
+  .meta { padding: .85rem 1rem 1.1rem; } .meta h2 { font-size: 1.15rem; margin: 0; } .meta .era { color: #9a9aa6; font-size: .82rem; margin: .1rem 0 .5rem; } .meta p { margin: 0; font-size: .92rem; }
+  .gf { max-width: 1180px; margin: 0 auto; padding: 1rem 1.25rem; color: #9a9aa6; font-size: .88rem; }
+  @media (prefers-reduced-motion: reduce) { .card a { transition: none; } }
+</style>
