@@ -1,0 +1,558 @@
+---
+/**
+ * Bauhaus theme: the website is an exhibition poster (Weimar 1923 / Dessau 1926 school).
+ * Asymmetric 12-column grid, circle / triangle / square in red-yellow-blue, rotated type, thick bars, two-ink halftone photos.
+ * Signature: a numbered contents list (01-08) is the primary navigation; hover or focus swaps a featured preview.
+ * Case studies use the same master/detail idea. All content comes from @/content/profile and @/lib/photos.
+ */
+import { profile } from '@/content/profile';
+import { photoGroups, photo } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import meta from './meta';
+import './theme.css';
+
+const STYLE = 'bauhaus';
+const pad = (n: number, l = 2) => String(n).padStart(l, '0');
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+/** wrap figures in a sentence so they get a marker underline (text content unchanged) */
+const hi = (s: string) => esc(s).replace(/(~?\d[\d.,]*(?:-\d[\d.,]*)?[+%MK]+|~\d[\d.,]*)/g, '<b class="fig">$1</b>');
+/** split a leading figure off an impact line: "~90% lower cost" -> ['~90%', 'lower cost'] */
+const splitFig = (s: string): [string, string] => {
+  const m = s.match(/^(~?\d[\d.,]*(?:-\d[\d.,]*)?[+%MK]*)\s+(.*)$/);
+  return m ? [m[1], m[2]] : ['', s];
+};
+const GLYPHS = ['circle', 'triangle', 'square'] as const; // blue, yellow, red (Kandinsky)
+const glyph = (i: number) => GLYPHS[i % 3];
+
+const hero = photo(STYLE, 'portraits/01-selfie-maroon');
+const aboutPhoto = photo(STYLE, 'portraits/02-smile-jacket');
+const groups = photoGroups(STYLE);
+const totalPhotos = groups.reduce((n, g) => n + g.photos.length, 0);
+let plateNo = 0;
+
+// ---- chronology: education + jobs on one time axis (a staircase, after Schlemmer's Bauhaus Stairway)
+const MON: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+const toDate = (s: string) => (s === 'Present' ? new Date() : new Date(Number(s.split(' ')[1]), MON[s.split(' ')[0]], 1));
+const edu = profile.education[0];
+const spans = [
+  { key: 'edu', label: edu.short, sub: edu.degree, start: edu.start, end: edu.end, tone: 'blue', open: false },
+  ...[...profile.experience].reverse().map((e, i) => ({ key: e.id, label: e.company, sub: e.title, start: e.start, end: e.end, tone: ['yellow', 'ink', 'red'][i] ?? 'ink', open: e.end === 'Present' })),
+];
+const t0 = Math.min(...spans.map((s) => +toDate(s.start)));
+const t1 = Math.max(...spans.map((s) => +toDate(s.end)));
+const pct = (d: number) => ((d - t0) / (t1 - t0)) * 100;
+const years: number[] = [];
+for (let y = new Date(t0).getFullYear() + 1; y <= new Date(t1).getFullYear(); y++) years.push(y);
+const toneOf = Object.fromEntries(profile.experience.map((e, i) => [e.id, ['red', 'ink', 'yellow'][i] ?? 'ink']));
+
+const featured = profile.caseStudies.filter((c) => c.featured);
+const projects = [...profile.projects].sort((a, b) => Number(b.year) - Number(a.year));
+const companies = [...new Set(profile.experience.map((e) => e.company))];
+const yearsP = projects.map((p) => Number(p.year));
+const linkedinShown = profile.contact.linkedin.replace(/^https?:\/\/(www\.)?/, '');
+const githubShown = profile.contact.github.replace(/^https?:\/\/(www\.)?/, '');
+const year = new Date().getFullYear();
+const now = profile.experience[0];
+const heroStatCount = 6;
+
+// ---- the contents list = primary navigation
+const nav = [
+  { id: 'about', label: 'About', flavor: 'the person behind the stack', peek: profile.focus, bg: 'paper' },
+  { id: 'experience', label: 'Experience', flavor: 'built step by step', peek: `${profile.experience.length} roles at ${companies.join(' and ')}`, bg: 'yellow' },
+  { id: 'case-studies', label: 'Case studies', flavor: 'problem, approach, impact', peek: `${profile.caseStudies.length} studies, from ${profile.stats[0].value} ${profile.stats[0].label}`, bg: 'blue' },
+  { id: 'projects', label: 'Projects', flavor: 'side constructions', peek: `${projects.length} projects, ${Math.min(...yearsP)} to ${Math.max(...yearsP)}`, bg: 'paper' },
+  { id: 'skills', label: 'Skills', flavor: 'the toolkit, grouped by function', peek: `${profile.skills.length} groups: ${profile.skills.map((s) => s.group.split(' ')[0]).slice(0, 3).join(', ')} and more`, bg: 'red' },
+  { id: 'beyond-code', label: 'Beyond code', flavor: 'photographs, set in two inks', peek: `${totalPhotos} photographs: ${profile.interests.slice(0, 3).join(', ').toLowerCase()}`, bg: 'paper' },
+  { id: 'writing', label: 'Writing', flavor: 'to be typeset soon', peek: profile.writing.status, bg: 'yellow' },
+  { id: 'contact', label: 'Contact', flavor: 'say hello', peek: 'Open to interesting problems in GenAI agents, workflow systems and backend infrastructure.', bg: 'blue' },
+];
+const N = Object.fromEntries(nav.map((n, i) => [n.id, pad(i + 1)]));
+
+// ---- preview artwork for the contents list (viewBox 400, shapes only; colours via classes)
+const art: string[] = [
+  // about: the trinity, overlapped like an overprint
+  `<circle class="s-b mul" cx="150" cy="210" r="125"/><polygon class="s-y mul" points="250,70 370,300 130,300"/><rect class="s-r mul" x="250" y="40" width="100" height="100"/><line class="l" x1="30" y1="360" x2="370" y2="360"/>`,
+  // experience: a staircase of bars
+  `<rect class="s-k" x="40" y="80" width="170" height="44"/><rect class="s-r" x="110" y="160" width="210" height="44"/><rect class="s-b" x="170" y="240" width="190" height="44"/><circle class="s-p" cx="340" cy="342" r="30"/><polygon class="s-k" points="40,330 90,330 65,290"/>`,
+  // case studies: concentric rings + a bar
+  `<circle class="s-p" cx="200" cy="200" r="165"/><circle class="s-y" cx="200" cy="200" r="112"/><circle class="s-k" cx="200" cy="200" r="58"/><rect class="s-k" x="-20" y="350" width="460" height="22" transform="rotate(-24 200 360)"/>`,
+  // projects: a pattern sheet of nine
+  `<rect class="s-r" x="40" y="40" width="96" height="96"/><circle class="s-b" cx="200" cy="88" r="48"/><polygon class="s-y" points="264,136 360,136 312,40"/><circle class="s-y" cx="88" cy="200" r="48"/><rect class="s-k" x="152" y="152" width="96" height="96"/><polygon class="s-r" points="264,248 360,248 312,152"/><polygon class="s-b" points="40,360 136,360 88,264"/><rect class="s-p" x="152" y="264" width="96" height="96" style="stroke:#141414;stroke-width:5"/><circle class="s-k" cx="312" cy="312" r="48"/>`,
+  // skills: triangle, square, circle stacked
+  `<polygon class="s-y" points="200,36 300,150 100,150"/><rect class="s-p" x="110" y="164" width="180" height="90"/><circle class="s-k" cx="200" cy="320" r="62"/>`,
+  // beyond code: sunrise
+  `<circle class="s-y" cx="200" cy="140" r="84"/><path class="s-k" d="M30 330 A170 170 0 0 1 370 330 Z"/><rect class="s-b" x="300" y="40" width="64" height="64"/><line class="l" x1="40" y1="352" x2="360" y2="352"/><line class="l" x1="80" y1="372" x2="320" y2="372"/>`,
+  // writing: lines of type
+  `<circle class="s-r" cx="64" cy="96" r="22"/><rect class="s-k" x="108" y="78" width="250" height="36"/><circle class="s-b" cx="64" cy="176" r="22"/><rect class="s-k" x="108" y="158" width="170" height="36"/><circle class="s-k" cx="64" cy="256" r="22"/><rect class="s-k" x="108" y="238" width="220" height="36"/><polygon class="s-r" points="108,352 168,352 138,308"/>`,
+  // contact: target + arrow
+  `<circle class="s-p" cx="190" cy="210" r="150"/><circle class="s-y" cx="190" cy="210" r="100"/><circle class="s-k" cx="190" cy="210" r="50"/><polygon class="s-p" points="250,70 372,70 372,192" style="stroke:#141414;stroke-width:5"/>`,
+];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style={STYLE} themeColor="#141414" />
+    <meta name="robots" content="index,follow" />
+    <script is:inline>document.documentElement.classList.add('js')</script>
+  </head>
+  <body class="bh">
+    <a class="bh-skip" href="#main">Skip to content</a>
+
+    <!-- sticky bar: wordmark + eight numbered keys (circle / triangle / square) -->
+    <header class="bh-bar" data-bar>
+      <a class="bh-brand" href="#hero" aria-label={`${profile.name}: back to top`}>
+        <span class="bh-logo" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="bh-brand-t">{profile.firstName.toLowerCase()}<b>{profile.name.split(' ')[1].toLowerCase()}</b></span>
+      </a>
+      <nav class="bh-keys" aria-label="Sections">
+        <ol>
+          {nav.map((n, i) => (
+            <li><a href={`#${n.id}`} data-spy={n.id}><i class={`bh-g bh-g--${glyph(i)}`} aria-hidden="true"></i><b>{N[n.id]}</b><span>{n.label}</span></a></li>
+          ))}
+        </ol>
+      </nav>
+      <details class="bh-menu" data-menu>
+        <summary><span>index</span><i aria-hidden="true"></i></summary>
+        <ol>
+          {nav.map((n, i) => (
+            <li><a href={`#${n.id}`}><i class={`bh-g bh-g--${glyph(i)}`} aria-hidden="true"></i><b>{N[n.id]}</b>{n.label}</a></li>
+          ))}
+          <li class="bh-menu-cv"><a href={withBase(profile.resume.href)} download>Resume (PDF)</a></li>
+        </ol>
+      </details>
+    </header>
+
+    <main id="main">
+
+      <!-- ===== HERO: the exhibition poster ===== -->
+      <section id="hero" class="bh-hero" data-pf-section="hero">
+        <p class="bh-vert" aria-hidden="true">{profile.focus}</p>
+
+        <div class="bh-hero-top">
+          <span class="bh-sq" aria-hidden="true"></span>
+          <p><span>{profile.role}</span><span class="bh-dot" aria-hidden="true"></span><span>{profile.location}</span></p>
+        </div>
+
+        <h1><span>{profile.firstName}</span> <span>{profile.name.split(' ')[1]}</span></h1>
+
+        <div class="bh-hero-copy">
+          <p class="bh-kick">{meta.flavor.kicker}</p>
+          <p class="bh-lead">{profile.tagline}</p>
+          <p class="bh-cta">
+            <a class="bh-btn bh-btn--red" href={withBase(profile.resume.href)} data-pf-resume download>{profile.resume.label} <i class="bh-arr" aria-hidden="true"></i></a>
+            <a class="bh-btn" href="#contact">Get in touch</a>
+          </p>
+          <p class="bh-now"><i class="bh-g bh-g--circle" aria-hidden="true"></i>Now: {now.title}, {now.company}, since {now.start}</p>
+        </div>
+
+        <div class="bh-hero-art">
+          <i class="bh-sh bh-sh-tri" aria-hidden="true" data-slide style="--sy:-70px;--sr:8deg"></i>
+          <i class="bh-sh bh-sh-diag" aria-hidden="true" data-slide style="--sx:60px;--sy:-30px"></i>
+          <figure class="bh-disc">
+            <div class="bh-disc-in">
+              <img src={hero.img.src} width={hero.img.width} height={hero.img.height} alt={hero.alt} fetchpriority="high" decoding="async" style={`object-position:${hero.focus}`} />
+            </div>
+          </figure>
+          <i class="bh-sh bh-sh-sq" aria-hidden="true" data-slide style="--sy:50px;--sr:-10deg"></i>
+          <i class="bh-sh bh-sh-half" aria-hidden="true" data-slide style="--sx:-40px;--sy:40px"></i>
+          <i class="bh-sh bh-sh-dot" aria-hidden="true" data-slide style="--sy:-40px"></i>
+          <p class="bh-fig"><b>fig. 1</b> {hero.caption}</p>
+        </div>
+
+        <ul class="bh-stats" aria-label="Key numbers">
+          {profile.stats.slice(0, heroStatCount).map((s, i) => (
+            <li><i class={`bh-g bh-g--${glyph(i)}`} aria-hidden="true"></i><strong>{s.value}</strong><span>{s.label}</span></li>
+          ))}
+        </ul>
+      </section>
+
+      <!-- ===== CONTENTS: numbered list is the primary navigation; hover / focus swaps the preview ===== -->
+      <section class="bh-index" id="index" aria-labelledby="index-h" data-switch>
+        <div class="bh-wrap bh-index-grid">
+          <div class="bh-index-list">
+            <header class="bh-index-head">
+              <h2 id="index-h">contents</h2>
+              <p>{meta.flavor.tagline}</p>
+            </header>
+            <ol>
+              {nav.map((n, i) => (
+                <li>
+                  <a href={`#${n.id}`} data-sw={n.id} class:list={[`rw-${n.bg}`, { 'is-on': i === 0 }]}>
+                    <b class="bh-ix-n">{N[n.id]}</b>
+                    <span class="bh-ix-t">{n.label}</span>
+                    <span class="bh-ix-d">{n.flavor}</span>
+                    <i class="bh-ix-a" aria-hidden="true"></i>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </div>
+          <aside class="bh-pv" aria-hidden="true">
+            <div class="bh-pv-art">
+              {nav.map((n, i) => (
+                <div class:list={['bh-pv-card', `bg-${n.bg}`, { 'is-on': i === 0 }]} data-pv={n.id}>
+                  <svg viewBox="0 0 400 400" role="presentation" focusable="false" set:html={art[i]} />
+                </div>
+              ))}
+            </div>
+            <div class="bh-pv-cap">
+              {nav.map((n, i) => (
+                <p class:list={[{ 'is-on': i === 0 }]} data-pv={n.id}><b>{N[n.id]} / {n.label}</b><span>{n.peek}</span></p>
+              ))}
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ===== 01 ABOUT ===== -->
+      <section id="about" class="bh-sec bh-about" data-pf-section="about">
+        <div class="bh-wrap">
+          <header class="bh-head" data-reveal>
+            <p class="bh-num" aria-hidden="true">{N.about}</p>
+            <h2>About</h2>
+            <p class="bh-sub">{nav[0].flavor}</p>
+            <span class="bh-rule" aria-hidden="true"></span>
+          </header>
+
+          <div class="bh-about-grid">
+            <figure class="bh-about-fig">
+              <i class="bh-sh bh-sh-a1" aria-hidden="true" data-slide style="--sy:-40px;--sx:20px"></i>
+              <i class="bh-sh bh-sh-a2" aria-hidden="true" data-slide style="--sy:40px;--sr:-6deg"></i>
+              <div class="bh-arch">
+                <img src={aboutPhoto.img.src} width={aboutPhoto.img.width} height={aboutPhoto.img.height} alt={aboutPhoto.alt} loading="lazy" decoding="async" style={`object-position:${aboutPhoto.focus}`} />
+              </div>
+              <figcaption><b>fig. 2</b> {aboutPhoto.caption}</figcaption>
+            </figure>
+            <div class="bh-about-copy">
+              <p class="bh-summary" set:html={hi(profile.summary)} />
+              <div class="bh-cols">
+                {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+              </div>
+              <h3 class="bh-lab">off the clock</h3>
+              <ul class="bh-chips" aria-label="Interests">
+                {profile.interests.map((it, i) => <li><i class={`bh-g bh-g--${glyph(i)}`} aria-hidden="true"></i>{it}</li>)}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 02 EXPERIENCE ===== -->
+      <section id="experience" class="bh-sec bh-exp" data-pf-section="experience">
+        <div class="bh-wrap">
+          <header class="bh-head" data-reveal>
+            <p class="bh-num" aria-hidden="true">{N.experience}</p>
+            <h2>Experience</h2>
+            <p class="bh-sub">{nav[1].flavor}</p>
+            <span class="bh-rule" aria-hidden="true"></span>
+          </header>
+
+          <ol class="bh-chron" aria-label="Chronology">
+            <li class="bh-chron-grid" aria-hidden="true">
+              {years.map((y) => <span style={`left:${pct(+new Date(y, 0, 1)).toFixed(2)}%`}></span>)}
+            </li>
+            {spans.map((s) => (
+              <li class:list={[`tone-${s.tone}`]} style={`--l:${pct(+toDate(s.start)).toFixed(2)}%`}>
+                <p class="bh-chron-l"><b>{s.label}</b> <span>{s.start} - {s.end}</span></p>
+                <div class="bh-chron-track" aria-hidden="true">
+                  <span class:list={['bh-chron-bar', { 'is-open': s.open }]} style={`left:${pct(+toDate(s.start)).toFixed(2)}%;width:${(pct(+toDate(s.end)) - pct(+toDate(s.start))).toFixed(2)}%`}></span>
+                </div>
+              </li>
+            ))}
+            <li class="bh-chron-axis" aria-hidden="true">
+              <div class="bh-chron-track">
+                {years.map((y) => <span style={`left:${pct(+new Date(y, 0, 1)).toFixed(2)}%`}>{y}</span>)}
+              </div>
+            </li>
+          </ol>
+
+          {profile.experience.map((e, i) => (
+            <article class={`bh-job tone-${toneOf[e.id]}`} aria-labelledby={`job-${e.id}`}>
+              <header class="bh-job-head">
+                <p class="bh-job-no"><i class={`bh-g bh-g--${glyph(i)}`} aria-hidden="true"></i>{N.experience}.{i + 1}</p>
+                <h3 id={`job-${e.id}`}>{e.company}</h3>
+                <p class="bh-job-title">{e.title}</p>
+                <p class="bh-job-when"><span>{e.start} <i class="bh-to" aria-hidden="true"></i><span class="bh-sr"> to </span> {e.end}</span><span>{e.place}</span></p>
+                <p class="bh-job-blurb">{e.blurb}</p>
+              </header>
+              <ol class="bh-bul">
+                {e.bullets.map((b, j) => (
+                  <li>
+                    <i class={`bh-g bh-g--${glyph(j)}`} aria-hidden="true"></i>
+                    <h4>{b.head}</h4>
+                    <p set:html={hi(b.text)} />
+                  </li>
+                ))}
+              </ol>
+            </article>
+          ))}
+
+          <article class="bh-job bh-edu tone-blue" aria-labelledby="edu-h">
+            <header class="bh-job-head">
+              <p class="bh-job-no"><i class="bh-g bh-g--circle" aria-hidden="true"></i>{N.experience}.E</p>
+              <h3 id="edu-h">Education</h3>
+            </header>
+            <div class="bh-edu-list">
+              {profile.education.map((e) => (
+                <div class="bh-edu-card" data-pf-education>
+                  <h4>{e.school}</h4>
+                  <p>{e.degree}</p>
+                  <p class="bh-edu-when">{e.start} <i class="bh-to" aria-hidden="true"></i><span class="bh-sr"> to </span> {e.end}</p>
+                </div>
+              ))}
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- ===== 03 CASE STUDIES: master / detail work list ===== -->
+      <section id="case-studies" class="bh-sec bh-cs" data-pf-section="case-studies">
+        <div class="bh-wrap">
+          <header class="bh-head" data-reveal>
+            <p class="bh-num" aria-hidden="true">{N['case-studies']}</p>
+            <h2>Case studies</h2>
+            <p class="bh-sub">{nav[2].flavor}</p>
+            <span class="bh-rule" aria-hidden="true"></span>
+          </header>
+
+          <div class="bh-works" data-switch>
+            <ol class="bh-wlist" aria-label="Work list">
+              <li class="bh-wlist-h" aria-hidden="true"><span>nr</span><span>work</span><span>year</span></li>
+              {profile.caseStudies.map((c, i) => (
+                <li>
+                  <a href={`#cs-${c.id}`} data-sw={c.id} class:list={[{ 'is-on': i === 0 }]}>
+                    <b class="bh-w-n">{pad(i + 1)}</b>
+                    <span class="bh-w-t">{c.title}<small>{c.org} / {c.role}</small></span>
+                    <span class="bh-w-y">{c.period}</span>
+                  </a>
+                </li>
+              ))}
+            </ol>
+
+            <div class="bh-wpanels">
+              {profile.caseStudies.map((c, i) => {
+                const tone = ['red', 'blue', 'yellow'][i % 3];
+                return (
+                  <article id={`cs-${c.id}`} class:list={['bh-wp', `tone-${tone}`, { 'is-on': i === 0, 'is-alt': !c.featured }]} data-pf-case={c.id} data-pv={c.id}>
+                    <i class="bh-wp-shape" aria-hidden="true"></i>
+                    <header class="bh-wp-head">
+                      <p class="bh-wp-no"><b aria-hidden="true">{pad(i + 1)}</b><span>{c.featured ? 'featured' : 'earlier work'}</span></p>
+                      <h3>{c.title}</h3>
+                      <p class="bh-wp-kick">{c.kicker}</p>
+                    </header>
+                    <div class="bh-wp-body">
+                      <div><h4>Problem</h4><p>{c.problem}</p></div>
+                      <div><h4>Approach</h4><p>{c.approach}</p></div>
+                    </div>
+                    <ul class="bh-impact" aria-label="Impact">
+                      {c.impact.map((x, k) => {
+                        const [fig, rest] = splitFig(x);
+                        return <li class={`k${k % 3}`}>{fig ? <><strong>{fig}</strong> <span>{rest}</span></> : <span>{x}</span>}</li>;
+                      })}
+                    </ul>
+                    <dl class="bh-meta">
+                      <div><dt>Org</dt><dd>{c.org}</dd></div>
+                      <div><dt>Role</dt><dd>{c.role}</dd></div>
+                      <div><dt>Period</dt><dd>{c.period}</dd></div>
+                    </dl>
+                    <ul class="bh-tags" aria-label="Tags">{c.tags.map((t, k) => <li><i class={`bh-g bh-g--${glyph(k)}`} aria-hidden="true"></i>{t}</li>)}</ul>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 04 PROJECTS: ruled index table ===== -->
+      <section id="projects" class="bh-sec bh-proj" data-pf-section="projects">
+        <div class="bh-wrap">
+          <header class="bh-head" data-reveal>
+            <p class="bh-num" aria-hidden="true">{N.projects}</p>
+            <h2>Projects</h2>
+            <p class="bh-sub">{nav[3].flavor}</p>
+            <span class="bh-rule" aria-hidden="true"></span>
+          </header>
+          <div class="bh-table" role="list">
+            <p class="bh-table-h" aria-hidden="true"><span>year</span><span>project</span><span>stack</span><span>links</span></p>
+            {projects.map((p, i) => (
+              <article class="bh-row" role="listitem" data-pf-project={p.name}>
+                <p class="bh-row-y"><i class={`bh-g bh-g--${glyph(i)}`} aria-hidden="true"></i><b>{p.year}</b><small>{N.projects}.{pad(i + 1)}</small></p>
+                <div class="bh-row-m">
+                  <h3>{p.title}</h3>
+                  <p>{p.blurb}</p>
+                </div>
+                <ul class="bh-row-s" aria-label="Stack">{p.stack.map((s) => <li>{s}</li>)}</ul>
+                <p class="bh-row-l">
+                  <a href={p.repo} rel="noopener" aria-label={`${p.title}: source on GitHub`}>Source <i class="bh-arr" aria-hidden="true"></i></a>
+                  {p.live ? <a href={p.live} rel="noopener" aria-label={`${p.title}: live site`}>Live <i class="bh-arr" aria-hidden="true"></i></a> : <span class="bh-row-nolive">no live site</span>}
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 05 SKILLS ===== -->
+      <section id="skills" class="bh-sec bh-skills" data-pf-section="skills">
+        <i class="bh-sh bh-sh-s1" aria-hidden="true" data-slide style="--sy:-60px;--sr:14deg"></i>
+        <i class="bh-sh bh-sh-s2" aria-hidden="true" data-slide style="--sy:50px;--sx:-30px"></i>
+        <div class="bh-wrap">
+          <header class="bh-head" data-reveal>
+            <p class="bh-num" aria-hidden="true">{N.skills}</p>
+            <h2>Skills</h2>
+            <p class="bh-sub">{nav[4].flavor}</p>
+            <span class="bh-rule" aria-hidden="true"></span>
+          </header>
+          <div class="bh-skgrid">
+            {profile.skills.map((g, i) => (
+              <section class="bh-sk" aria-labelledby={`sk-${i}`}>
+                <h3 id={`sk-${i}`}><i class={`bh-g bh-g--${glyph(i)}`} aria-hidden="true"></i><span>{N.skills}.{i + 1}</span>{g.group}</h3>
+                <ul>
+                  {g.items.map((it) => <li>{it}</li>)}
+                  {((g as { familiar?: readonly string[] }).familiar ?? []).map((it) => <li class="bh-fam">{it} <small>(familiar)</small></li>)}
+                </ul>
+              </section>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 06 BEYOND CODE ===== -->
+      <section id="beyond-code" class="bh-sec bh-beyond" data-pf-section="beyond-code">
+        <div class="bh-wrap">
+          <header class="bh-head" data-reveal>
+            <p class="bh-num" aria-hidden="true">{N['beyond-code']}</p>
+            <h2>Beyond code</h2>
+            <p class="bh-sub">{nav[5].flavor}</p>
+            <span class="bh-rule" aria-hidden="true"></span>
+          </header>
+          <p class="bh-intro">The personal half of the portfolio: trips, rides, books and friends. {totalPhotos} photographs, each printed in black plus one spot colour. Click one to see the original.</p>
+
+          {groups.map((g, gi) => (
+            <div class={`bh-pg ink-${({ portraits: 'red', adventure: 'blue', scenery: 'blue', 'friends-trips': 'ink', bikes: 'ink' } as Record<string, string>)[g.category] ?? 'yellow'}`}>
+              <header class="bh-pg-head">
+                <h3><i class={`bh-g bh-g--${glyph(gi)}`} aria-hidden="true"></i><span>{N['beyond-code']}.{gi + 1}</span>{g.title}</h3>
+                <p>{g.blurb}</p>
+                <p class="bh-pg-count">{pad(g.photos.length)} plates</p>
+              </header>
+              <ul class:list={['bh-wall', { 'has-feature': g.photos.length >= 5 }]}>
+                {g.photos.map((p, pi) => {
+                  plateNo += 1;
+                  const people = p.tags.includes('solo') || p.tags.includes('group') || ['pets', 'portraits'].includes(p.category);
+                  const group = p.tags.includes('group');
+                  const cyc = group ? ['square', 'arch', 'square', 'notch'] : people ? ['circle', 'square', 'arch', 'circle', 'square'] : ['tri', 'circle', 'leaf', 'arch', 'tri', 'square'];
+                  const shape = pi === 0 && g.photos.length >= 5 ? (group ? 'arch' : 'circle') : cyc[pi % cyc.length];
+                  return (
+                    <li class={`bh-tile sh-${shape}`}>
+                      <figure>
+                        <a href={p.original.src} data-lb data-print={p.img.src} data-no={`P-${pad(plateNo)}`} data-cap={p.caption ?? ''} data-alt={p.alt} aria-label={`Open photo: ${p.caption ?? p.alt}`}>
+                          <span class="bh-shape"><img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} /></span>
+                        </a>
+                        <figcaption><b>{pad(plateNo)}</b> {p.caption}</figcaption>
+                      </figure>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <!-- ===== 07 WRITING ===== -->
+      <section id="writing" class="bh-sec bh-writing" data-pf-section="writing">
+        <div class="bh-wrap">
+          <header class="bh-head" data-reveal>
+            <p class="bh-num" aria-hidden="true">{N.writing}</p>
+            <h2>Writing</h2>
+            <p class="bh-sub">{nav[6].flavor}</p>
+            <span class="bh-rule" aria-hidden="true"></span>
+          </header>
+          <div class="bh-wgrid">
+            <div class="bh-status">
+              <i class="bh-g bh-g--triangle" aria-hidden="true"></i>
+              <p>{profile.writing.status}</p>
+            </div>
+            <div>
+              {profile.writing.posts.length > 0 && (
+                <ol class="bh-wlines bh-posts">
+                  {profile.writing.posts.map((p, i) => (
+                    <li><b>{pad(i + 1)}</b><a href={p.href}>{p.title}</a><span>{p.date}</span></li>
+                  ))}
+                </ol>
+              )}
+              <h3 class="bh-lab">planned</h3>
+              <ol class="bh-wlines">
+                {profile.writing.planned.map((t, i) => (
+                  <li><b>W{i + 1}</b><span class="bh-wl-t">{t}</span><span class="bh-wl-tag">in planning</span></li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 08 CONTACT ===== -->
+      <section id="contact" class="bh-sec bh-contact" data-pf-section="contact">
+        <i class="bh-sh bh-sh-c1" aria-hidden="true" data-slide style="--sy:-50px;--sr:10deg"></i>
+        <i class="bh-sh bh-sh-c2" aria-hidden="true" data-slide style="--sy:40px"></i>
+        <div class="bh-wrap">
+          <header class="bh-head" data-reveal>
+            <p class="bh-num" aria-hidden="true">{N.contact}</p>
+            <h2>Contact</h2>
+            <p class="bh-sub">{nav[7].flavor}</p>
+            <span class="bh-rule" aria-hidden="true"></span>
+          </header>
+          <div class="bh-contact-grid">
+            <div class="bh-contact-copy">
+              <p class="bh-big">Open to interesting problems in GenAI agents, workflow systems and backend infrastructure.</p>
+              <ul class="bh-clist">
+                <li><span class="bh-k">Email</span><Protected kind="email" class="bh-v" /></li>
+                <li><span class="bh-k">Phone</span><Protected kind="phone" class="bh-v" /></li>
+                <li><span class="bh-k">LinkedIn</span><a class="bh-v" href={profile.contact.linkedin} rel="noopener me" data-pf-linkedin>{linkedinShown}</a></li>
+                <li><span class="bh-k">GitHub</span><a class="bh-v" href={profile.contact.github} rel="noopener me" data-pf-github>{githubShown}</a></li>
+                <li><span class="bh-k">Resume</span><a class="bh-v" href={withBase(profile.resume.href)} download>{profile.resume.label}</a></li>
+              </ul>
+            </div>
+            <div class="bh-form-card">
+              <h3>Send a message</h3>
+              <ContactForm class="bh-form" submitLabel="Send message" labels={{ name: 'Name', email: 'Email', message: 'Message' }} />
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bh-foot">
+      <div class="bh-wrap">
+        <p class="bh-foot-big" aria-hidden="true"><span>{profile.firstName.toLowerCase()}</span><span>{profile.name.split(' ')[1].toLowerCase()}</span></p>
+        <div class="bh-foot-row">
+          <p>&copy; {year} {profile.name}. {meta.flavor.footer}</p>
+          <p>Built with Astro. A different art style every day: see the <a href={withBase('gallery/')}>gallery</a>. <a href="#hero">Back to top <i class="bh-up" aria-hidden="true"></i></a></p>
+        </div>
+        <p class="bh-foot-sig" aria-hidden="true"><i class="bh-g bh-g--circle"></i><i class="bh-g bh-g--triangle"></i><i class="bh-g bh-g--square"></i></p>
+      </div>
+    </footer>
+
+    <dialog class="bh-lightbox" aria-label="Photo viewer" data-lightbox>
+      <div class="bh-lb-bar">
+        <p><b data-lb-no>P-00</b> <span data-lb-cap></span></p>
+        <div>
+          <button type="button" data-lb-toggle aria-pressed="false">Show original</button>
+          <button type="button" data-lb-prev aria-label="Previous photo">Prev</button>
+          <button type="button" data-lb-next aria-label="Next photo">Next</button>
+          <button type="button" data-lb-close aria-label="Close viewer">Close &times;</button>
+        </div>
+      </div>
+      <div class="bh-lb-stage" data-lb-stage></div>
+    </dialog>
+
+    <script>import './client.ts'</script>
+    <UtilityBar style={STYLE} />
+  </body>
+</html>
