@@ -15,7 +15,7 @@
  *     treatments: { name: (fx, ctx) => fx.chain()... },       // fx is queued; return it (or await fx.run())
  *     pick: (ctx) => 'name',                                  // optional; default 'default'
  *   }
- *   ctx = { id, category, name, width, height, orientation, seed, rng, style }
+ *   ctx = { id, category, name, tags, alt, width, height, orientation, seed, rng, style }   (tags come from src/content/photos.ts)
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,6 +23,7 @@ import crypto from 'node:crypto';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { Fx, FX_VERSION, hashString } from './fx/index.mjs';
 import sharp from 'sharp';
+import { photoMeta } from '../src/content/photos.ts';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PHOTOS = path.join(ROOT, 'photos');
@@ -60,7 +61,8 @@ async function listPhotos() {
     const bytes = fs.readFileSync(file);
     const meta = await sharp(bytes).rotate().metadata();
     const w = meta.autoOrient?.width ?? meta.width, h = meta.autoOrient?.height ?? meta.height;
-    out.push({ id, category: rest.length ? category : 'misc', name: rest.length ? rest.join('/') : category, file, hash: sha(bytes), width: w, height: h, orientation: w > h * 1.05 ? 'landscape' : h > w * 1.05 ? 'portrait' : 'square' });
+    const pm = photoMeta[id] || {};
+    out.push({ id, tags: pm.tags || [], alt: pm.alt || '', category: rest.length ? category : 'misc', name: rest.length ? rest.join('/') : category, file, hash: sha(bytes), width: w, height: h, orientation: w > h * 1.05 ? 'landscape' : h > w * 1.05 ? 'portrait' : 'square' });
   }
   return out.sort((a, b) => a.id.localeCompare(b.id));
 }
@@ -89,7 +91,7 @@ async function buildStyle(style, recipeFile, photos) {
     while (todo.length) {
       const p = todo.shift();
       const treatment = (recipe.pick ? recipe.pick({ ...p, style }) : 'default') || 'default';
-      const key = sha(`${p.hash}|${recipeHash}|${fxVersionHash}|${treatment}|${recipe.maxSize}|${recipe.thumb}|${recipe.quality}|${recipe.format}`);
+      const key = sha(`${p.hash}|${p.tags.join(',')}|${recipeHash}|${fxVersionHash}|${treatment}|${recipe.maxSize}|${recipe.thumb}|${recipe.quality}|${recipe.format}`);
       const relFull = `generated/${style}/${p.id}.${ext}`, relThumb = `generated/${style}/${p.id}.thumb.${ext}`;
       const fullPath = path.join(ROOT, 'public', relFull), thumbPath = path.join(ROOT, 'public', relThumb);
       const old = prev.photos?.[p.id];
