@@ -9,7 +9,9 @@
     "build": "node scripts/build-images.mjs && astro build",
     "preview": "astro preview",
     "check": "node scripts/check-theme.mjs",
-    "new:theme": "node scripts/new-theme.mjs"
+    "new:theme": "node scripts/new-theme.mjs",
+    "credits": "node scripts/credits.mjs",
+    "check:all": "node scripts/check-all.mjs"
   },
   "dependencies": {
     "astro": "^7.4.7",
