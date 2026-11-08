@@ -1,0 +1,422 @@
+---
+/**
+ * Brutalism theme: the page is a poured-concrete building.
+ * Desktop: fixed "floor directory" rail + stacked slabs. Mobile: sticky top slab with an index.
+ * Keeps every data-pf-* hook and all content from @/content/profile.
+ */
+import { profile } from '@/content/profile';
+import { photoGroups, photo } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import meta from './meta';
+import './theme.css';
+
+const STYLE = 'brutalism';
+const pad = (n: number, l = 2) => String(n).padStart(l, '0');
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+/** wrap the figures in a sentence so they read as yellow "marker" highlights (text itself is unchanged) */
+const hi = (s: string) => esc(s).replace(/(~?\d[\d.,]*(?:-\d[\d.,]*)?[+%MK]+|~\d[\d.,]*)/g, '<mark>$1</mark>');
+
+const hero = photo(STYLE, 'portraits/02-smile-jacket');
+const aboutPhoto = photo(STYLE, 'portraits/07-tree-dusk');
+const groups = photoGroups(STYLE);
+const totalPlates = groups.reduce((n, g) => n + g.photos.length, 0);
+let plateNo = 0;
+
+const floors = [
+  { id: 'hero', n: '00', label: 'Home', sub: 'Ground floor' },
+  { id: 'about', n: '01', label: 'About', sub: 'Load-bearing facts' },
+  { id: 'experience', n: '02', label: 'Experience', sub: 'Structural record' },
+  { id: 'case-studies', n: '03', label: 'Case studies', sub: 'Drawing sheets' },
+  { id: 'projects', n: '04', label: 'Projects', sub: 'Schedule of works' },
+  { id: 'skills', n: '05', label: 'Skills', sub: 'Material specification' },
+  { id: 'beyond-code', n: '06', label: 'Beyond code', sub: 'Site photographs' },
+  { id: 'writing', n: '07', label: 'Writing', sub: 'Notices of intent' },
+  { id: 'contact', n: '08', label: 'Contact', sub: 'Reception' },
+];
+const F = Object.fromEntries(floors.map((f) => [f.id, f]));
+
+const featured = profile.caseStudies.filter((c) => c.featured);
+const earlier = profile.caseStudies.filter((c) => !c.featured);
+const projects = [...profile.projects].sort((a, b) => Number(b.year) - Number(a.year));
+const tickerItems = [...profile.interests, profile.focus, profile.location];
+const linkedinShown = profile.contact.linkedin.replace(/^https?:\/\/(www\.)?/, '');
+const githubShown = profile.contact.github.replace(/^https?:\/\/(www\.)?/, '');
+const year = new Date().getFullYear();
+const now = profile.experience[0];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style={STYLE} themeColor="#1b1b1a" />
+    <meta name="robots" content="index,follow" />
+  </head>
+  <body class="bt">
+    <a class="bt-skip" href="#main">Skip to content</a>
+
+    <!-- mobile / tablet: sticky top slab -->
+    <header class="bt-topbar">
+      <a class="bt-tb-brand" href="#hero"><span class="bt-mark" aria-hidden="true">AK</span><span class="bt-tb-name">{profile.name}</span></a>
+      <details class="bt-tb-index" data-index>
+        <summary><span>Index</span></summary>
+        <nav aria-label="Floor directory">
+          <ol>
+            {floors.map((f) => (
+              <li><a href={`#${f.id}`} data-floor={f.id}><b>{f.n}</b> {f.label}</a></li>
+            ))}
+            <li class="bt-tb-resume"><a href={withBase(profile.resume.href)} download>Resume (PDF) &darr;</a></li>
+          </ol>
+        </nav>
+      </details>
+    </header>
+
+    <div class="bt-shell">
+      <!-- desktop: fixed floor directory -->
+      <aside class="bt-rail" aria-label="Site index">
+        <a class="bt-rail-brand" href="#hero">
+          <span class="bt-mark" aria-hidden="true">AK</span>
+          <span class="bt-rail-name">{profile.name}</span>
+          <span class="bt-rail-role">{profile.role}</span>
+        </a>
+        <nav class="bt-rail-nav" aria-label="Floor directory">
+          <p class="bt-rail-label">Floor directory</p>
+          <ol>
+            {floors.map((f) => (
+              <li><a href={`#${f.id}`} data-floor={f.id}><b>{f.n}</b><span>{f.label}</span></a></li>
+            ))}
+          </ol>
+        </nav>
+        <div class="bt-rail-foot">
+          <a class="bt-btn bt-btn-sm" href={withBase(profile.resume.href)} download>Resume &darr;</a>
+          <p class="bt-lift" aria-hidden="true"><span class="bt-lift-label">You are on floor</span><span class="bt-lift-now" data-floor-now>00</span><span class="bt-lift-of">/08</span></p>
+        </div>
+      </aside>
+
+      <div class="bt-stage">
+        <main id="main">
+
+          <!-- 00 HERO -->
+          <section id="hero" class="bt-slab bt-hero bt-s-concrete" data-pf-section="hero">
+            <p class="bt-strip"><span><b>00</b> / Ground floor</span><span>{profile.role}</span><span class="bt-strip-loc">{profile.location}</span></p>
+            <div class="bt-wrap">
+              <h1><span class="bt-ln"><span>Abhishek</span></span> <span class="bt-ln"><span>Kumar</span></span></h1>
+              <div class="bt-hero-grid">
+                <div class="bt-hero-copy">
+                  <p class="bt-kick">{meta.flavor.kicker}</p>
+                  <p class="bt-lead">{profile.tagline}</p>
+                  <p class="bt-hero-focus"><span>Currently</span> {now.title}, {now.company} - since {now.start}</p>
+                  <p class="bt-cta">
+                    <a class="bt-btn" href={withBase(profile.resume.href)} data-pf-resume download>{profile.resume.label} &darr;</a>
+                    <a class="bt-btn bt-btn-ghost" href="#contact">Get in touch</a>
+                  </p>
+                </div>
+                <figure class="bt-hero-fig">
+                  <div class="bt-frame">
+                    <img src={hero.img.src} width={hero.img.width} height={hero.img.height} alt={hero.alt} fetchpriority="high" decoding="async" data-orig={hero.original.src} style={`object-position:${hero.focus}`} />
+                  </div>
+                  <figcaption><b>Fig. 00</b> {hero.caption}</figcaption>
+                </figure>
+              </div>
+            </div>
+          </section>
+
+          <ul class="bt-stats" aria-label="Key numbers">
+            {profile.stats.map((s, i) => (
+              <li class:list={[{ 'bt-hot': i === 0 }]}><strong>{s.value}</strong><span>{s.label}</span></li>
+            ))}
+          </ul>
+
+          <div class="bt-hazard" aria-hidden="true"></div>
+          <div class="bt-ticker" aria-hidden="true">
+            <div class="bt-ticker-track">
+              {[0, 1].map(() => (
+                <div class="bt-ticker-half">
+                  {[0, 1, 2].map(() => tickerItems.map((t) => <span>{t}</span>))}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div class="bt-hazard" aria-hidden="true"></div>
+
+          <!-- 01 ABOUT -->
+          <section id="about" class="bt-slab bt-s-lime" data-pf-section="about">
+            <div class="bt-wrap">
+              <header class="bt-sec-head"><p class="bt-sec-no">{F.about.n}</p><h2>About</h2><p class="bt-sec-sub">{F.about.sub}</p></header>
+              <div class="bt-about-grid">
+                <figure class="bt-about-fig">
+                  <div class="bt-frame">
+                    <img src={aboutPhoto.img.src} width={aboutPhoto.img.width} height={aboutPhoto.img.height} alt={aboutPhoto.alt} loading="lazy" decoding="async" data-orig={aboutPhoto.original.src} style={`object-position:${aboutPhoto.focus}`} />
+                  </div>
+                  <figcaption><b>Fig. 01</b> {aboutPhoto.caption}</figcaption>
+                </figure>
+                <div class="bt-about-copy">
+                  <p class="bt-about-summary" set:html={hi(profile.summary)} />
+                  <div class="bt-about-personal">
+                    {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+                  </div>
+                  <h3 class="bt-mini">Off site</h3>
+                  <ul class="bt-cells bt-interests" aria-label="Interests">
+                    {profile.interests.map((i, n) => <li><span>I-{pad(n + 1)}</span>{i}</li>)}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 02 EXPERIENCE -->
+          <section id="experience" class="bt-slab bt-s-concrete" data-pf-section="experience">
+            <div class="bt-wrap">
+              <header class="bt-sec-head"><p class="bt-sec-no">{F.experience.n}</p><h2>Experience</h2><p class="bt-sec-sub">{F.experience.sub}</p></header>
+              {profile.experience.map((e, i) => (
+                <article class="bt-bay" aria-labelledby={`job-${e.id}`}>
+                  <header class="bt-bay-head">
+                    <p class="bt-bay-no">{F.experience.n}.{pad(i + 1)}</p>
+                    <div class="bt-bay-who">
+                      <h3 id={`job-${e.id}`}>{e.company}</h3>
+                      <p class="bt-bay-title">{e.title}</p>
+                    </div>
+                    <p class="bt-bay-when"><span class="bt-when-tag">{e.start} <i aria-hidden="true">-&gt;</i><span class="bt-sr-only"> to </span> {e.end}</span><span class="bt-when-place">{e.place}</span></p>
+                  </header>
+                  <p class="bt-bay-blurb">{e.blurb}</p>
+                  <ol class="bt-wall bt-mods">
+                    {e.bullets.map((b, j) => (
+                      <li class="bt-mod">
+                        <span class="bt-mod-no">{F.experience.n}.{pad(i + 1)}.{pad(j + 1)}</span>
+                        <h4>{b.head}</h4>
+                        <p>{b.text}</p>
+                      </li>
+                    ))}
+                  </ol>
+                </article>
+              ))}
+              <article class="bt-bay bt-bay-edu" aria-labelledby="edu-h">
+                <header class="bt-bay-head">
+                  <p class="bt-bay-no">{F.experience.n}.E</p>
+                  <div class="bt-bay-who"><h3 id="edu-h">Education</h3></div>
+                </header>
+                <div class="bt-edu-list">
+                  {profile.education.map((e) => (
+                    <div class="bt-edu" data-pf-education>
+                      <h4>{e.school}</h4>
+                      <p>{e.degree}</p>
+                      <p class="bt-edu-when">{e.start} <i aria-hidden="true">-&gt;</i><span class="bt-sr-only"> to </span> {e.end}</p>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <!-- 03 CASE STUDIES -->
+          <section id="case-studies" class="bt-slab bt-s-lime" data-pf-section="case-studies">
+            <div class="bt-wrap">
+              <header class="bt-sec-head"><p class="bt-sec-no">{F['case-studies'].n}</p><h2>Case studies</h2><p class="bt-sec-sub">{F['case-studies'].sub}</p></header>
+              <h3 class="bt-group-h"><span>{F['case-studies'].n}.A</span> Featured sheets <em>{featured.length}</em></h3>
+              <div class="bt-sheets">
+                {featured.map((c, i) => (
+                  <article class="bt-sheet" data-pf-case={c.id}>
+                    <header class="bt-sheet-head">
+                      <p class="bt-sheet-no">Sheet {F['case-studies'].n}.A{pad(i + 1)}</p>
+                      <h4>{c.title}</h4>
+                      <p class="bt-sheet-kick">{c.kicker}</p>
+                    </header>
+                    <div class="bt-sheet-body">
+                      <div><h5>Problem</h5><p>{c.problem}</p></div>
+                      <div><h5>Approach</h5><p>{c.approach}</p></div>
+                    </div>
+                    <ul class="bt-impact" aria-label="Impact">{c.impact.map((x) => <li set:html={hi(x)} />)}</ul>
+                    <dl class="bt-tblock">
+                      <div><dt>Org</dt><dd>{c.org}</dd></div>
+                      <div><dt>Role</dt><dd>{c.role}</dd></div>
+                      <div><dt>Period</dt><dd>{c.period}</dd></div>
+                      <div class="bt-tb-tags"><dt>Tags</dt><dd>{c.tags.join(' / ')}</dd></div>
+                    </dl>
+                  </article>
+                ))}
+              </div>
+              {earlier.length > 0 && (
+                <>
+                  <h3 class="bt-group-h"><span>{F['case-studies'].n}.B</span> Earlier work <em>{earlier.length}</em></h3>
+                  <div class="bt-sheets">
+                    {earlier.map((c, i) => (
+                      <article class="bt-sheet bt-sheet-alt" data-pf-case={c.id}>
+                        <header class="bt-sheet-head">
+                          <p class="bt-sheet-no">Sheet {F['case-studies'].n}.B{pad(i + 1)}</p>
+                          <h4>{c.title}</h4>
+                          <p class="bt-sheet-kick">{c.kicker}</p>
+                        </header>
+                        <div class="bt-sheet-body">
+                          <div><h5>Problem</h5><p>{c.problem}</p></div>
+                          <div><h5>Approach</h5><p>{c.approach}</p></div>
+                        </div>
+                        <ul class="bt-impact" aria-label="Impact">{c.impact.map((x) => <li set:html={hi(x)} />)}</ul>
+                        <dl class="bt-tblock">
+                          <div><dt>Org</dt><dd>{c.org}</dd></div>
+                          <div><dt>Role</dt><dd>{c.role}</dd></div>
+                          <div><dt>Period</dt><dd>{c.period}</dd></div>
+                          <div class="bt-tb-tags"><dt>Tags</dt><dd>{c.tags.join(' / ')}</dd></div>
+                        </dl>
+                      </article>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </section>
+
+          <!-- 04 PROJECTS -->
+          <section id="projects" class="bt-slab bt-s-concrete" data-pf-section="projects">
+            <div class="bt-wrap">
+              <header class="bt-sec-head"><p class="bt-sec-no">{F.projects.n}</p><h2>Projects</h2><p class="bt-sec-sub">{F.projects.sub}</p></header>
+              <div class="bt-sched">
+                <p class="bt-sched-head" aria-hidden="true"><span>Year</span><span>Project</span><span>Stack</span><span>Links</span></p>
+                <ol>
+                  {projects.map((p, i) => (
+                    <li class="bt-row" data-pf-project={p.name}>
+                      <span class="bt-row-year"><i>{F.projects.n}.{pad(i + 1)}</i>{p.year}</span>
+                      <div class="bt-row-main">
+                        <h3>{p.title}</h3>
+                        <p>{p.blurb}</p>
+                      </div>
+                      <ul class="bt-row-stack" aria-label="Stack">{p.stack.map((s) => <li>{s}</li>)}</ul>
+                      <p class="bt-row-links">
+                        <a href={p.repo} rel="noopener" aria-label={`${p.title}: source on GitHub`}>Source</a>
+                        {p.live && <a href={p.live} rel="noopener" aria-label={`${p.title}: live site`}>Live</a>}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+          </section>
+
+          <!-- 05 SKILLS -->
+          <section id="skills" class="bt-slab bt-s-dark" data-pf-section="skills">
+            <div class="bt-wrap">
+              <header class="bt-sec-head"><p class="bt-sec-no">{F.skills.n}</p><h2>Skills</h2><p class="bt-sec-sub">{F.skills.sub}</p></header>
+              <div class="bt-spec">
+                {profile.skills.map((g, i) => (
+                  <div class="bt-spec-row">
+                    <h3><span>{F.skills.n}.{pad(i + 1)}</span>{g.group}</h3>
+                    <ul class="bt-wall bt-tiles">
+                      {g.items.map((it) => <li>{it}</li>)}
+                      {((g as { familiar?: readonly string[] }).familiar ?? []).map((it) => <li class="bt-fam">{it} <small>(familiar)</small></li>)}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <!-- 06 BEYOND CODE -->
+          <section id="beyond-code" class="bt-slab bt-s-lime" data-pf-section="beyond-code">
+            <div class="bt-wrap">
+              <header class="bt-sec-head"><p class="bt-sec-no">{F['beyond-code'].n}</p><h2>Beyond code</h2><p class="bt-sec-sub">{F['beyond-code'].sub}</p></header>
+              <p class="bt-intro">The personal half of the portfolio: trips, rides, books and friends. {totalPlates} plates, cast in concrete. Hover a plate to bring the colour back; click it to open the viewer.</p>
+              {groups.map((g, gi) => (
+                <div class="bt-pgroup">
+                  <header class="bt-pg-head">
+                    <h3><span>{F['beyond-code'].n}.{pad(gi + 1)}</span>{g.title}</h3>
+                    <p>{g.blurb}</p>
+                    <p class="bt-pg-count">{pad(g.photos.length)} plates</p>
+                  </header>
+                  <ul class="bt-wall bt-photos">
+                    {g.photos.map((p) => {
+                      plateNo += 1;
+                      return (
+                        <li class="bt-plate" style={`--ar:${(p.img.thumbWidth / p.img.thumbHeight).toFixed(3)}`}>
+                          <figure>
+                            <a href={p.original.src} data-lb data-mono={p.img.src} data-no={`P-${pad(plateNo)}`} data-cap={p.caption ?? ''} data-alt={p.alt} aria-label={`Open photo: ${p.caption ?? p.alt}`}>
+                              <img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" data-orig={p.original.thumb} style={`object-position:${p.focus}`} />
+                            </a>
+                            <figcaption><b>P-{pad(plateNo)}</b><span class="bt-cap">{p.caption}</span></figcaption>
+                          </figure>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <!-- 07 WRITING -->
+          <section id="writing" class="bt-slab bt-s-concrete" data-pf-section="writing">
+            <div class="bt-wrap">
+              <header class="bt-sec-head"><p class="bt-sec-no">{F.writing.n}</p><h2>Writing</h2><p class="bt-sec-sub">{F.writing.sub}</p></header>
+              <div class="bt-notice">
+                <p class="bt-notice-head"><b>Notice of intent</b><span>Status: in planning</span></p>
+                <p class="bt-notice-body">{profile.writing.status}</p>
+                {profile.writing.posts.length > 0 && (
+                  <ol class="bt-notice-list bt-posts">
+                    {profile.writing.posts.map((p, i) => (
+                      <li><span class="bt-w-no">{pad(i + 1)}</span><a class="bt-w-title" href={p.href}>{p.title}</a><span class="bt-w-tag">{p.date}</span></li>
+                    ))}
+                  </ol>
+                )}
+                <p class="bt-notice-sub">Planned</p>
+                <ol class="bt-notice-list">
+                  {profile.writing.planned.map((t, i) => (
+                    <li><span class="bt-w-no">W-{pad(i + 1)}</span><span class="bt-w-title">{t}</span><span class="bt-w-tag">In planning</span></li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+          </section>
+
+          <!-- 08 CONTACT -->
+          <section id="contact" class="bt-slab bt-s-signal" data-pf-section="contact">
+            <div class="bt-wrap">
+              <header class="bt-sec-head"><p class="bt-sec-no">{F.contact.n}</p><h2>Contact</h2><p class="bt-sec-sub">{F.contact.sub}</p></header>
+              <div class="bt-contact-grid">
+                <div class="bt-contact-copy">
+                  <p class="bt-lead">Open to interesting problems in GenAI agents, workflow systems and backend infrastructure.</p>
+                  <ul class="bt-clist">
+                    <li><span class="bt-k">Email</span><Protected kind="email" class="bt-v bt-v-mail" /></li>
+                    <li><span class="bt-k">Phone</span><Protected kind="phone" class="bt-v" /></li>
+                    <li><span class="bt-k">LinkedIn</span><a class="bt-v" href={profile.contact.linkedin} rel="noopener me" data-pf-linkedin>{linkedinShown}</a></li>
+                    <li><span class="bt-k">GitHub</span><a class="bt-v" href={profile.contact.github} rel="noopener me" data-pf-github>{githubShown}</a></li>
+                    <li><span class="bt-k">Resume</span><a class="bt-v" href={withBase(profile.resume.href)} download>{profile.resume.label}</a></li>
+                  </ul>
+                </div>
+                <div class="bt-contact-form">
+                  <h3 class="bt-form-h">Send a message</h3>
+                  <ContactForm class="bt-brut-form" submitLabel="Send message" labels={{ name: 'Name', email: 'Email', message: 'Message' }} />
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <footer class="bt-foot">
+          <div class="bt-wrap">
+            <p class="bt-foot-big" aria-hidden="true">Abhishek<br />Kumar</p>
+            <div class="bt-foot-row">
+              <p>&copy; {year} {profile.name}. {meta.flavor.footer}</p>
+              <p>Built with Astro. A different art style every day: see the <a href={withBase('gallery/')}>gallery</a>. <a href="#hero">Back to ground floor &uarr;</a></p>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </div>
+
+    <dialog class="bt-lightbox" aria-label="Photo viewer" data-lightbox>
+      <div class="bt-lb-bar">
+        <p class="bt-lb-meta"><b data-lb-no>P-00</b> <span data-lb-cap></span></p>
+        <div class="bt-lb-actions">
+          <button type="button" data-lb-color aria-pressed="false">Colour</button>
+          <button type="button" data-lb-prev aria-label="Previous photo">Prev</button>
+          <button type="button" data-lb-next aria-label="Next photo">Next</button>
+          <button type="button" data-lb-close aria-label="Close viewer">Close &times;</button>
+        </div>
+      </div>
+      <div data-lb-stage></div>
+    </dialog>
+
+    <script>import './client.ts'</script>
+    <UtilityBar style={STYLE} />
+  </body>
+</html>
