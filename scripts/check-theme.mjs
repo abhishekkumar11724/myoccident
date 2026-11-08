@@ -53,6 +53,7 @@ async function load(ctxOpts, tag) {
   page.on('request', (r) => { const u = new URL(r.url()); if (!['localhost', '127.0.0.1'].includes(u.hostname) && !['data:', 'blob:'].includes(u.protocol)) log.external.push(r.url()); });
   page.on('response', (r) => { if (r.status() >= 400) log.bad.push(`${r.status()} ${r.url()}`); });
   const resp = await page.goto(url, { waitUntil: 'load', timeout: 60000 });
+  await page.addStyleTag({ content: 'html,body{scroll-behavior:auto !important}' }); // themes may use smooth scrolling; we need instant jumps
   await page.evaluate(() => document.fonts?.ready);
   // scroll through to trigger lazy images / reveal-on-scroll, then return
   const H = await page.evaluate(() => document.documentElement.scrollHeight);
@@ -167,7 +168,7 @@ const mt = await tiles(m.page, 'mobile', 10, 2400);
 hard('no horizontal overflow (phone 390px)', await m.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `scrollWidth ${await m.page.evaluate(() => document.documentElement.scrollWidth)} > 390`);
 hard('phone: no console errors', m.log.console.length === 0 && m.log.pageErrors.length === 0, [...m.log.console, ...m.log.pageErrors].slice(0, 2).join(' || '));
 hard('phone: UtilityBar visible', await m.page.locator('[data-pf-bar]').first().isVisible());
-const small = await m.page.evaluate(() => { const bad = []; for (const e of document.querySelectorAll('a,button,input,textarea,select')) { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); if (r.width && r.height && cs.visibility !== 'hidden' && (r.width < 24 || r.height < 24) && !e.closest('[data-pf-bar]') && !(e.tagName === 'A' && e.closest('p,li,span') && cs.display === 'inline')) bad.push(`${e.tagName.toLowerCase()} ${Math.round(r.width)}x${Math.round(r.height)}`); } return bad; });
+const small = await m.page.evaluate(() => { const bad = []; for (const e of document.querySelectorAll('a,button,input,textarea,select')) { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); if (r.width && r.height && cs.visibility !== 'hidden' && (r.width < 24 || r.height < 24) && !e.closest('[data-pf-bar]') && e.getAttribute('name') !== 'botcheck' && !(e.tagName === 'A' && e.closest('p,li,span') && cs.display === 'inline')) bad.push(`${e.tagName.toLowerCase()} ${Math.round(r.width)}x${Math.round(r.height)}`); } return bad; });
 soft('phone: tap targets >= 24px', small.length === 0, `${small.length}: ${small.slice(0, 4).join(', ')}`);
 await m.ctx.close();
 
