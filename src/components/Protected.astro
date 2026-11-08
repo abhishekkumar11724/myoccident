@@ -22,6 +22,5 @@ const hasSlot = Astro.slots.has('default');
     const kind = a.dataset.pfProtected, val = atob(a.dataset.v || ''), disp = atob(a.dataset.d || '');
     a.href = (kind === 'email' ? 'mailto:' : 'tel:') + val;
     if (a.dataset.fill === 'true') a.textContent = disp;
-    a.removeAttribute('rel'); a.setAttribute('rel', 'nofollow');
   });
 </script>
