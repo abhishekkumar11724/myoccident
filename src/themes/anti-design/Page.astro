@@ -1,0 +1,527 @@
+---
+/**
+ * Anti-design theme: controlled chaos with a rulebook.
+ * Every section breaks the 12-column grid in a different, deliberate way; the DOM order is still the reading order,
+ * body copy always sits on a solid field, and the Lab (keys S R G B M F) can show the grid or switch the chaos off.
+ * Keep every data-pf-* hook and ALL content (docs/THEME_GUIDE.md).
+ */
+import { profile } from '@/content/profile';
+import { photoGroups, heroPhotos, photos } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import meta from './meta';
+import './theme.css';
+
+const STYLE = 'anti-design';
+const all = photos(STYLE);
+const heroes = heroPhotos(STYLE);
+const hero = heroes[0] ?? all[0];
+const groups = photoGroups(STYLE);
+const byId = (id: string) => all.find((p) => p.id === id);
+
+// ---------- deterministic randomness (no layout shift between builds)
+const rng = (seed: number) => { let a = seed >>> 0; return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; };
+const hash = (s: string) => { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+/** split a sentence around phrases so some words can be blown up / shrunk without touching the wording */
+function segment(text: string, phrases: string[]) {
+  const out: { t: string; k: number }[] = [];
+  let rest = text;
+  while (rest) {
+    let best = -1, at = Infinity;
+    phrases.forEach((ph, i) => { const j = rest.indexOf(ph); if (j >= 0 && j < at) { at = j; best = i; } });
+    if (best < 0) { out.push({ t: rest, k: -1 }); break; }
+    if (at > 0) out.push({ t: rest.slice(0, at), k: -1 });
+    out.push({ t: phrases[best], k: best });
+    rest = rest.slice(at + phrases[best].length);
+  }
+  return out;
+}
+const star = (n = 14, ro = 50, ri = 41) => `polygon(${Array.from({ length: n * 2 }, (_, i) => { const a = (Math.PI * i) / n - Math.PI / 2; const r = i % 2 ? ri : ro; return `${(50 + r * Math.cos(a)).toFixed(1)}% ${(50 + r * Math.sin(a)).toFixed(1)}%`; }).join(',')})`;
+
+// ---------- photos the page blends with CSS (must match MONO in recipe.mjs: they are plain greyscale)
+const BLEND: Record<string, { bg: string; mode: 'multiply' | 'screen' }> = {
+  'adventure/04-hillside-smile': { bg: 'var(--orange)', mode: 'multiply' },
+  'portraits/06-alley-smile': { bg: 'var(--acid)', mode: 'multiply' },
+  'bikes/04-bike-bw': { bg: 'var(--blue)', mode: 'screen' },
+  'pets/02-dog-on-ledge': { bg: 'var(--orange)', mode: 'multiply' },
+};
+const aboutPics = ['portraits/06-alley-smile', 'adventure/04-hillside-smile', 'bikes/04-bike-bw', 'adventure/09-with-dog']
+  .map(byId).filter((p): p is NonNullable<typeof p> => !!p);
+
+const nav = [
+  ['about', 'about'], ['experience', 'experience'], ['case-studies', 'case studies'], ['projects', 'projects'],
+  ['skills', 'skills'], ['beyond-code', 'beyond code'], ['writing', 'writing'], ['lab', 'lab'], ['contact', 'contact'],
+] as const;
+
+// the log of rules this page breaks (one per section, shown in tiny type under each heading)
+const RULE: Record<string, string> = {
+  about: 'the margin', experience: 'the column (merged cells)', 'case-studies': 'straight lines', projects: 'the typeface (one only: default)',
+  skills: 'reading direction (row 2 runs backwards)', 'beyond-code': 'the crop', writing: 'shipping', lab: 'usefulness', contact: 'the polite button',
+};
+
+const featured = profile.caseStudies.filter((c) => c.featured);
+const older = profile.caseStudies.filter((c) => !c.featured);
+const noteColor = ['acid', 'orange', 'white', 'blue', 'acid', 'white'];
+const notePos = [[1, 7, 0, -1.4], [8, 5, 5, 1.6], [2, 5, 1, 1.9], [7, 6, 4, -1.1], [1, 6, 2, -2.1], [7, 6, 6, 1.2], [3, 5, 2, -1.3], [8, 5, 5, 1.5]] as const;
+
+const skillItems = (g: (typeof profile.skills)[number]) => [
+  ...g.items.map((t) => ({ t, fam: false })),
+  ...(((g as { familiar?: readonly string[] }).familiar ?? []).map((t) => ({ t, fam: true }))),
+];
+const tickRows = [profile.skills.slice(0, 3), profile.skills.slice(3)].map((gs) => gs.flatMap((g) => skillItems(g).map((s) => s.t)));
+const tickLook = (s: string) => `sk-${hash(s) % 8}`;
+
+// ---------- "Beyond code" boards
+const POOL: Record<string, [number, number][]> = {
+  portrait: [[3, 5], [2, 3], [3, 4], [2, 4], [4, 5]],
+  landscape: [[5, 3], [4, 3], [3, 2], [6, 4], [4, 2]],
+  square: [[3, 3], [2, 2], [4, 4], [3, 3]],
+};
+function span(p: (typeof all)[number], i: number, small = false): [number, number] {
+  if (small) return p.orientation === 'portrait' ? [3, 4] : p.orientation === 'landscape' ? [4, 3] : [3, 3];
+  const list = POOL[p.orientation] ?? POOL.square;
+  const k = Math.floor(rng(hash(p.id))() * list.length);
+  if (i === 0) return p.orientation === 'portrait' ? [4, 6] : p.orientation === 'landscape' ? [7, 5] : [5, 5];
+  return list[k];
+}
+function mobile(p: (typeof all)[number], c: number, small = false): [number, number] {
+  const cm = small ? (c >= 4 ? 6 : 3) : c >= 5 ? 6 : c >= 3 ? 3 : 2;
+  const a = Math.min(1.45, Math.max(0.7, p.img.thumbHeight / p.img.thumbWidth));
+  return [cm, Math.max(2, Math.round(cm * a))];
+}
+const frames = ['f-plain', 'f-box', 'f-shadow', 'f-notch', 'f-out', 'f-box'];
+const headKinds = ['k-a', 'k-b', 'k-c'];
+
+// ---------- facts for the Lab's "F" toy (all derived from profile data)
+const ed = profile.education[0];
+const facts = [
+  ...profile.stats.map((s) => `${s.value} ${s.label}.`),
+  `Studied ${ed.degree} at ${ed.short}, ${ed.start} to ${ed.end}.`,
+  `Currently ${profile.experience[0].title} at ${profile.experience[0].company}, since ${profile.experience[0].start}.`,
+  `Daily languages: ${profile.skills[0].items.join(', ')}.`,
+  ...profile.interests.map((i) => `Off the clock: ${i.toLowerCase()}.`),
+  `${profile.projects.length} public repos are listed in /projects. ${profile.caseStudies.length} case studies sit on the desk.`,
+];
+const heroLine = segment(profile.tagline, ['GenAI agent platforms', 'distributed backends']);
+const summary = segment(profile.summary, ['GenAI agent platforms', 'NL-to-workflow compiler', 'workflow engine', '~5M workflow and ~2M agent requests per day']);
+const lastName = profile.name.split(' ').slice(1).join(' ');
+const now = profile.experience[0];
+const linkedinShort = profile.contact.linkedin.replace(/^https?:\/\/(www\.)?linkedin\.com\//, '');
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style={STYLE} themeColor="#1a1aff" />
+    <meta name="robots" content="index,follow" />
+  </head>
+  <body style={`--star:${star()}`}>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="top">
+      <a class="top-mark" href="#hero" aria-label={`${profile.name}, back to top`}>AK</a>
+      <nav class="top-nav" aria-label="Sections">
+        {nav.map(([id, label]) => <a href={`#${id}`}>{label}</a>)}
+      </nav>
+      <a class="top-resume" href={withBase(profile.resume.href)} download>resume (pdf)</a>
+    </header>
+
+    <div class="grid-overlay" aria-hidden="true">{Array.from({ length: 12 }, () => <i></i>)}</div>
+
+    <main id="main">
+      <!-- ================= HERO: the wordmark is wider than the page ================= -->
+      <section class="hero" id="hero" data-pf-section="hero">
+        <p class="hero-kicker">{meta.flavor.kicker}</p>
+
+        <h1 class="wordmark">
+          <span class="wm wm-a">{profile.firstName}</span>{' '}
+          <span class="wm wm-b">{lastName}</span>
+        </h1>
+
+        {hero && (
+          <figure class="hero-fig w" style="--r:-3.2deg">
+            <img src={hero.img.src} width={hero.img.width} height={hero.img.height} alt={hero.alt} fetchpriority="high" decoding="async" style={`object-position:${hero.focus}`} />
+            <figcaption>fig. 1: the author, in the wrong colours on purpose</figcaption>
+          </figure>
+        )}
+
+        <div class="hero-copy">
+          <p class="hero-role"><span class="r-a">{profile.role}</span><span class="r-b">{profile.location}</span></p>
+          <p class="hero-line">
+            {heroLine.map((s) => <span class={s.k === 0 ? 'hl-serif' : s.k === 1 ? 'hl-disp' : 'hl-tiny'}>{s.t}</span>)}
+          </p>
+
+          <div class="hero-cta">
+            <a class="mega" href={withBase(profile.resume.href)} data-pf-resume download>
+              <span class="mega-a">{profile.resume.label}</span>
+              <span class="mega-b" aria-hidden="true">&darr;</span>
+            </a>
+            <a class="tiny-link" href="#contact">or just say hi</a>
+            <svg class="arrow-nowhere" viewBox="0 0 120 80" aria-hidden="true" focusable="false">
+              <path d="M6 66 C 30 10, 74 6, 108 30 M108 30 L 90 20 M108 30 L 98 48" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span class="note-nowhere" aria-hidden="true">(this one points at nothing)</span>
+          </div>
+        </div>
+
+        <div class="burst hero-burst w" style="--r:11deg" aria-hidden="true"><span>now at<b>{now.company}</b></span></div>
+      </section>
+
+      <div class="ticker t-stats" role="group" aria-label="Key numbers">
+        <div class="tk-track">
+          <ul class="tk-set">
+            {profile.stats.map((s) => <li><strong>{s.value}</strong><span>{s.label}</span></li>)}
+          </ul>
+          <ul class="tk-set tk-dup" aria-hidden="true">
+            {profile.stats.map((s) => <li><strong>{s.value}</strong><span>{s.label}</span></li>)}
+          </ul>
+        </div>
+      </div>
+
+      <!-- ================= ABOUT: text hangs out of the margin ================= -->
+      <section class="sec about" id="about" data-pf-section="about">
+        <header class="sh sh-about">
+          <p class="sh-no">02 / 09</p>
+          <h2>About</h2>
+          <p class="sh-rule">rule broken: {RULE.about}</p>
+        </header>
+
+        <div class="about-grid">
+          <p class="about-lead">
+            {summary.map((s) => s.k < 0 ? s.t : s.k === 0 ? <em class="a-ser">{s.t}</em> : s.k === 3 ? <mark class="a-hl">{s.t}</mark> : <strong class="a-disp">{s.t}</strong>)}
+          </p>
+
+          <div class="about-note w" style="--r:1.1deg">
+            <p class="mono-label">The rest, in smaller type</p>
+            {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+          </div>
+
+          <div class="likes w" style="--r:-1.3deg">
+            <fieldset>
+              <legend>Things I like (tick to agree)</legend>
+              {profile.interests.map((it) => <label class="chk"><input type="checkbox" checked /> <span>{it}</span></label>)}
+              <label class="chk chk-no"><input type="checkbox" /> <span>Meetings that could have been an email</span></label>
+            </fieldset>
+          </div>
+
+          <aside class="job2 w" style="--r:-2.2deg" aria-label="Second job, not on the resume">
+            <p class="mono-label">Also employed as</p>
+            <p class="job2-t">Chief Chai Officer</p>
+            <p class="job2-s">Pay: chai. Hours: unreasonable. Reports to: nobody. Not on the resume, please do not tell HR.</p>
+          </aside>
+
+          <div class="about-pics">
+            {aboutPics.map((p, i) => {
+              const b = BLEND[p.id];
+              return (
+                <figure class={`pic w ap-${i + 1} ${b ? 'blend' : ''}`} style={`--r:${[-4, 3, -2, 5][i]}deg`} data-o={p.original.thumb}>
+                  <div class="pic-in" style={b ? `background:${b.bg}` : undefined}>
+                    <img class={b ? `bl-${b.mode}` : ''} src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} />
+                  </div>
+                  <figcaption>{p.caption}</figcaption>
+                </figure>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= EXPERIENCE: a spreadsheet with merged cells ================= -->
+      <section class="sec exp" id="experience" data-pf-section="experience">
+        <header class="sh sh-exp">
+          <p class="sh-no">03 / 09</p>
+          <h2>Experience</h2>
+          <p class="sh-rule">rule broken: {RULE.experience}</p>
+        </header>
+
+        <div class="jobs">
+          {profile.experience.map((e, i) => (
+            <article class={`job j${i} w`} data-job={e.id} style={`--r:${[0, -0.5, 0.7][i % 3]}deg`}>
+              <div class="fbar" aria-hidden="true"><b>fx</b><span>B{i + 1}</span><code>=EXPERIENCE("{e.company}", "{e.start}", "{e.end}")</code></div>
+              <div class="cols" aria-hidden="true"><span></span><span>A</span><span>B</span></div>
+              <table class="sheet" aria-label={`${e.title}, ${e.company}, ${e.start} to ${e.end}, ${e.place}`}>
+                <colgroup><col class="c-rn" /><col class="c-head" /><col /></colgroup>
+                <tbody>
+                  <tr class="jh">
+                    <td class="rn" aria-hidden="true">1</td>
+                    <th colspan="2" scope="colgroup" class="jh-cell">
+                      <h3 class="jh-co">{e.company}</h3>
+                      <p class="jh-meta"><b>{e.title}</b><span>{e.start} to {e.end}</span><span>{e.place}</span></p>
+                      <p class="jh-blurb">{e.blurb}</p>
+                      {e.end === 'Present' && <span class="burst jh-now w" style="--r:-9deg" aria-hidden="true"><span>now</span></span>}
+                    </th>
+                  </tr>
+                  {e.bullets.map((b, k) => (
+                    <tr>
+                      <td class="rn" aria-hidden="true">{k + 2}</td>
+                      <th scope="row" class="b-head">{b.head}</th>
+                      <td class="b-text">{b.text}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </article>
+          ))}
+        </div>
+
+        <fieldset class="edu w" data-pf-education id="education" style="--r:1.2deg">
+          <legend>Education</legend>
+          {profile.education.map((ed2) => (
+            <dl>
+              <dt>School</dt><dd class="edu-school">{ed2.school}</dd>
+              <dt>Degree</dt><dd>{ed2.degree}</dd>
+              <dt>Years</dt><dd>{ed2.start} to {ed2.end}</dd>
+            </dl>
+          ))}
+          <p class="edu-note" aria-hidden="true">(deliberately in the system font, after all that)</p>
+        </fieldset>
+      </section>
+
+      <!-- ================= CASE STUDIES: a desk of colour blocks ================= -->
+      <section class="sec cases" id="case-studies" data-pf-section="case-studies">
+        <header class="sh sh-cases">
+          <p class="sh-no">04 / 09</p>
+          <h2>Case studies</h2>
+          <p class="sh-rule">rule broken: {RULE['case-studies']}</p>
+        </header>
+
+        <div class="desk">
+          {featured.map((c, i) => {
+            const [col, sp, mt, rot] = notePos[i % notePos.length];
+            return (
+              <article class={`note n-${noteColor[i % noteColor.length]} w`} data-pf-case={c.id} style={`--r:${rot}deg;--col:${col};--sp:${sp};--mt:${mt}rem`}>
+                <h3 class="note-t">{c.title}</h3>
+                <span class="note-no" aria-hidden="true">{pad2(i + 1)}</span>
+                <p class="note-meta">{c.org} / {c.period} / {c.role}</p>
+                <p class="note-kick">{c.kicker}</p>
+                <div class="note-body">
+                  <p><b>Problem.</b> {c.problem}</p>
+                  <p><b>Approach.</b> {c.approach}</p>
+                </div>
+                <ul class="stamps" aria-label="Impact">
+                  {c.impact.map((m, k) => <li style={`--a:${[-2, 1.5, -1, 2.5][k % 4]}deg`}>{m}</li>)}
+                </ul>
+                <ul class="tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+              </article>
+            );
+          })}
+        </div>
+
+        {older.length > 0 && (
+          <div class="older">
+            <h3 class="older-h">Older notes, still pinned</h3>
+            <div class="desk desk-old">
+              {older.map((c, i) => {
+                const [col, sp, mt, rot] = notePos[(i + 6) % notePos.length];
+                return (
+                  <article class={`note n-ink w`} data-pf-case={c.id} style={`--r:${rot}deg;--col:${col};--sp:${sp};--mt:${i % 2 ? 3 : 0}rem`}>
+                    <h3 class="note-t">{c.title}</h3>
+                    <span class="note-no" aria-hidden="true">{pad2(featured.length + i + 1)}</span>
+                    <p class="note-meta">{c.org} / {c.period} / {c.role}</p>
+                    <p class="note-kick">{c.kicker}</p>
+                    <div class="note-body">
+                      <p><b>Problem.</b> {c.problem}</p>
+                      <p><b>Approach.</b> {c.approach}</p>
+                    </div>
+                    <ul class="stamps" aria-label="Impact">
+                      {c.impact.map((m, k) => <li style={`--a:${[-2, 1.5][k % 2]}deg`}>{m}</li>)}
+                    </ul>
+                    <ul class="tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <!-- ================= PROJECTS: Index of /projects ================= -->
+      <section class="sec projects" id="projects" data-pf-section="projects">
+        <header class="sh sh-proj">
+          <p class="sh-no">05 / 09</p>
+          <h2>Projects</h2>
+          <p class="sh-rule">rule broken: {RULE.projects}</p>
+        </header>
+
+        <div class="dir w" style="--r:-0.5deg">
+          <h3 class="dir-h">Index of /projects</h3>
+          <table class="dir-t">
+            <thead>
+              <tr><th scope="col">Name</th><th scope="col">Last modified</th><th scope="col">Size</th><th scope="col">Description</th></tr>
+            </thead>
+            <tbody>
+              <tr class="dir-up"><td colspan="4"><span class="ico">[PARENTDIR]</span> <a href="#hero">Parent Directory</a></td></tr>
+              {profile.projects.map((p) => (
+                <tr data-pf-project={p.name}>
+                  <td class="d-name"><span class="ico" aria-hidden="true">[DIR]</span> <a href={p.repo} rel="noopener" target="_blank">{p.title}/</a></td>
+                  <td class="d-date">{p.year}</td>
+                  <td class="d-size">{p.stack.join(', ')}</td>
+                  <td class="d-desc">
+                    {p.blurb}
+                    <span class="d-links"> <a href={p.repo} rel="noopener" target="_blank">[source on GitHub]</a>{p.live && <> <a href={p.live} rel="noopener" target="_blank">[live site]</a></>}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <hr />
+          <address>Served by hand at github.com/{profile.handle}, port 443.</address>
+        </div>
+      </section>
+
+      <!-- ================= SKILLS: two tickers, opposite directions ================= -->
+      <section class="sec skills" id="skills" data-pf-section="skills">
+        <header class="sh sh-skills">
+          <p class="sh-no">06 / 09</p>
+          <h2>Skills</h2>
+          <p class="sh-rule">rule broken: {RULE.skills}</p>
+        </header>
+
+        <div class="tickers" role="group" aria-label="Skills ticker (decorative; the full list is below)">
+          {tickRows.map((row, ri) => (
+            <div class={`ticker t-sk ${ri ? 't-rev' : ''}`} aria-hidden="true">
+              <div class="tk-track">
+                <ul class="tk-set">{row.map((s) => <li class={tickLook(s)}>{s}</li>)}</ul>
+                <ul class="tk-set tk-dup">{row.map((s) => <li class={tickLook(s)}>{s}</li>)}</ul>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div class="soup">
+          {profile.skills.map((g, gi) => (
+            <section class={`sg sg-${gi} w`} aria-labelledby={`sg-${gi}`} style={`--r:${[-0.8, 0.6, -0.4, 0.9, -0.7, 0.5][gi % 6]}deg;--len:${g.group.length};--lines:${g.group.length > 24 ? 3 : 1}`}>
+              <h3 id={`sg-${gi}`} class="sg-h">{g.group}</h3>
+              <ul class="sg-l">
+                {skillItems(g).map((s) => <li class={`v${hash(g.group + s.t) % 6}`}>{s.t}{s.fam && <small> (familiar)</small>}</li>)}
+              </ul>
+            </section>
+          ))}
+        </div>
+      </section>
+
+      <!-- ================= BEYOND CODE: boards that ignore the crop ================= -->
+      <section class="sec beyond" id="beyond-code" data-pf-section="beyond-code">
+        <header class="sh sh-beyond">
+          <p class="sh-no">07 / 09</p>
+          <h2>Beyond <em>code</em></h2>
+          <p class="sh-rule">rule broken: {RULE['beyond-code']}. Hover or tap a photo for its real colours.</p>
+        </header>
+
+        {groups.map((g, gi) => {
+          const small = g.photos.length <= 4;
+          return (
+          <section class={`board ${headKinds[gi % 3]} ${small ? 'small' : ''}`} aria-labelledby={`bc-${g.category}`}>
+            <header class="bh">
+              <h3 id={`bc-${g.category}`} class="bh-t">{g.title}</h3>
+              <p class="bh-b">{g.blurb}</p>
+            </header>
+            <div class="bgrid">
+              {g.photos.map((p, i) => {
+                const [c, r] = span(p, i, small);
+                const [cm, rm] = mobile(p, c, small);
+                const rr = rng(hash(p.id));
+                const rot = ((rr() - 0.5) * 5).toFixed(1);
+                const dx = ((rr() - 0.5) * 1.6).toFixed(1);
+                const dy = ((rr() - 0.5) * 1.6).toFixed(1);
+                const b = BLEND[p.id];
+                return (
+                  <figure class={`tile w ${frames[(i + gi) % frames.length]} ${b ? 'blend' : ''}`} style={`--cs:${c};--rs:${r};--cm:${cm};--rm:${rm};--r:${rot}deg;--x:${dx}vw;--y:${dy}vw`} data-o={p.original.thumb}>
+                    <div class="pic-in" style={b ? `background:${b.bg}` : undefined}>
+                      <img class={b ? `bl-${b.mode}` : ''} src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} />
+                    </div>
+                    {p.caption && <figcaption style={`--cx:${((rr() - 0.5) * 24).toFixed(0)}px`}>{p.caption}</figcaption>}
+                  </figure>
+                );
+              })}
+            </div>
+          </section>
+          );
+        })}
+      </section>
+
+      <!-- ================= WRITING: under construction ================= -->
+      <section class="sec writing" id="writing" data-pf-section="writing">
+        <header class="sh sh-writing">
+          <p class="sh-no">08 / 09</p>
+          <h2>Writing</h2>
+          <p class="sh-rule">rule broken: {RULE.writing}</p>
+        </header>
+
+        <div class="hazard" aria-hidden="true"><span>under construction</span><span>under construction</span><span>under construction</span></div>
+        <div class="wr-box w" style="--r:0.6deg">
+          <p class="wr-status">{profile.writing.status}</p>
+          <p class="mono-label">Planned (checkboxes are disabled, as in life)</p>
+          <ol class="drafts">
+            {profile.writing.planned.map((t) => <li><label><input type="checkbox" disabled /> <span>{t}</span></label></li>)}
+          </ol>
+          <label class="prog">Posts published: <progress value={profile.writing.posts.length} max={profile.writing.planned.length}></progress> <span>{profile.writing.posts.length} of {profile.writing.planned.length}</span></label>
+          {profile.writing.posts.length > 0 && (
+            <ul class="posts">
+              {profile.writing.posts.map((post) => <li><a href={post.href}>{post.title}</a> <span>{post.date}</span></li>)}
+            </ul>
+          )}
+        </div>
+        <div class="hazard h2" aria-hidden="true"><span>under construction</span><span>under construction</span><span>under construction</span></div>
+      </section>
+
+      <!-- ================= LAB: six useless toys ================= -->
+      <section class="sec lab" id="lab" data-facts={JSON.stringify(facts)}>
+        <header class="sh sh-lab">
+          <p class="sh-no">09 / 09</p>
+          <h2>Lab</h2>
+          <p class="sh-rule">rule broken: {RULE.lab} Six toys. Press the key, or press the button.</p>
+        </header>
+        <div class="toys">
+          <button type="button" class="toy" data-toy="shuffle"><kbd>S</kbd><b>Shuffle</b><span>re-tilt everything</span></button>
+          <button type="button" class="toy" data-toy="reset"><kbd>R</kbd><b>Reset</b><span>put the tilt back</span></button>
+          <button type="button" class="toy" data-toy="grid" aria-pressed="false"><kbd>G</kbd><b>Grid</b><span>show the 12 columns being ignored</span></button>
+          <button type="button" class="toy" data-toy="calm" aria-pressed="false"><kbd>B</kbd><b>Boring mode</b><span>no tilt, no overlap, no blend</span></button>
+          <button type="button" class="toy" data-toy="pause" aria-pressed="false"><kbd>M</kbd><b>Mute tickers</b><span>stop the marquees</span></button>
+          <button type="button" class="toy" data-toy="fact"><kbd>F</kbd><b>Fact</b><span>one real fact, at random</span></button>
+        </div>
+        <p class="lab-out" role="status" aria-live="polite">Nothing pressed yet. Keys work anywhere on the page, except inside the form.</p>
+      </section>
+
+      <!-- ================= CONTACT: the polite button is missing ================= -->
+      <section class="sec contact" id="contact" data-pf-section="contact">
+        <header class="sh sh-contact">
+          <p class="sh-no">fin.</p>
+          <h2>Contact</h2>
+          <p class="sh-rule">rule broken: {RULE.contact}</p>
+        </header>
+
+        <div class="contact-grid">
+          <div class="c-links">
+            <p class="c-open">Open to interesting problems in GenAI agents, workflow systems and backend infrastructure.</p>
+            <ul class="c-list">
+              <li class="cl cl-1"><span class="cl-k">Email</span><Protected kind="email" class="cl-a cl-mail" /></li>
+              <li class="cl cl-2"><span class="cl-k">Phone</span><Protected kind="phone" class="cl-a" /></li>
+              <li class="cl cl-3"><span class="cl-k">LinkedIn</span><a class="cl-a" href={profile.contact.linkedin} rel="noopener me" target="_blank" data-pf-linkedin>{linkedinShort}</a></li>
+              <li class="cl cl-4"><span class="cl-k">GitHub</span><a class="cl-a" href={profile.contact.github} rel="noopener me" target="_blank" data-pf-github>{profile.handle}</a></li>
+              <li class="cl cl-5"><span class="cl-k">Resume</span><a class="cl-a" href={withBase(profile.resume.href)} download>PDF, updated {profile.resume.updated}</a></li>
+            </ul>
+          </div>
+
+          <div class="c-form w" style="--r:1deg">
+            <h3 class="c-form-h">Or write it down</h3>
+            <ContactForm class="ad-form" submitLabel="Send it" labels={{ name: 'Your name', email: 'Your email', message: 'What do you want to build?' }} />
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p class="foot-big" aria-hidden="true">thanks for scrolling</p>
+      <p class="foot-a">&copy; {new Date().getFullYear()} {profile.name}. {meta.flavor.footer}</p>
+      <p class="foot-b">A different art style every day: see the <a href={withBase('gallery/')}>gallery</a>. <a href="#hero">Back to the top</a></p>
+    </footer>
+
+    <UtilityBar style={STYLE} />
+    <script>import './client.ts';</script>
+  </body>
+</html>
