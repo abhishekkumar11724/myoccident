@@ -14,14 +14,14 @@ An honest list of what this project does **not** do, what was **not** tested, an
 | **Look & taste** | Reviewed through screenshots and automated checks, not by you. Your own pass through all 19 styles is the real review. |
 | **Facts in photo captions** | Landmarks such as "Hawa Mahal", "Jal Mahal" and "Jaipur" were inferred from the pictures. Check captions/alt text in `src/content/photos.ts`. |
 | **"About this style" history** | Written by research agents with limited web access; a couple of details are flagged as unverified in the research notes (for example who coined "neumorphism"). Skim before publishing. |
-| **Not deployed** | Nothing has been pushed or published; the GitHub workflow has never run. |
+| **Live deployment** | Published to `abhishekkumar11724/myoccident` (see [DEPLOY.md](DEPLOY.md)). The browser checks above ran on a local production build, not on github.io itself. |
 
 ## Known limitations
 
 ### Rotation and search engines
 - The daily switch needs **JavaScript**. With it off, visitors get the Clean view.
 - Bots and link-preview scrapers that don't run scripts see only the tiny loading page at `/` (title, description, one link-preview image, `public/og.jpg`), **not** your content.
-  Pages `/clean/` and `/s/<style>/` can be indexed directly. Every page's canonical link points to the site root. Search ranking was not a design goal.
+  Pages `/clean/` and `/s/<style>/` can be indexed directly. Every page's canonical link points to the site home page (`https://abhishekkumar11724.github.io/myoccident/`). Search ranking was not a design goal.
 - Time zone is fixed to **IST**; there is no per-visitor "remember my style". Changing the zone means editing two files ([THEMES-AND-ROTATION.md](THEMES-AND-ROTATION.md#change-the-start-date-the-order-or-the-time-zone)).
 - Changing the order, the launch date, or the number of styles changes which style appears on which date.
 

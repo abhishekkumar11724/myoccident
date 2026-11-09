@@ -10,11 +10,13 @@ const ignoreOthers = (p) => {
   return /\/(research|docs|scripts|tools|\.git|\.github)\//.test(p) || /\/public\/previews\//.test(p);
 };
 
-// Deployed at the root of https://abhishekkumar11724.github.io  ->  base "/".
-// If you ever host under a sub-path, set `base: '/sub-path/'` here; all links go through withBase().
+// Published at https://abhishekkumar11724.github.io/myoccident/  (the "myoccident" repository's GitHub Pages site)  ->  base "/myoccident/".
+// All internal links and /public assets go through withBase() (src/lib/urls.ts), so they follow this value.
+// Moving to a user-site repo or a custom domain served at the root? Set base to '/' (and `site` to the new origin).
+// The checker scripts read `base` from here, and `npm run dev` / `npm run preview` serve under it too.
 export default defineConfig({
   site: 'https://abhishekkumar11724.github.io',
-  base: '/',
+  base: '/myoccident/',
   trailingSlash: 'always',
   output: 'static',
   build: { format: 'directory' },

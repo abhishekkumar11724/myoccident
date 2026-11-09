@@ -3,6 +3,9 @@
 One web address, a **different art-styled website every day** (19 styles: Brutalism, Vaporwave, Bauhaus, Glitch, ... Isometric).
 All 19 sites show the same content, so you edit your text and photos once.
 
+**Live:** https://abhishekkumar11724.github.io/myoccident/ (GitHub repository `abhishekkumar11724/myoccident`, deployed by GitHub Actions on every push to `main`).
+Because it lives under `/myoccident/`, local addresses carry that prefix too (see below).
+
 > **Which doc do I need?**
 > - Set it up and run it: [Quick start](#quick-start) (below)
 > - Change my bio, jobs, projects, links, resume: [docs/EDITING-CONTENT.md](docs/EDITING-CONTENT.md)
@@ -20,11 +23,12 @@ All 19 sites show the same content, so you edit your text and photos once.
 ```bash
 cd portfolio
 npm install              # once
-npm run dev              # renders the photo variants, then starts http://localhost:4321
+npm run dev              # renders the photo variants, then starts http://localhost:4321/myoccident/
 ```
 - The **first** `npm run dev` / `npm run build` renders every photo in all 19 styles. Expect roughly 10 minutes on a laptop
   (about 30 s per style; an estimate from the build logs). Results are cached, so later runs take seconds.
-- Open `http://localhost:4321/` - it redirects to today's style. `http://localhost:4321/gallery/` lists all 19.
+- Open `http://localhost:4321/myoccident/` - it redirects to today's style. `http://localhost:4321/myoccident/gallery/` lists all 19.
+  (The `/myoccident/` part is the `base` in `astro.config.mjs`; set it to `'/'` if the site ever moves to a root address.)
 
 | Command | What it does |
 |---|---|
@@ -71,7 +75,7 @@ portfolio/
 ├─ tools/depad-instagram.py  removes the blurred bars from photos exported from an Instagram backup
 ├─ research/                 one research note per style + _inspiration.md (portfolio patterns)
 ├─ docs/                     the guides listed at the top
-├─ .github/workflows/deploy.yml   GitHub Pages deploy (does nothing until you push)
+├─ .github/workflows/deploy.yml   GitHub Pages deploy (runs on every push to main)
 ├─ astro.config.mjs          site URL and base path;  package.json / package-lock.json;  tsconfig.json
 ├─ .env.example              copy to .env and add your Web3Forms key (contact form)
 └─ BRIEF.md (agreed plan)   PROGRESS.md (build log)   CREDITS.md (licences, generated)
@@ -92,7 +96,7 @@ portfolio/
 | Change the order / start date | `src/themes/order.ts` | [THEMES-AND-ROTATION](docs/THEMES-AND-ROTATION.md) |
 | Add or remove a style | `npm run new:theme` / delete its folders | [THEMES-AND-ROTATION](docs/THEMES-AND-ROTATION.md#add-a-new-style) |
 | Turn on the contact form | Put a Web3Forms key in `.env` | [DEPLOY](docs/DEPLOY.md#contact-form-key) |
-| Publish it | Push to GitHub, enable Pages -> GitHub Actions | [DEPLOY](docs/DEPLOY.md) |
+| Publish a change | Commit and `git push` to `main`; the workflow redeploys | [DEPLOY](docs/DEPLOY.md) |
 
 ## How it works in one minute
 - **Content** lives once in `profile.ts`. Each style's `Page.astro` reads it and lays it out its own way.

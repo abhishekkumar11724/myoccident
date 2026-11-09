@@ -1,5 +1,8 @@
 # Styles ("themes") and the daily rotation
 
+> **Addresses in this doc** such as `/`, `/s/<style>/`, `/clean/` and `/gallery/` are relative to the site's base path, `/myoccident/`
+> (so `/s/glitch/` is `https://abhishekkumar11724.github.io/myoccident/s/glitch/`). The base is set in `astro.config.mjs`.
+
 A **style** (the code calls it a *theme*) is a complete, separate web design of your content - Brutalism, Glitch, Ukiyo-e, and so on. There are 19.
 They share your content (`profile.ts`), your photos (`photos/`), and a few small components, but each owns its layout, CSS, fonts, behaviour and photo filter.
 
@@ -80,7 +83,7 @@ Delete (or rename) just its route file, `src/pages/s/<style>/index.astro`. The s
    Position in the list = position in the daily order. The id is lowercase with dashes.
 2. Scaffold it: `npm run new:theme -- art-deco`. This creates `src/themes/art-deco/` (a working page with every required hook, `theme.css`, `client.ts`, `meta.ts`, `recipe.mjs`, `assets/`),
    the route file `src/pages/s/art-deco/index.astro`, and `research/art-deco.md`.
-3. Develop it: `PF_ONLY=art-deco npm run dev`, then open `http://localhost:4321/s/art-deco/`. Replace the scaffold's layout completely (it is only a checklist of hooks) and write the filter in `recipe.mjs`.
+3. Develop it: `PF_ONLY=art-deco npm run dev`, then open `http://localhost:4321/myoccident/s/art-deco/`. Replace the scaffold's layout completely (it is only a checklist of hooks) and write the filter in `recipe.mjs`.
 4. Quality gate: `npm run check -- art-deco --port 4321` (see the README for what it checks), and look at the screenshots it writes to `/tmp/pf-shots/art-deco/`. Finish with `--previews` to create its gallery thumbnail.
 5. Fill in `meta.ts` (palette, fonts, "About this style", credits) and run `npm run credits`.
 The rotation and gallery pick it up automatically (the count in the gallery heading and the modulo both adapt).

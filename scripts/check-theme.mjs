@@ -4,6 +4,7 @@
  *     PF_ONLY=glitch npx astro dev --port 4401        # in another terminal / background
  *     node scripts/check-theme.mjs glitch --port 4401 [--previews]
  *     node scripts/check-theme.mjs --path /clean/ --port 4401
+ * Paths are relative to the site's `base` (read from astro.config.mjs, currently /myoccident/).
  *
  * Drives real Chrome (desktop 1440x900, phone 390x844, desktop with prefers-reduced-motion) and verifies:
  * required sections/hooks, ALL resume content present, photos (count / alt / loaded), no console errors,
@@ -24,8 +25,10 @@ const has = (n) => argv.includes(`--${n}`);
 const valueFlags = new Set(['--port', '--path']);
 const id = argv.filter((a, i) => !a.startsWith('--') && !valueFlags.has(argv[i - 1]))[0];
 const port = opt('port', '4321');
-const urlPath = opt('path', id ? `/s/${id}/` : '/');
-const url = `http://localhost:${port}${urlPath}`;
+const urlPath = opt('path', id ? `/s/${id}/` : '/');   // relative to the site's base path
+const { default: astroConfig } = await import(pathToFileURL(path.join(ROOT, 'astro.config.mjs')).href);
+const BASE = (astroConfig.base || '/').replace(/\/+$/, '');   // '' for a root deployment, '/myoccident' for the GitHub Pages sub-path
+const url = `http://localhost:${port}${BASE}${urlPath}`;
 const label = id || urlPath.replace(/\W+/g, '') || 'root';
 const shots = path.join('/tmp/pf-shots', label);
 fs.mkdirSync(shots, { recursive: true });

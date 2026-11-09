@@ -1,6 +1,8 @@
 # Progress log
 
-Started 2026-11-09. One local git commit per theme. Nothing is pushed or deployed.
+Started 2026-11-09. One local git commit per theme.
+On 2026-11-09 (after the build) the owner asked for it to be published to the existing `abhishekkumar11724/myoccident` repository (GitHub Pages at
+`https://abhishekkumar11724.github.io/myoccident/`), so the site now uses `base: '/myoccident/'`. See [docs/DEPLOY.md](docs/DEPLOY.md).
 
 ## Foundation
 - [x] Brief, repo, Astro 7 + sharp, content model (`src/content/profile.ts`)
@@ -46,9 +48,9 @@ Started 2026-11-09. One local git commit per theme. Nothing is pushed or deploye
   (collapsed hover captions, closed <details>, clipped decoration).
 - Rotation verified offline and in a real browser (flips at IST midnight; ?style=, ?clean, ?gallery; no-JS -> Clean view).
 - Credits: 113 entries, all OFL/Apache/original; art-movement references are "studied only".
-- Nothing pushed or deployed.
+- Sub-path hosting (`/myoccident/`): built output scanned for root-absolute URLs (none), checker made base-aware, `check-all` fixed so it no longer orphans its preview server.
 
 ## For the owner
 1. Review personal copy in `src/content/profile.ts` (aboutPersonal, interests) and per-theme flavour lines/captions, which were written from your photos, not from facts you gave me.
 2. Get a Web3Forms key (see README) or the contact form falls back to opening the visitor's email app.
-3. Decide when to deploy: create/replace `abhishekkumar11724/abhishekkumar11724.github.io`, enable Pages -> GitHub Actions. (The Instagram export has since been deleted from the project; `.gitignore` still ignores `assets/` as a safeguard.)
+3. Deployment: done via the `myoccident` repository (see docs/DEPLOY.md); the old 2023 portfolio stays in that repo's history. (The Instagram export has since been deleted from the project; `.gitignore` still ignores `assets/` as a safeguard.)

@@ -1,6 +1,7 @@
 # Portfolio brief (agreed 2026-11-09)
 
-Abhishek Kumar's portfolio. Replaces `abhishekkumar11724.github.io` (currently a 404). Goes on his resume.
+Abhishek Kumar's portfolio. Goes on his resume. Originally meant to replace `abhishekkumar11724.github.io` (then a 404); it is now published at
+`https://abhishekkumar11724.github.io/myoccident/` (repository `abhishekkumar11724/myoccident`, which used to hold his 2023 portfolio; see docs/DEPLOY.md).
 
 **Concept:** one URL; a different art-style website every day, chosen by date (IST), cycling through 19 styles.
 A gallery lets visitors preview any style; `?style=<id>` deep-links one. A persistent **Clean view** shows a plain, readable version.
@@ -30,5 +31,5 @@ A gallery lets visitors preview any style; `?style=<id>` deep-links one. A persi
 - Assets: only CC0 / public domain / OFL / MIT, self-hosted, logged in `CREDITS.md`.
 - Run mode: research all styles -> foundation -> all themes, one local git commit per theme, progress in `PROGRESS.md`.
 - Allowed unattended: npm installs, builds/dev server, downloading free-licensed assets, local git commits.
-- **NOT allowed without asking: pushing / deploying to GitHub** (it would replace the live github.io).
+- **NOT allowed without asking: pushing / deploying to GitHub.** (The owner later asked explicitly for the push to `myoccident`; that request covered that repository only.)
 - Friends/family in posts agreed to appear. Alcohol photos excluded. The Instagram export that photos were picked from was private and has since been deleted from the project (and was never committed); never open DM folders if one is ever re-added.

@@ -1,60 +1,77 @@
 # Putting it online
 
-**Status: nothing has been deployed or pushed.** This project has a local git repository (branch `main`, no remote) and a ready-made GitHub Actions workflow
-(`.github/workflows/deploy.yml`) that does nothing until you push to GitHub. Pushing to `abhishekkumar11724.github.io` publishes the site, so do it deliberately.
+**Where it lives:** https://abhishekkumar11724.github.io/myoccident/
+**Repository:** `abhishekkumar11724/myoccident` (branch `main`). A GitHub Actions workflow, `.github/workflows/deploy.yml`, builds the site and publishes it to GitHub Pages **every time you push to `main`**.
 
-The site is 100% static files (HTML/CSS/JS/images) in `dist/`, so any static host works. These steps are for GitHub Pages at `https://abhishekkumar11724.github.io`.
+The site is 100% static files (HTML/CSS/JS/images) in `dist/`, so any static host works.
 
 ---
 
-## Before you publish - checklist
-- [ ] Read through the personal text in `src/content/profile.ts` (`aboutPersonal`, `interests`) and the photo captions in `src/content/photos.ts`. They were written from your photos, not from facts you gave.
-- [ ] Look at all 19 styles once yourself (`npm run dev`, then `http://localhost:4321/gallery/`). Everything was verified by automated checks and screenshots in Chrome only.
-- [ ] Decide about your **phone number**: it is on the site (encoded in the HTML, visible to anyone who loads the page). To remove it see [EDITING-CONTENT.md](EDITING-CONTENT.md#contact-details).
+## How this repository came to hold the site
+
+`myoccident` used to be your 2023 portfolio (a Next.js app; 12 commits, the last one `5128a5f` from 2023-06-12), deployed by a workflow called `nextjs.yml`.
+This project replaced it **without erasing it**:
+
+- The new code was pushed on top of the old history using a merge that keeps the **new** files and leaves the old ones out of the tree (no force-push). Nothing was deleted from git.
+- The old workflow `nextjs.yml` is gone from the tree (it would have tried to build a Next.js app that no longer exists); `deploy.yml` replaces it.
+- **To get the old portfolio back** (for reference or to host elsewhere): `git worktree add ../myoccident-2023 5128a5f` gives you a folder with exactly the old files.
+- GitHub Pages was already set to deploy from **GitHub Actions** (the old workflow used it), so no setting had to change. If you ever see the old site, check **Settings -> Pages -> Build and deployment -> Source** is "GitHub Actions".
+
+## The sub-path (`/myoccident/`)
+
+A project repository is served under its name, so every address carries `/myoccident/`: the home page is `.../myoccident/`, a style is `.../myoccident/s/glitch/`, the Clean view `.../myoccident/clean/`.
+This is configured once, in `astro.config.mjs` (`base: '/myoccident/'`, `site: 'https://abhishekkumar11724.github.io'`). Every internal link and image goes through `withBase()`, the rotation script receives the base, and the checker reads it from the same file.
+Locally, `npm run dev` and `npm run preview` also serve under it: `http://localhost:4321/myoccident/`.
+
+To publish at the root of a domain instead (a repository named `abhishekkumar11724.github.io`, or a custom domain), set `base: '/'` (and `site`), nothing else.
+
+---
+
+## Before you publish a change - checklist
+- [ ] `npm run build` completes with no errors; `npm run preview` (open `http://localhost:4321/myoccident/`) looks right.
+- [ ] Read through personal text in `src/content/profile.ts` (`aboutPersonal`, `interests`) and photo captions in `src/content/photos.ts`. They were written from your photos, not from facts you gave.
+- [ ] Your **phone number** is on the site (encoded in the HTML, visible to anyone who loads the page). To remove it see [EDITING-CONTENT.md](EDITING-CONTENT.md#contact-details).
 - [ ] Update `public/resume/Abhishek-Kumar-Resume.pdf` if your resume changed.
-- [ ] Friends and family appear in the photos; you told me they agreed. Remove any photo you are unsure about ([PHOTOS-AND-FILTERS.md](PHOTOS-AND-FILTERS.md#remove-a-photo---read-this-first)).
-- [ ] `npm run build` completes with no errors, and `npm run preview` looks right.
+- [ ] Friends and family appear in photos; you told me they agreed. Remove any photo you are unsure about ([PHOTOS-AND-FILTERS.md](PHOTOS-AND-FILTERS.md#remove-a-photo---read-this-first)).
 - [ ] Nothing private is in the repo: the Instagram export was deleted and `assets/`, `.env`, `node_modules/`, `dist/` and the generated photo variants are git-ignored. (`git ls-files` lists what would be pushed.)
+
+## Updating the live site
+
+```bash
+# edit content / photos / styles ...
+npm run build                 # must succeed
+git add -A && git commit -m "Describe the change"
+git push                      # origin = git@github-personal:abhishekkumar11724/myoccident.git
+```
+Then watch the repository's **Actions** tab -> "Deploy to GitHub Pages". The page updates when the run finishes. The first run renders all photo variants (it has no cache yet, so allow 10+ minutes; an estimate), later runs reuse a cache and are much faster
+(the cache is keyed on `photos/`, every `recipe.mjs`, `scripts/fx/index.mjs`, `scripts/build-images.mjs` and `src/content/photos.ts`, so text-only edits stay fast).
+The daily style change needs no redeploy; it happens in the visitor's browser.
+
+If a build fails, **the previous version of the site stays online**; open the failed run in the Actions tab to read the error.
+
+**Git access on this Mac:** the `origin` remote uses the SSH host alias `github-personal` (defined in `~/.ssh/config`, key `~/.ssh/ak_personal`). The plain `git@github.com` address is not authorised with the default key. If a push says "Permission denied (publickey)", check `git remote -v` still shows the `github-personal` host.
 
 ## Contact form key
 
 The form needs a free access key from Web3Forms; without one it simply opens the visitor's email app with the message pre-filled (still works).
 1. Go to https://web3forms.com, enter the email address that should receive messages, and they email you an **Access Key**.
 2. Locally: copy `.env.example` to `.env` and set `PUBLIC_WEB3FORMS_KEY=your-key`. Restart `npm run dev`. Send a test message from any style's contact form.
-3. For the published site: GitHub repo -> **Settings -> Secrets and variables -> Actions -> New repository secret**, name `PUBLIC_WEB3FORMS_KEY`, paste the key. The workflow passes it to the build.
+3. For the published site: GitHub repo -> **Settings -> Secrets and variables -> Actions -> New repository secret**, name `PUBLIC_WEB3FORMS_KEY`, paste the key; then re-run the latest workflow (Actions -> Deploy to GitHub Pages -> Re-run) or push any commit. The workflow passes the secret to the build.
 Notes: the key ends up in the page's JavaScript (it has to - the browser sends the form). That is normal for this kind of service, but use a key dedicated to this site.
 This form submission is the only request that ever leaves your site, and only when someone presses Send. Service limits/pricing are Web3Forms' own; check their site.
-
-## Publish to GitHub Pages
-
-1. **Repository**: for the address `https://abhishekkumar11724.github.io` the repository must be named exactly `abhishekkumar11724.github.io` under your account.
-   If it already exists with old content, back that up first (pushing this project to it replaces the site).
-2. **Connect and push** (from this project folder):
-   ```bash
-   git remote add origin git@github.com:abhishekkumar11724/abhishekkumar11724.github.io.git     # or the https:// URL
-   git push -u origin main
-   ```
-   (The workflow triggers on branch `main`, which is what this repo uses.) If the remote already has commits you must decide how to combine or replace them - do not force-push over something you want to keep.
-3. **Enable Pages**: repository **Settings -> Pages -> Build and deployment -> Source: GitHub Actions**.
-4. **Watch the build**: repository **Actions** tab -> "Deploy to GitHub Pages". The first run renders all photo variants (roughly 10+ minutes; an estimate), later runs reuse a cache and are much faster.
-   The cache is keyed on `photos/`, every `recipe.mjs`, `scripts/fx/index.mjs`, `scripts/build-images.mjs` and `src/content/photos.ts`, so editing text-only content stays fast.
-5. Open `https://abhishekkumar11724.github.io/`. It should redirect to today's style.
-
-**Updating later**: edit, `npm run build` to check, commit, `git push`. The workflow redeploys. The daily change needs no redeploy.
 
 ## Test the production build locally
 ```bash
 npm run build      # writes dist/ (about 280 MB, mostly photo variants)
-npm run preview    # http://localhost:4321/
+npm run preview    # http://localhost:4321/myoccident/
 ```
+`npm run check:all` does the same on port 4488 and then runs the browser checks on every style. It refuses to start if something is already listening on that port.
 
-## Custom domain or a sub-path
-- **Custom domain** (e.g. `abhishek.dev`): create `public/CNAME` containing just the domain, set `site: 'https://abhishek.dev'` in `astro.config.mjs` (used for link-preview tags and canonical links),
-  point the DNS as GitHub's Pages documentation describes, and tick **Enforce HTTPS** in Settings -> Pages.
-- **Hosted under a sub-path** (a project site like `user.github.io/portfolio/`): set `base: '/portfolio/'` and `site` in `astro.config.mjs`. All internal links go through `withBase()`, so they follow.
+## Custom domain
+Create `public/CNAME` containing just the domain, set `site: 'https://your.domain'` and `base: '/'` in `astro.config.mjs`, point DNS as GitHub's Pages documentation describes, and tick **Enforce HTTPS** in Settings -> Pages.
 
 ## Other hosts (Netlify, Vercel, Cloudflare Pages...)
-Any static host works: build command `npm run build`, publish directory `dist`, Node `22.23.4` or newer, and add `PUBLIC_WEB3FORMS_KEY` as an environment variable.
+Any static host works: build command `npm run build`, publish directory `dist`, Node `22.23.4` or newer, and add `PUBLIC_WEB3FORMS_KEY` as an environment variable. Set `base` to match where the host serves the site (`'/'` for a domain root).
 These hosts don't use the GitHub Actions cache, so every build re-renders photos unless their build cache keeps `public/generated` and `src/generated/manifest`.
 
 ## Size and limits

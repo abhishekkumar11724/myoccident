@@ -142,7 +142,7 @@ npm run images -- --style isometric --force
 # 2. look at the result files
 open public/generated/isometric/portraits/01-selfie-maroon.webp
 # 3. see it in the page
-PF_ONLY=isometric npm run dev          # http://localhost:4321/s/isometric/
+PF_ONLY=isometric npm run dev          # http://localhost:4321/myoccident/s/isometric/
 ```
 
 ### Real examples from this project
