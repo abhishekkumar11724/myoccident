@@ -1,5 +1,9 @@
 # Theme guide (read fully before you start)
 
+> **Who this is for:** this is the strict build contract for a style, written as the brief given to the AI agents that built the 19 styles
+> (hence "you are building ONE theme"). If you are a person adding or changing a style, start with [THEMES-AND-ROTATION.md](THEMES-AND-ROTATION.md);
+> use this file for the exact hooks, accessibility/performance rules and the photo-filter (`fx`) reference. Sections 4-7 are the useful reference.
+
 You are building ONE theme of Abhishek Kumar's portfolio. The site shows a different art-styled website every day
 (19 styles). All 19 share ONE content source; each theme is a **completely distinct website design** over that content.
 Read `BRIEF.md` for the agreed decisions and `research/_inspiration.md` for portfolio patterns worth borrowing.

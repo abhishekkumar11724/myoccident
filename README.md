@@ -1,36 +1,110 @@
 # Abhishek Kumar - portfolio
 
-One URL, a new art-styled website every day (19 styles). All sites render the same content.
+One web address, a **different art-styled website every day** (19 styles: Brutalism, Vaporwave, Bauhaus, Glitch, ... Isometric).
+All 19 sites show the same content, so you edit your text and photos once.
+
+> **Which doc do I need?**
+> - Set it up and run it: [Quick start](#quick-start) (below)
+> - Change my bio, jobs, projects, links, resume: [docs/EDITING-CONTENT.md](docs/EDITING-CONTENT.md)
+> - Add, replace or remove photos / change the photo filters: [docs/PHOTOS-AND-FILTERS.md](docs/PHOTOS-AND-FILTERS.md)
+> - Add, remove or reorder styles; change the rotation: [docs/THEMES-AND-ROTATION.md](docs/THEMES-AND-ROTATION.md)
+> - Put it online: [docs/DEPLOY.md](docs/DEPLOY.md)
+> - Something broke / what can't it do: [docs/LIMITATIONS-AND-TROUBLESHOOTING.md](docs/LIMITATIONS-AND-TROUBLESHOOTING.md)
+> - Rules for building a theme (written as a brief for the AI agents that built them): [docs/THEME_GUIDE.md](docs/THEME_GUIDE.md)
+
+## Quick start
+
+**You need:** Node.js **22.23.4 or newer** (Node 24 recommended; this was built on Node 25) and npm. Nothing else for the site itself.
+(Optional extras: Google Chrome or Brave on macOS for `npm run check`; Python 3 + `pip install pillow` for `tools/depad-instagram.py`.)
 
 ```bash
-npm install
-npm run dev          # builds photo variants, starts http://localhost:4321
-npm run build        # builds photo variants + static site into dist/
-npm run preview      # serve dist/
+cd portfolio
+npm install              # once
+npm run dev              # renders the photo variants, then starts http://localhost:4321
 ```
+- The **first** `npm run dev` / `npm run build` renders every photo in all 19 styles. Expect roughly 10 minutes on a laptop
+  (about 30 s per style; an estimate from the build logs). Results are cached, so later runs take seconds.
+- Open `http://localhost:4321/` - it redirects to today's style. `http://localhost:4321/gallery/` lists all 19.
 
-## How it fits together
-| What | Where |
+| Command | What it does |
 |---|---|
-| Your content (bio, experience, case studies, projects, skills, links) | `src/content/profile.ts` - edit once, all 19 themes update |
-| Photos (the "root" images) | `photos/<category>/NN-name.webp` + alt text in `src/content/photos.ts` |
-| Themes | `src/themes/<id>/` (Page.astro, theme.css, meta.ts, recipe.mjs, assets/) |
-| Daily rotation order, launch date | `src/themes/order.ts` (`THEMES` is the order, `LAUNCH_DATE` is day 0) |
-| Style research notes | `research/<id>.md` (+ `research/_inspiration.md`) |
-| Image effects library | `scripts/fx/index.mjs`, pipeline `scripts/build-images.mjs` |
-| Acceptance checks | `npm run check -- <id> --port <p>` (see `docs/THEME_GUIDE.md`) |
+| `npm run dev` | Render photo variants, then start the dev server with live reload |
+| `npm run build` | Render photo variants + build the static site into `dist/` |
+| `npm run preview` | Serve the built `dist/` locally (run `build` first) |
+| `npm run images` | Only the photo step. Flags: `-- --style glitch`, `-- --photo portraits/01-selfie-maroon`, `-- --force` |
+| `npm run new:theme -- <id>` | Scaffold a new style (see THEMES doc) |
+| `npm run check -- <id> --port <p>` | Automated quality check of one style in real Chrome (dev server must be running) |
+| `npm run check:all` | Build, then check every style + the Clean view |
+| `npm run credits` | Regenerate `CREDITS.md` from each style's `meta.ts` |
 
-## Change a photo
-Replace/add a file in `photos/<category>/` (same name to replace), run `npm run images` (or just `npm run dev` / `npm run build`).
-Every theme regenerates its own treatment of it automatically. Photos exported from an Instagram backup have blurred bars:
-run `python3 tools/depad-instagram.py in.webp out.webp` first. Add alt text in `src/content/photos.ts` (optional but recommended).
+Isolated work on one style (faster, and other styles can't interfere): `PF_ONLY=glitch npm run dev`.
 
-## How "a new site every day" works
-`/` runs a tiny script that computes today's style from the IST calendar day (day 0 = `LAUNCH_DATE`, then cycles in `THEMES` order) and
-redirects to `/s/<style>/`. Everyone gets the same style on the same day. `/?style=glitch` opens one, `/gallery/` lists all, `/clean/` is the
-plain readable version (also what JavaScript-less visitors get). No server and no rebuild needed for the daily change.
+## Project map (what is where)
 
-## The 19 styles (daily rotation order, day 0 = 2026-11-10 IST)
+```
+portfolio/
+├─ src/
+│  ├─ content/
+│  │  ├─ profile.ts          YOUR TEXT: bio, jobs, case studies, projects, skills, links, email/phone, resume path
+│  │  └─ photos.ts           photo alt text / captions / tags + the gallery categories and their order
+│  ├─ themes/
+│  │  ├─ order.ts            the 19 styles in daily order + LAUNCH_DATE (day 0)
+│  │  ├─ registry.ts         finds which styles exist; defines the ThemeMeta type
+│  │  ├─ _template/Page.astro   the plain "Clean view" page (also the starting point for new styles)
+│  │  └─ <style>/            ONE FOLDER PER STYLE (19):
+│  │       Page.astro          the whole page layout for that style
+│  │       theme.css           its styles          client.ts   its behaviour (optional)
+│  │       meta.ts             palette, "About this style" text, flavour lines, credits
+│  │       recipe.mjs          its PHOTO FILTER (applied to every photo at build time)
+│  │       assets/             its fonts and textures (self-hosted)
+│  ├─ pages/                 routes: index.astro (daily redirect), gallery.astro, clean.astro, 404.astro,
+│  │                         s/<style>/index.astro (one tiny route file per style - do not edit)
+│  ├─ components/            shared by all styles: UtilityBar (the style/Clean/Gallery bar), ContactForm,
+│  │                         Protected (hides email/phone from scrapers), ThemeHead (page <head>)
+│  ├─ lib/                   photos.ts (reads the photo list), urls.ts (base-path-safe links)
+│  └─ generated/manifest/    BUILD OUTPUT: list of rendered photos (git-ignored)
+├─ photos/<category>/NN-name.webp   YOUR ROOT PHOTOS (9 category folders, 60 photos)
+├─ public/                   favicon.svg, og.jpg (link preview image), resume/*.pdf, previews/<style>.jpg (gallery thumbnails),
+│                            generated/ = BUILD OUTPUT: the filtered photos per style (git-ignored, ~230 MB)
+├─ scripts/                  build-images.mjs (photo pipeline), fx/index.mjs (filter toolkit), check-theme.mjs, check-all.mjs,
+│                            new-theme.mjs, credits.mjs
+├─ tools/depad-instagram.py  removes the blurred bars from photos exported from an Instagram backup
+├─ research/                 one research note per style + _inspiration.md (portfolio patterns)
+├─ docs/                     the guides listed at the top
+├─ .github/workflows/deploy.yml   GitHub Pages deploy (does nothing until you push)
+├─ astro.config.mjs          site URL and base path;  package.json / package-lock.json;  tsconfig.json
+├─ .env.example              copy to .env and add your Web3Forms key (contact form)
+└─ BRIEF.md (agreed plan)   PROGRESS.md (build log)   CREDITS.md (licences, generated)
+```
+`dist/`, `node_modules/`, `.astro/`, `.env`, `public/generated/` and `src/generated/manifest/*.json` are build output / local files and are git-ignored.
+
+## "I want to..." cheat-sheet
+
+| I want to... | Do this | Details |
+|---|---|---|
+| Change my bio / tagline / stats | Edit `src/content/profile.ts` | [EDITING-CONTENT](docs/EDITING-CONTENT.md) |
+| Add a job, project, case study, skill | Add an object to the matching list in `profile.ts` | [EDITING-CONTENT](docs/EDITING-CONTENT.md) |
+| Change email / phone / LinkedIn / GitHub | `profile.ts` -> `contact` | [EDITING-CONTENT](docs/EDITING-CONTENT.md#contact-details) |
+| Replace my resume PDF | Overwrite `public/resume/Abhishek-Kumar-Resume.pdf` | [EDITING-CONTENT](docs/EDITING-CONTENT.md#resume-pdf) |
+| Replace my main portrait | Overwrite `photos/portraits/01-selfie-maroon.webp` (and `02`, `03`) keeping the **same filename**, then `npm run images` | [PHOTOS-AND-FILTERS](docs/PHOTOS-AND-FILTERS.md#replace-a-photo) |
+| Add new photos | Drop into `photos/<category>/`, add alt text in `photos.ts`, `npm run images` | [PHOTOS-AND-FILTERS](docs/PHOTOS-AND-FILTERS.md#add-a-photo) |
+| Change how a style filters my photos | Edit `src/themes/<style>/recipe.mjs`, then `npm run images -- --style <style>` | [PHOTOS-AND-FILTERS](docs/PHOTOS-AND-FILTERS.md#change-a-styles-photo-filter) |
+| Change the order / start date | `src/themes/order.ts` | [THEMES-AND-ROTATION](docs/THEMES-AND-ROTATION.md) |
+| Add or remove a style | `npm run new:theme` / delete its folders | [THEMES-AND-ROTATION](docs/THEMES-AND-ROTATION.md#add-a-new-style) |
+| Turn on the contact form | Put a Web3Forms key in `.env` | [DEPLOY](docs/DEPLOY.md#contact-form-key) |
+| Publish it | Push to GitHub, enable Pages -> GitHub Actions | [DEPLOY](docs/DEPLOY.md) |
+
+## How it works in one minute
+- **Content** lives once in `profile.ts`. Each style's `Page.astro` reads it and lays it out its own way.
+- **Photos** live once in `photos/`. At build time `scripts/build-images.mjs` runs each style's `recipe.mjs` over every photo and writes the
+  result to `public/generated/<style>/`. Replace a photo, rebuild, and all 19 styles update. Live effects (hover colour reveal, glitch, WebGL) are CSS/JS in each style.
+- **Daily rotation** is a small script on `/` (`src/pages/index.astro`): it takes today's date in India time (IST), subtracts `LAUNCH_DATE`, and picks
+  `styles[days % 19]`, then redirects to `/s/<style>/`. No server and no rebuild is needed for the daily change. `/?style=glitch` forces one,
+  `/?clean` and `/?gallery` jump to those pages.
+- **Clean view** (`/clean/`) is a plain, fast, readable version of the same content. Visitors with JavaScript off are sent there.
+- **Shared bar** on every page (`UtilityBar`): style name, "About this style", Clean view, Gallery, previous/next style.
+
+## The 19 styles (daily order; day 0 = 2026-11-10 IST)
 | Day | Style | Era | Idea |
 |---|---|---|---|
 | 0 | [Brutalism](research/brutalism.md) (`brutalism`) | 1950s - now | Raw concrete energy: default fonts, hard borders, honest structure. |
@@ -54,25 +128,18 @@ plain readable version (also what JavaScript-less visitors get). No server and n
 | 18 | [Isometric](research/isometric.md) (`isometric`) | Technical drawing - now | A tilted 30-degree world built from cubes, platforms and tiny stages. |
 
 Each style has a research note in `research/` (origins, traits, palette, type, motion, pitfalls, references) and its own `meta.ts`
-that feeds the "About this style" panel and `CREDITS.md`. Inspiration notes for portfolio patterns: `research/_inspiration.md`.
+that feeds the "About this style" panel and `CREDITS.md`.
 
-## Quality gates
-`npm run check -- <id> --port <p>` drives real Chrome against a theme (desktop, phone, reduced-motion) and verifies required sections, all resume
-content present, >= 24 photos with alt text, no console errors / failed / external requests, true 390px overflow, fonts, pixel-sampled WCAG contrast over real
-backdrops, reduced-motion behaviour, and writes screenshots to `/tmp/pf-shots/<id>/`. `npm run check:all` builds the site and runs it for every theme.
+## Quality checks
+`npm run check -- <id> --port <p>` drives real Chrome against a style (desktop, phone, reduced-motion) and verifies required sections, all resume
+content present, >= 24 photos with alt text, no console errors / failed / external requests, no sideways scrolling at 390 px, fonts, WCAG contrast measured on the
+real rendered pixels, reduced-motion behaviour, and writes screenshots to `/tmp/pf-shots/<id>/`. `npm run check:all` builds the site and runs it for every style.
+(It looks for Chrome/Brave at macOS paths; see the troubleshooting doc for other systems.)
 
 ## Things to know
-- `src/content/profile.ts` is the single source of truth. Case-study and project copy was written only from the resume, LinkedIn and your public GitHub READMEs.
-  Personal lines (interests, "Beyond code" captions, playful flavour text per theme) were written from your photos and are meant to be edited by you.
-- Some themes include small interactive sketches (e.g. the Neumorphism case-study consoles). They are labelled "illustrative" and only use numbers from the resume.
-- `public/generated/` (~230 MB of photo variants) and `src/generated/manifest/` are build output, git-ignored, and cached in CI.
-- `assets/` is your private Instagram export: git-ignored, never published. Remove it from the repo folder entirely before sharing the project anywhere.
-- Credits and licences: `CREDITS.md` (generated by `npm run credits`).
-
-## Contact form
-Get a free key at web3forms.com, copy `.env.example` to `.env`, set `PUBLIC_WEB3FORMS_KEY`. For GitHub Pages add it as a repository secret of the same name.
-Without a key the form falls back to opening the visitor's email app.
-
-## Deploy (not done yet - needs your go-ahead)
-`.github/workflows/deploy.yml` builds and deploys to GitHub Pages on every push to `main`. This repo should become `abhishekkumar11724/abhishekkumar11724.github.io`
-(Settings -> Pages -> Source: GitHub Actions). Note `assets/` (your Instagram export) is git-ignored on purpose - never publish it.
+- Case-study and project copy was written only from your resume, LinkedIn and public GitHub READMEs. Personal lines (interests, "Beyond code" captions,
+  playful per-style flavour text) were written from your photos: **edit them to be yours**.
+- Some styles include small interactive sketches (e.g. the Neumorphism case-study consoles). They are labelled "illustrative" and only use numbers from your resume.
+- The original Instagram export was deleted from this project (the 60 photos you need are in `photos/`). `.gitignore` still ignores an `assets/` folder, so a re-added export won't be committed; never publish one.
+- Limits and known rough edges (browser coverage, SEO, photos referenced by name, page weight): [docs/LIMITATIONS-AND-TROUBLESHOOTING.md](docs/LIMITATIONS-AND-TROUBLESHOOTING.md).
+- Licences and credits: `CREDITS.md` (all fonts are free/open and self-hosted; no external requests at runtime).
