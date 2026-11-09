@@ -51,4 +51,4 @@ Started 2026-11-09. One local git commit per theme. Nothing is pushed or deploye
 ## For the owner
 1. Review personal copy in `src/content/profile.ts` (aboutPersonal, interests) and per-theme flavour lines/captions, which were written from your photos, not from facts you gave me.
 2. Get a Web3Forms key (see README) or the contact form falls back to opening the visitor's email app.
-3. Decide when to deploy: create/replace `abhishekkumar11724/abhishekkumar11724.github.io`, enable Pages -> GitHub Actions. Do NOT publish the `assets/` folder (Instagram export).
+3. Decide when to deploy: create/replace `abhishekkumar11724/abhishekkumar11724.github.io`, enable Pages -> GitHub Actions. (The Instagram export has since been deleted from the project; `.gitignore` still ignores `assets/` as a safeguard.)

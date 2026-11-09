@@ -31,4 +31,4 @@ A gallery lets visitors preview any style; `?style=<id>` deep-links one. A persi
 - Run mode: research all styles -> foundation -> all themes, one local git commit per theme, progress in `PROGRESS.md`.
 - Allowed unattended: npm installs, builds/dev server, downloading free-licensed assets, local git commits.
 - **NOT allowed without asking: pushing / deploying to GitHub** (it would replace the live github.io).
-- Friends/family in posts agreed to appear. Alcohol photos excluded. `assets/` (Instagram export) is private: never commit it, never open DM folders.
+- Friends/family in posts agreed to appear. Alcohol photos excluded. The Instagram export that photos were picked from was private and has since been deleted from the project (and was never committed); never open DM folders if one is ever re-added.
