@@ -18,7 +18,7 @@
   --legal: #e7d77a;
   --manila: #d6c493;
   --red: #b3321e;
-  --red-ink: #a52b19;      /* red text on paper (>= 5:1) */
+  --red-ink: #861f10;      /* red text on TEXTURED paper (>= 5:1 measured on rendered pixels) */
   --red-hi: #f0573a;       /* red on the wall (>= 4.5:1) */
   --chalk: #ebe5d3;
   --f-display: 'Anton', 'Impact', 'Arial Narrow Bold', sans-serif;

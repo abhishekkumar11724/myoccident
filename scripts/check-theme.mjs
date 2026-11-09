@@ -170,6 +170,8 @@ const domLowContrast = lowContrast; // reported later only if the (authoritative
       const el = t.parentElement; if (!el || seen.has(el)) continue; seen.add(el);
       if (el.closest('[data-pf-bar],dialog,[aria-hidden="true"],svg,script,style,noscript,canvas,[hidden]')) continue;
       const cs = getComputedStyle(el); if (cs.visibility === 'hidden' || cs.display === 'none') continue;
+      const eb = el.getBoundingClientRect(); if (eb.width < 4 || eb.height < 4) continue; // collapsed (e.g. hover-reveal) text is not visible
+      if (el.closest('details:not([open])') && !el.closest('summary')) continue; // content of a closed disclosure is not rendered
       let op = 1; for (let e = el; e; e = e.parentElement) op *= +getComputedStyle(e).opacity; if (op < 0.2) continue;
       const rg = document.createRange(); rg.selectNodeContents(t); const r = rg.getBoundingClientRect(); if (r.width < 10 || r.height < 8) continue;
       if (r.right <= 4 || r.bottom <= 4 || r.left >= innerWidth - 4 || el.closest('.skip,[class*="skip"],[class*="sr-only"],[class*="visually-hidden"]')) continue; // off-screen / focus-only text

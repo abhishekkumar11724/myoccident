@@ -407,7 +407,7 @@ html[data-light='night'] .t-day { display: none; } html[data-light='night'] .t-n
 .app-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
 .pill { display: inline-flex; align-items: center; min-height: 34px; padding: 0 16px; border-radius: 999px; text-decoration: none; font: 600 14px/1 var(--f-body); color: #232323 !important; text-shadow: 0 1px 0 rgba(255, 255, 255, .8);
   background: linear-gradient(180deg, #fff, #e6e6e6 50%, #cfcfcf 51%, #e2e2e2); border: 1px solid #7d7d7d; box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0, 0, 0, .3); }
-.pill-blue { color: #fff !important; text-shadow: 0 -1px 0 rgba(0, 30, 90, .7); background: linear-gradient(180deg, #8fbcf8, #4b87e6 50%, #2f6ed6 51%, #5c9af0); border-color: #1f4fa3; }
+.pill-blue { color: #fff !important; text-shadow: 0 -1px 0 rgba(0, 30, 90, .7); background: linear-gradient(180deg, #5a96ea, #2f6ed6 50%, #1d57bd 51%, #3b7be0); border-color: #173f86; }
 .pill:hover { filter: brightness(1.06); } .pill:active { transform: translateY(1px); box-shadow: inset 0 2px 3px rgba(0, 0, 0, .35); }
 .aqua-status { padding: 6px 12px; text-align: center; font: 400 12.5px/1.2 var(--f-body); color: #3a3a3a; background: linear-gradient(#e6e6e6, #cfcfcf); border-top: 1px solid #8b8b8b; text-shadow: 0 1px 0 rgba(255, 255, 255, .7); }
 .aqua[data-view='list'] .aqua-body { grid-template-columns: 1fr; gap: 12px; }
