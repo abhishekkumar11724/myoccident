@@ -1,0 +1,5 @@
+Fonts bundled with the Liquid chrome theme (all SIL Open Font License 1.1, https://openfontlicense.org):
+
+- Unbounded (variable, latin subset) - https://fonts.google.com/specimen/Unbounded - delivered via Fontsource (fontsource.org/fonts/unbounded)
+- Michroma (Regular, latin subset)   - https://fonts.google.com/specimen/Michroma   - delivered via Fontsource
+- Instrument Sans (variable, latin)  - https://fonts.google.com/specimen/Instrument+Sans - delivered via Fontsource

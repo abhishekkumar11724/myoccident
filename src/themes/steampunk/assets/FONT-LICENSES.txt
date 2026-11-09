@@ -1,0 +1,12 @@
+FONT LICENSES - Steampunk theme
+
+Abril Fatface      Copyright (c) 2011 TypeTogether (www.type-together.com), Reserved Font Names "Abril" and "Abril Fatface". SIL OFL 1.1.
+Cinzel             Copyright 2020 The Cinzel Project Authors (https://github.com/NDISCOVER/Cinzel). SIL OFL 1.1.
+Libre Baskerville  Copyright 2012 The Libre Baskerville Project Authors (https://github.com/impallari/Libre-Baskerville). SIL OFL 1.1.
+Special Elite      Astigmatic (Brian J. Bonislawsky). Apache License 2.0.
+
+The woff2 files are the unmodified Latin subsets distributed by Fontsource (https://fontsource.org), fetched from
+https://cdn.jsdelivr.net/fontsource/fonts/<font>@latest/ .
+
+SIL Open Font License 1.1: https://openfontlicense.org/open-font-license-official-text/
+Apache License 2.0:        https://www.apache.org/licenses/LICENSE-2.0

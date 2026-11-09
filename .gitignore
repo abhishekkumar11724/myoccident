@@ -1,5 +1,6 @@
 # Instagram export contains private data (DMs, contacts, login info). NEVER commit or publish it.
-assets/
+# Anchored to the project root on purpose: an unanchored 'assets/' also hid every src/themes/<style>/assets/ folder (fonts, textures, SVGs).
+/assets/
 node_modules/
 dist/
 .astro/
