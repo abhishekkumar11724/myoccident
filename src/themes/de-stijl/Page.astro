@@ -1,0 +1,430 @@
+---
+/**
+ * De Stijl theme: the page IS a Neoplastic composition.
+ * One black-lined grid (CSS gap on a black ground = the lines), cells are white text fields or flat red / yellow / blue planes.
+ * Only horizontals and verticals, asymmetric spans, colour used sparingly. Every section is a different composition on the same 12-column grid.
+ * Signatures: block lettering built from a 5-row raster of squares; case studies as a mosaic whose coloured tiles open white detail fields;
+ * a ruled project index with generated Mondrian thumbnails; a hole-free photo mosaic with a six-value "neoplastic print" photo recipe.
+ * All facts come from @/content/profile and @/lib/photos.
+ */
+import { profile } from '@/content/profile';
+import { photoGroups, photo } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import Head from './components/Head.astro';
+import meta from './meta';
+import { block, blockWidth, mondrian, bestPack } from './blocks';
+import './theme.css';
+
+const STYLE = 'de-stijl';
+const pad = (n: number) => String(n).padStart(2, '0');
+const host = (u: string) => u.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
+
+// ---------------------------------------------------------------- hero
+const hero = photo(STYLE, 'portraits/01-selfie-maroon');
+const aboutPhoto = photo(STYLE, 'portraits/03-red-kurta-seated');
+const [first, last] = [profile.firstName, profile.name.replace(profile.firstName, '').trim()];
+const cut = Math.ceil(first.length / 2);
+const wideLines = [
+  { svg: block(first, { 0: 'r', 5: 'b' }), w: blockWidth(first) },
+  { svg: block(last, { 3: 'r' }), w: blockWidth(last) },
+];
+const tallLines = [
+  { svg: block(first.slice(0, cut), { 0: 'r' }), w: blockWidth(first.slice(0, cut)) },
+  { svg: block(first.slice(cut), { 1: 'b' }), w: blockWidth(first.slice(cut)) },
+  { svg: block(last, { 3: 'r' }), w: blockWidth(last) },
+];
+const maxWide = Math.max(...wideLines.map((l) => l.w));
+const maxTall = Math.max(...tallLines.map((l) => l.w));
+const stats = profile.stats;
+const statTone = ['r', 'w', 'y', 'w', 'b', 'g'] as const;
+
+// ---------------------------------------------------------------- nav
+const nav = [
+  { id: 'about', label: 'About' },
+  { id: 'experience', label: 'Experience' },
+  { id: 'case-studies', label: 'Case studies' },
+  { id: 'projects', label: 'Projects' },
+  { id: 'skills', label: 'Skills' },
+  { id: 'beyond-code', label: 'Beyond code' },
+  { id: 'writing', label: 'Writing' },
+  { id: 'contact', label: 'Contact' },
+];
+const markAK = block('AK', { 0: 'r' });
+
+// ---------------------------------------------------------------- about
+const now = profile.experience[0];
+
+// ---------------------------------------------------------------- experience chart (true to scale)
+const MON: Record<string, number> = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+const monthStart = (s: string) => new Date(Number(s.split(' ')[1]), MON[s.split(' ')[0]], 1);
+const endOf = (s: string) => { if (s === 'Present') return new Date(); const d = monthStart(s); return new Date(d.getFullYear(), d.getMonth() + 1, 1); };
+const edu = profile.education[0];
+const jobTone = ['r', 'y', 'b'];
+const spans = [
+  ...profile.experience.map((e, i) => ({ id: e.id, label: e.company, sub: e.title, start: e.start, end: e.end, tone: jobTone[i] ?? 'k', a: +monthStart(e.start), b: +endOf(e.end) })),
+  { id: 'edu', label: edu.short, sub: edu.degree, start: edu.start, end: edu.end, tone: 'g', a: +monthStart(edu.start), b: +endOf(edu.end) },
+];
+const t0 = Math.min(...spans.map((s) => s.a));
+const t1 = Math.max(...spans.map((s) => s.b));
+const pct = (t: number) => ((t - t0) / (t1 - t0)) * 100;
+const yearTicks: { y: number; at: number }[] = [];
+for (let y = new Date(t0).getFullYear() + 1; y <= new Date(t1).getFullYear(); y++) yearTicks.push({ y, at: pct(+new Date(y, 0, 1)) });
+const BULLET_SPANS: Record<number, number[]> = { 9: [5, 4, 3, 3, 4, 5, 4, 3, 5], 3: [5, 4, 3], 2: [7, 5] };
+const bulletSpans = (n: number) => BULLET_SPANS[n] ?? Array.from({ length: n }, (_, i) => (n % 2 && i === n - 1 ? 12 : 6));
+
+// ---------------------------------------------------------------- case studies
+const cases = profile.caseStudies;
+const tileTone = ['r', 'w', 'y', 'w', 'b', 'w', 'g', 'g'];
+const splitFig = (s: string): [string, string] => {
+  const m = s.match(/^(~?\d[\d.,]*(?:-\d[\d.,]*)?[+%MK]*)\s+(.*)$/);
+  return m ? [m[1], m[2]] : ['', s];
+};
+
+// ---------------------------------------------------------------- projects
+const projects = profile.projects.map((p, i) => ({ ...p, i })).sort((a, b) => Number(b.year) - Number(a.year) || a.i - b.i);
+
+// ---------------------------------------------------------------- skills
+const skillTone = ['w', 'w', 'w', 'y', 'w', 'g'];
+
+// ---------------------------------------------------------------- photos: one complete mosaic per category
+const groups = photoGroups(STYLE);
+const total = groups.reduce((n, g) => n + g.photos.length, 0);
+const headTone = ['r', 'y', 'b', 'g', 'b', 'r', 'y', 'g', 'b'];
+let lbIndex = 0;
+const mosaics = groups.map((g, gi) => {
+  const { pk } = bestPack(g.photos.map((p) => p.original.width / p.original.height), g.category);
+  const n = g.photos.length;
+  const items = g.photos.map((p, i) => ({ p, at: pk.items[i], lb: lbIndex++, mWide: n % 2 === 1 && i === n - 1, tWide: n % 3 === 1 && i === n - 1 ? 3 : n % 3 === 2 && i === n - 1 ? 2 : 0 }));
+  const fillTone = pk.fillers.map((f, fi) => (fi === 0 && gi % 2 === 0 ? (['y', 'b', 'r', 'y', 'b'][Math.floor(gi / 2)] ?? 'w') : fi % 2 ? 'g' : 'w'));
+  return { g, gi, pk, items, fillTone, tone: headTone[gi % headTone.length] };
+});
+
+// ---------------------------------------------------------------- writing / contact
+const year = new Date().getFullYear();
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style={STYLE} themeColor="#111111" />
+    <meta name="robots" content="index,follow" />
+    <script is:inline>document.documentElement.classList.add('js')</script>
+  </head>
+  <body class="ds">
+    <a class="ds-skip" href="#main">Skip to content</a>
+    <div class="stage">
+
+      <!-- sticky row of cells: wordmark, eight sections, resume -->
+      <header class="bar" data-bar>
+        <a class="bar-brand" href="#hero" aria-label={`${profile.name}: back to top`}>
+          <span class="bar-mark" set:html={markAK} />
+        </a>
+        <nav class="bar-nav" aria-label="Sections">
+          {nav.map((n, i) => <a href={`#${n.id}`} data-spy={n.id} data-k={['r', 'y', 'b'][i % 3]}><span>{n.label}</span></a>)}
+        </nav>
+        <a class="bar-cv" href={withBase(profile.resume.href)} download>Resume</a>
+        <div class="bar-menu" data-menu>
+          <input type="checkbox" id="ds-menu" class="bar-menu-t" aria-label="Open the section menu" />
+          <label for="ds-menu" class="bar-menu-b lab"><span>Menu</span></label>
+          <div class="bar-menu-grid">
+            {nav.map((n, i) => <a href={`#${n.id}`} data-k={['r', 'y', 'b'][i % 3]}>{n.label}</a>)}
+            <a href={withBase(profile.resume.href)} download class="mn-cv">Resume (PDF)</a>
+          </div>
+        </div>
+      </header>
+
+      <main id="main">
+
+        <!-- ================= HERO: modelled on the 1930 red / blue / yellow compositions ================= -->
+        <section id="hero" class="comp hero" data-pf-section="hero" aria-label="Introduction">
+          <div class="cell h-name">
+            <p class="lab h-kick">{profile.role} / {profile.location}</p>
+            <h1 class="nm">
+              <span class="sr">{profile.name}</span>
+              <span class="nm-wide" aria-hidden="true">
+                {wideLines.map((l) => <span class="nm-l" style={`--f:${(l.w / maxWide).toFixed(4)}`} set:html={l.svg} />)}
+              </span>
+              <span class="nm-tall" aria-hidden="true">
+                {tallLines.map((l) => <span class="nm-l" style={`--f:${(l.w / maxTall).toFixed(4)}`} set:html={l.svg} />)}
+              </span>
+            </h1>
+            <p class="lab h-flav">{meta.flavor.kicker}</p>
+          </div>
+
+          <figure class="cell h-photo">
+            <img src={hero.img.src} width={hero.img.width} height={hero.img.height} alt={hero.alt} style={`object-position:${hero.focus}`} fetchpriority="high" decoding="async" />
+            <figcaption class="lab cap">Fig. 1 / {hero.caption}</figcaption>
+          </figure>
+
+          <div class="cell c-r h-stat h-s0">
+            <b class="num">{stats[0].value}</b><span class="lab">{stats[0].label}</span>
+          </div>
+
+          <div class="cell h-tag">
+            <p class="h-lead">{profile.tagline}</p>
+            <p class="h-cta">
+              <a class="btn btn--r" href={withBase(profile.resume.href)} data-pf-resume download>{profile.resume.label}</a>
+              <a class="btn" href="#contact">Get in touch</a>
+            </p>
+          </div>
+
+          {stats.slice(1).map((s, i) => (
+            <div class={`cell c-${statTone[i + 1]} h-stat h-s${i + 1}`}>
+              <b class="num">{s.value}</b><span class="lab">{s.label}</span>
+            </div>
+          ))}
+        </section>
+
+        <!-- ================= ABOUT ================= -->
+        <section id="about" class="comp about" data-pf-section="about" aria-labelledby="about-h">
+          <div class="cell c-y a-now">
+            <p class="lab">Now</p>
+            <p class="a-co">{now.company}</p>
+            <p class="a-role">{now.title}</p>
+            <p class="lab">Since {now.start}</p>
+          </div>
+          <div class="cell a-main">
+            <p class="lab a-no">01</p>
+            <h2 id="about-h"><span class="sr">About</span><Fragment set:html={block('About')} /></h2>
+            <p class="a-sum">{profile.summary}</p>
+          </div>
+          <figure class="cell a-photo">
+            <img src={aboutPhoto.img.src} width={aboutPhoto.img.width} height={aboutPhoto.img.height} alt={aboutPhoto.alt} style={`object-position:${aboutPhoto.focus}`} loading="lazy" decoding="async" />
+            <figcaption class="lab cap">Fig. 2 / {aboutPhoto.caption}</figcaption>
+          </figure>
+          <div class="cell c-b a-focus">
+            <p class="lab">Focus</p>
+            <p class="a-fo">{profile.focus}</p>
+          </div>
+          <div class="cell a-pers">
+            {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+          </div>
+          <p class="cell c-g lab a-int-l">Away from the keyboard</p>
+          <ul class="cell a-int" aria-label="Interests">
+            {profile.interests.map((it, i) => <li><span class="lab">{pad(i + 1)}</span>{it}</li>)}
+          </ul>
+        </section>
+
+        <!-- ================= EXPERIENCE ================= -->
+        <section id="experience" class="comp exp" data-pf-section="experience" aria-labelledby="experience-h">
+          <Head id="experience-h" no="02" title="Experience" tone="r" variant="a" sub="Roles on one true-to-scale time axis, then the detail." />
+
+          <figure class="cell chart">
+            <figcaption class="lab">Timeline, {new Date(t0).getFullYear()} to {new Date(t1).getFullYear()}</figcaption>
+            <div class="ch">
+              <div class="ch-axis" aria-hidden="true">
+                {yearTicks.map((t) => <span style={`--at:${t.at.toFixed(2)}%`}>{t.y}</span>)}
+              </div>
+              {spans.map((s) => (
+                <div class="ch-row">
+                  <p class="ch-lab"><b>{s.label}</b><span>{s.start} - {s.end}</span></p>
+                  <div class="ch-track" aria-hidden="true">
+                    {yearTicks.map((t) => <i class="ch-tick" style={`--at:${t.at.toFixed(2)}%`}></i>)}
+                    <i class={`ch-bar c-${s.tone}`} style={`--a:${pct(s.a).toFixed(2)}%;--w:${(pct(s.b) - pct(s.a)).toFixed(2)}%`}></i>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </figure>
+
+          {profile.experience.map((e, ei) => {
+            const sp = bulletSpans(e.bullets.length);
+            return (
+              <article class={`job job--${ei + 1}`} data-job={e.id}>
+                <div class={`cell j-co c-${jobTone[ei] ?? 'k'}`}>
+                  <p class="lab">{e.start} - {e.end}</p>
+                  <p class="j-name">{e.company}</p>
+                  <p class="lab">{e.place}</p>
+                </div>
+                <div class="cell j-ti">
+                  <h3>{e.title}, {e.company}</h3>
+                  <p>{e.blurb}</p>
+                </div>
+                {e.bullets.map((b, bi) => (
+                  <div class="cell bul" style={`--sp:${sp[bi]}`}>
+                    <p class="lab bul-n">{pad(bi + 1)}</p>
+                    <h4>{b.head}</h4>
+                    <p>{b.text}</p>
+                  </div>
+                ))}
+              </article>
+            );
+          })}
+
+          <div class="edu" data-pf-education>
+            <p class="cell c-g lab edu-l">Education</p>
+            <div class="cell edu-b">
+              <h3>{edu.school}</h3>
+              <p>{edu.degree}</p>
+            </div>
+            <p class="cell c-k edu-y"><b>{edu.start}</b> to <b>{edu.end}</b></p>
+          </div>
+        </section>
+
+        <!-- ================= CASE STUDIES: a mosaic of planes; choosing one opens its white field ================= -->
+        <section id="case-studies" class="comp css" data-pf-section="case-studies" aria-labelledby="case-studies-h">
+          <Head id="case-studies-h" no="03" title="Case studies" tone="y" variant="b" sub="Choose a coloured plane to open its white field." />
+          <div class="cs" data-cs>
+            {cases.map((c, i) => {
+              const tone = tileTone[i] ?? 'w';
+              const ptone = tone === 'w' ? 'k' : tone;
+              return (
+                <>
+                  <button class={`tile t${i + 1} c-${tone}`} type="button" id={`cs-tab-${c.id}`} aria-controls={`cs-${c.id}`} aria-expanded={i === 0 ? 'true' : 'false'} data-cs-tab>
+                    <span class="tile-no lab">{pad(i + 1)}</span>
+                    <span class="tile-t">{c.title}</span>
+                    <span class="tile-o lab">{c.org} / {c.period}</span>
+                  </button>
+                  <article class={`panel p${i + 1}${i === 0 ? ' is-open' : ''}`} id={`cs-${c.id}`} data-pf-case={c.id} aria-labelledby={`cs-h-${c.id}`}>
+                    <header class={`pn-h c-${ptone}`}>
+                      <p class="lab">{pad(i + 1)} / {c.org} / {c.period} / {c.role}</p>
+                      <h3 id={`cs-h-${c.id}`}>{c.title}</h3>
+                      <p class="pn-k">{c.kicker}</p>
+                    </header>
+                    <div class="pn-pa">
+                      <div class="cell"><p class="lab">Problem</p><p>{c.problem}</p></div>
+                      <div class="cell"><p class="lab">Approach</p><p>{c.approach}</p></div>
+                    </div>
+                    <ul class="pn-im" aria-label="Impact">
+                      {c.impact.map((x) => {
+                        const [fig, rest] = splitFig(x);
+                        return <li class="cell">{fig && <b class="num">{fig}</b>}<span>{rest}</span></li>;
+                      })}
+                    </ul>
+                    <p class="pn-tags cell lab">{c.tags.join(' / ')}</p>
+                  </article>
+                </>
+              );
+            })}
+          </div>
+        </section>
+
+        <!-- ================= PROJECTS: ruled index with generated Mondrian thumbnails ================= -->
+        <section id="projects" class="comp prj" data-pf-section="projects" aria-labelledby="projects-h">
+          <Head id="projects-h" no="04" title="Projects" tone="b" variant="c" sub="Public repositories as an index: year, project, stack, links." />
+          <div class="pt-head lab" aria-hidden="true">
+            <span class="cell c-g">Plate</span><span class="cell c-g">Year</span><span class="cell c-g">Project</span><span class="cell c-g">Stack</span><span class="cell c-g">Links</span>
+          </div>
+          {projects.map((p) => (
+            <article class="pr" data-pf-project={p.name}>
+              <div class="cell pr-th" set:html={mondrian(p.name)} aria-hidden="true" />
+              <p class="cell pr-yr"><span class="num">{p.year}</span></p>
+              <div class="cell pr-ti">
+                <h3>{p.title}</h3>
+                <p>{p.blurb}</p>
+              </div>
+              <ul class="cell pr-st" aria-label="Stack">{p.stack.map((s) => <li>{s}</li>)}</ul>
+              <p class="cell pr-lk">
+                <a href={p.repo} rel="noopener">Source</a>
+                {p.live && <a href={p.live} rel="noopener">Live site</a>}
+              </p>
+            </article>
+          ))}
+        </section>
+
+        <!-- ================= SKILLS ================= -->
+        <section id="skills" class="comp skl" data-pf-section="skills" aria-labelledby="skills-h">
+          <Head id="skills-h" no="05" title="Skills" tone="y" variant="b" sub="Grouped and ruled. No ranking, no bars." />
+          {profile.skills.map((g, i) => (
+            <div class={`cell sk sk--${i + 1} c-${skillTone[i] ?? 'w'}`}>
+              <h3 class="lab"><i class={`sq sq--${['r', 'y', 'b'][i % 3]}`}></i>{g.group}</h3>
+              <ul class="chips">
+                {g.items.map((it) => <li>{it}</li>)}
+                {((g as any).familiar ?? []).map((f: string) => <li class="fam">{f}<small>familiar</small></li>)}
+              </ul>
+            </div>
+          ))}
+        </section>
+
+        <!-- ================= BEYOND CODE: one complete mosaic per category ================= -->
+        <section id="beyond-code" class="comp bc" data-pf-section="beyond-code" aria-labelledby="beyond-code-h">
+          <Head id="beyond-code-h" no="06" title="Beyond code" tone="r" variant="c" sub={`${total} photographs from trips, rides and bookshelves, reduced to six values: black, white, grey, red, yellow, blue.`} />
+          {mosaics.map((m) => (
+            <div class="mos-wrap">
+              <div class="mos" role="group" aria-labelledby={`mos-h-${m.g.category}`}>
+                <div class={`cell mos-h c-${m.tone}`} style={`--gx:${m.pk.header.x + 1};--gy:${m.pk.header.y + 1};--gw:${m.pk.header.w};--gh:${m.pk.header.h}`}>
+                  <p class="lab">{pad(m.gi + 1)} / {m.g.photos.length} photos</p>
+                  <h3 id={`mos-h-${m.g.category}`}>{m.g.title}</h3>
+                  <p>{m.g.blurb}</p>
+                </div>
+                {m.items.map(({ p, at, lb, mWide, tWide }) => {
+                  const big = at.w > 1 || at.h > 1;
+                  const v = big ? { src: p.img.src, w: p.img.width, h: p.img.height } : { src: p.img.thumb, w: p.img.thumbWidth, h: p.img.thumbHeight };
+                  return (
+                    <button class="ph" type="button" data-lb={lb} data-full={p.img.src} data-orig={p.original.src} data-alt={p.alt} data-cap={p.caption ?? ''} data-m={mWide ? 'wide' : undefined} data-t={tWide ? `w${tWide}` : undefined} style={`--gx:${at.x + 1};--gy:${at.y + 1};--gw:${at.w};--gh:${at.h}`} aria-label={`Open photo: ${p.caption ?? p.alt}`}>
+                      <img src={v.src} width={v.w} height={v.h} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} />
+                      {p.caption && <span class="ph-cap lab">{p.caption}</span>}
+                    </button>
+                  );
+                })}
+                {m.pk.fillers.map((f, fi) => (
+                  <div class={`fill c-${m.fillTone[fi]}`} aria-hidden="true" style={`--gx:${f.x + 1};--gy:${f.y + 1};--gw:${f.w};--gh:${f.h}`}></div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </section>
+
+        <!-- ================= WRITING ================= -->
+        <section id="writing" class="comp wri" data-pf-section="writing" aria-labelledby="writing-h">
+          <Head id="writing-h" no="07" title="Writing" tone="b" variant="a" sub="Space is reserved on the wall; nothing is hung yet." />
+          <div class="cell c-y wr-status">
+            <p class="lab">Status</p>
+            <p class="wr-st">{profile.writing.status}</p>
+          </div>
+          <ol class="wr-list" aria-label="Planned posts">
+            {profile.writing.planned.map((t, i) => (
+              <li class="cell"><span class="lab">Planned {pad(i + 1)}</span><span class="wr-t">{t}</span></li>
+            ))}
+          </ol>
+        </section>
+
+        <!-- ================= CONTACT ================= -->
+        <section id="contact" class="comp ctc" data-pf-section="contact" aria-labelledby="contact-h">
+          <Head id="contact-h" no="08" title="Contact" tone="r" variant="b" sub="Email, phone, LinkedIn, GitHub or the form: whichever is easiest." />
+          <div class="cell ct-intro">
+            <p class="ct-lead">Open to interesting problems in GenAI agents, workflow systems and backend infrastructure.</p>
+          </div>
+          <ul class="ct-links">
+            <li class="cell"><span class="lab">Email</span><Protected kind="email" /></li>
+            <li class="cell"><span class="lab">Phone</span><Protected kind="phone" /></li>
+            <li class="cell"><span class="lab">LinkedIn</span><a href={profile.contact.linkedin} rel="noopener me" data-pf-linkedin>{host(profile.contact.linkedin)}</a></li>
+            <li class="cell"><span class="lab">GitHub</span><a href={profile.contact.github} rel="noopener me" data-pf-github>{host(profile.contact.github)}</a></li>
+            <li class="cell c-r ct-cv"><span class="lab">Resume</span><a href={withBase(profile.resume.href)} download data-pf-resume>{profile.resume.label}</a></li>
+          </ul>
+          <div class="cell ct-form">
+            <p class="lab">Write to me</p>
+            <ContactForm submitLabel="Send message" labels={{ name: 'Your name', email: 'Your email', message: 'Message' }} />
+          </div>
+        </section>
+
+      </main>
+
+      <footer class="foot">
+        <p class="cell foot-l">{meta.flavor.footer}</p>
+        <p class="cell foot-m">&copy; {year} {profile.name}</p>
+        <p class="cell foot-r"><a href={withBase('gallery/')}>All styles: gallery</a></p>
+      </footer>
+    </div>
+
+    <!-- photo lightbox -->
+    <dialog class="lb" data-lb-dialog aria-label="Photo viewer">
+      <figure>
+        <img alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-lb-img />
+        <figcaption class="lb-cap"><span data-lb-cap></span></figcaption>
+      </figure>
+      <div class="lb-btns">
+        <button type="button" data-lb-prev aria-label="Previous photo">Prev</button>
+        <button type="button" data-lb-orig aria-pressed="false">Original colours</button>
+        <button type="button" data-lb-next aria-label="Next photo">Next</button>
+        <button type="button" data-lb-close class="lb-x">Close</button>
+      </div>
+    </dialog>
+
+    <script>import './client.ts'</script>
+    <UtilityBar style={STYLE} />
+  </body>
+</html>

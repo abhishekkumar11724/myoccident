@@ -1,0 +1,18 @@
+---
+/**
+ * Section opener: a numeral plane + a block-lettered title cell (+ optional subtitle). Three arrangements (a / b / c) so
+ * no two sections open the same way. Lives inside the section's black-lined grid; placement is in theme.css.
+ */
+import { block } from '../blocks';
+interface Props { id: string; no: string; title: string; sub?: string; tone?: 'r' | 'y' | 'b'; variant?: 'a' | 'b' | 'c' }
+const { id, no, title, sub, tone = 'r', variant = 'a' } = Astro.props;
+const words = title.split(' ');
+---
+<div class={`sh sh--${variant}`}>
+  <p class={`sh-no c-${tone}`} aria-hidden="true"><Fragment set:html={block(no)} /></p>
+  <div class="sh-title cell">
+    <h2 id={id}><span class="sr">{title}</span>{words.map((w) => <Fragment set:html={block(w)} />)}</h2>
+    {sub && <p class="sh-sub">{sub}</p>}
+  </div>
+  {sub && <p class="sh-sub2 cell c-g">{sub}</p>}
+</div>
