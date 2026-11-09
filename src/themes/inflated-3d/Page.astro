@@ -1,0 +1,501 @@
+---
+/**
+ * 3D Inflated: a pastel sky where everything has been pumped full of air.
+ * Floating pill dock, SVG-lit balloon type, balloon photo frames, a balloon garland for experience, knotted case-study tiles,
+ * a name-only project index whose preview bubble inflates on hover/focus, bubble stats, balloon skills, a four-toy squishy lab
+ * and pillow-framed photo pools. All data comes from @/content/profile; every data-pf-* hook is kept.
+ */
+import { profile } from '@/content/profile';
+import { photoGroups, photos, heroPhotos } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import SecHead from './components/SecHead.astro';
+import Balloon from './components/Balloon.astro';
+import meta from './meta';
+import { deco } from './shapes';
+import './theme.css';
+
+const STYLE = 'inflated-3d';
+const pad = (n: number) => String(n).padStart(2, '0');
+const all = photos(STYLE);
+const byId = (id: string) => all.find((p) => p.id === id);
+const heroes = heroPhotos(STYLE);
+const hMain = byId('portraits/02-smile-jacket') ?? heroes[0] ?? all[0];
+const hSnow = byId('adventure/05-snow-arms-crossed') ?? heroes[1] ?? all[1];
+const hBike = byId('bikes/03-bike-night-rider') ?? heroes[2] ?? all[2];
+const groups = photoGroups(STYLE);
+
+const nav = [
+  { id: 'about', label: 'About' },
+  { id: 'experience', label: 'Experience' },
+  { id: 'case-studies', label: 'Case studies' },
+  { id: 'projects', label: 'Projects' },
+  { id: 'skills', label: 'Skills' },
+  { id: 'lab', label: 'Lab' },
+  { id: 'beyond-code', label: 'Beyond code' },
+  { id: 'writing', label: 'Writing' },
+  { id: 'contact', label: 'Contact' },
+];
+const tones = ['pink', 'blue', 'lemon', 'mint', 'lilac', 'peach'] as const;
+const tone = (i: number) => tones[i % tones.length];
+// beads inside a pod never share the pod's own hue (pink beads on a pink pod would vanish)
+const beadTone = (pod: number, j: number) => { const others = tones.filter((t) => t !== tone(pod)); return others[j % others.length]; };
+
+const expTones = ['pink', 'blue', 'lemon'];
+const featured = profile.caseStudies.filter((c) => c.featured);
+const more = profile.caseStudies.filter((c) => !c.featured);
+const orderedCases = [...featured, ...more];
+const caseTones = ['pink', 'blue', 'mint', 'lilac', 'peach', 'lemon', 'pink', 'blue'];
+
+const aboutSnaps = [
+  { id: 'adventure/01-waterfall-standing', tone: 'mint' },
+  { id: 'pets/02-dog-on-ledge', tone: 'lemon' },
+  { id: 'books/01-a-little-life', tone: 'lilac' },
+]
+  .map((s) => ({ ...s, p: byId(s.id) }))
+  .filter((s) => s.p);
+
+const bigGroups = groups.filter((g) => g.photos.length > 4);
+const miniGroups = groups.filter((g) => g.photos.length <= 4);
+const frameTone = ['pink', 'blue', 'lemon', 'mint', 'lilac', 'peach'];
+const tilt = ['-1.4deg', '1deg', '-.6deg', '1.6deg', '-1deg', '.5deg', '-1.8deg', '1.2deg'];
+let frameN = 0;
+const shapeOf = (p: { orientation: string }, n: number) => (p.orientation === 'portrait' ? (n % 3 === 0 ? 'arch' : 'pillow') : p.orientation === 'square' ? 'round' : n % 5 === 0 ? 'pill' : 'pillow');
+const stripUrl = (u: string) => u.replace(/^https?:\/\//, '').replace(/\/$/, '');
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style="inflated-3d" title={`${profile.name} - ${profile.role} (3D Inflated edition)`} themeColor="#d8f0ff" />
+    <meta name="robots" content="index,follow" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+  </head>
+  <body class="inflated">
+    <!-- hidden sprite: SVG lighting filters (the "inflate" bevel) + gradients used by the ornaments -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+      <defs>
+        <filter id="inflate-xl" x="-8%" y="-14%" width="116%" height="132%" color-interpolation-filters="sRGB">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="9" result="b" />
+          <feDiffuseLighting in="b" surfaceScale="9" diffuseConstant="1.28" lighting-color="#fff" result="d0"><feDistantLight azimuth="235" elevation="52" /></feDiffuseLighting>
+          <feComponentTransfer in="d0" result="diff"><feFuncR type="linear" slope=".55" intercept=".45" /><feFuncG type="linear" slope=".55" intercept=".45" /><feFuncB type="linear" slope=".55" intercept=".45" /></feComponentTransfer>
+          <feSpecularLighting in="b" surfaceScale="9" specularConstant="1" specularExponent="30" lighting-color="#fff" result="s0"><feDistantLight azimuth="235" elevation="55" /></feSpecularLighting>
+          <feGaussianBlur in="s0" stdDeviation="1.5" result="spec" />
+          <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn" />
+          <feComposite in="SourceGraphic" in2="diff" operator="arithmetic" k1="1.08" k2="0" k3="0" k4="0" result="lit" />
+          <feComposite in="lit" in2="specIn" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />
+        </filter>
+        <filter id="inflate-l" x="-8%" y="-18%" width="116%" height="140%" color-interpolation-filters="sRGB">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="5.5" result="b" />
+          <feDiffuseLighting in="b" surfaceScale="6.5" diffuseConstant="1.28" lighting-color="#fff" result="d0"><feDistantLight azimuth="235" elevation="52" /></feDiffuseLighting>
+          <feComponentTransfer in="d0" result="diff"><feFuncR type="linear" slope=".55" intercept=".45" /><feFuncG type="linear" slope=".55" intercept=".45" /><feFuncB type="linear" slope=".55" intercept=".45" /></feComponentTransfer>
+          <feSpecularLighting in="b" surfaceScale="6.5" specularConstant="1" specularExponent="28" lighting-color="#fff" result="s0"><feDistantLight azimuth="235" elevation="55" /></feSpecularLighting>
+          <feGaussianBlur in="s0" stdDeviation="1" result="spec" />
+          <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn" />
+          <feComposite in="SourceGraphic" in2="diff" operator="arithmetic" k1="1.08" k2="0" k3="0" k4="0" result="lit" />
+          <feComposite in="lit" in2="specIn" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />
+        </filter>
+        <filter id="inflate-m" x="-8%" y="-18%" width="116%" height="140%" color-interpolation-filters="sRGB">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="3.6" result="b" />
+          <feDiffuseLighting in="b" surfaceScale="5" diffuseConstant="1.28" lighting-color="#fff" result="d0"><feDistantLight azimuth="235" elevation="52" /></feDiffuseLighting>
+          <feComponentTransfer in="d0" result="diff"><feFuncR type="linear" slope=".55" intercept=".45" /><feFuncG type="linear" slope=".55" intercept=".45" /><feFuncB type="linear" slope=".55" intercept=".45" /></feComponentTransfer>
+          <feSpecularLighting in="b" surfaceScale="5" specularConstant=".95" specularExponent="26" lighting-color="#fff" result="s0"><feDistantLight azimuth="235" elevation="55" /></feSpecularLighting>
+          <feGaussianBlur in="s0" stdDeviation=".7" result="spec" />
+          <feComposite in="spec" in2="SourceAlpha" operator="in" result="specIn" />
+          <feComposite in="SourceGraphic" in2="diff" operator="arithmetic" k1="1.07" k2="0" k3="0" k4="0" result="lit" />
+          <feComposite in="lit" in2="specIn" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />
+        </filter>
+        <filter id="inflate-s" x="-10%" y="-20%" width="120%" height="150%" color-interpolation-filters="sRGB">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="2.6" result="b" />
+          <feDiffuseLighting in="b" surfaceScale="4" diffuseConstant="1.28" lighting-color="#fff" result="d0"><feDistantLight azimuth="235" elevation="52" /></feDiffuseLighting>
+          <feComponentTransfer in="d0" result="diff"><feFuncR type="linear" slope=".6" intercept=".4" /><feFuncG type="linear" slope=".6" intercept=".4" /><feFuncB type="linear" slope=".6" intercept=".4" /></feComponentTransfer>
+          <feSpecularLighting in="b" surfaceScale="4" specularConstant=".9" specularExponent="24" lighting-color="#fff" result="s0"><feDistantLight azimuth="235" elevation="55" /></feSpecularLighting>
+          <feComposite in="s0" in2="SourceAlpha" operator="in" result="specIn" />
+          <feComposite in="SourceGraphic" in2="diff" operator="arithmetic" k1="1.06" k2="0" k3="0" k4="0" result="lit" />
+          <feComposite in="lit" in2="specIn" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />
+        </filter>
+        <radialGradient id="g-hi" cx=".3" cy=".25" r=".75"><stop offset="0" stop-color="#fff" stop-opacity=".9" /><stop offset=".55" stop-color="#fff" stop-opacity=".12" /><stop offset="1" stop-color="#fff" stop-opacity="0" /></radialGradient>
+        <linearGradient id="g-lo" x1=".25" y1=".1" x2=".8" y2="1"><stop offset=".35" stop-color="#2b1d5a" stop-opacity="0" /><stop offset="1" stop-color="#2b1d5a" stop-opacity=".3" /></linearGradient>
+        <radialGradient id="g-spec"><stop offset="0" stop-color="#fff" stop-opacity=".95" /><stop offset="1" stop-color="#fff" stop-opacity="0" /></radialGradient>
+      </defs>
+    </svg>
+
+    <a class="skip" href="#main">Skip to content</a>
+
+    <div class="world">
+      <!-- atmosphere: drifting clouds + bobbing balloons (decorative, transform-only) -->
+      <div class="sky" aria-hidden="true">
+        <span class="sk sk-cloud sk-c1" style="--c:#fff;--lo:#b9a6ff"><Fragment set:html={deco('cloud')} /></span>
+        <span class="sk sk-cloud sk-c2" style="--c:#fff;--lo:#ffb3d9"><Fragment set:html={deco('cloud')} /></span>
+        <span class="sk sk-cloud sk-c3" style="--c:#fff;--lo:#9bd8ff"><Fragment set:html={deco('cloud')} /></span>
+        <span class="sk sk-cloud sk-c4" style="--c:#fff;--lo:#b9a6ff"><Fragment set:html={deco('cloud')} /></span>
+        <span class="sk sk-cloud sk-c5" style="--c:#fff;--lo:#ffb3d9"><Fragment set:html={deco('cloud')} /></span>
+        <span class="sk sk-cloud sk-c6" style="--c:#fff;--lo:#9bd8ff"><Fragment set:html={deco('cloud')} /></span>
+        <span class="sk sk-bln sk-b1" style="--c:#ffa6d2;--lo:#e0488f"><Fragment set:html={deco('balloon')} /></span>
+        <span class="sk sk-bln sk-b2" style="--c:#9bd8ff;--lo:#3a8fe0"><Fragment set:html={deco('balloon')} /></span>
+        <span class="sk sk-bln sk-b3" style="--c:#ffe97f;--lo:#e5a800"><Fragment set:html={deco('balloon')} /></span>
+        <span class="sk sk-bln sk-b4" style="--c:#a6f3d4;--lo:#2fbf8f"><Fragment set:html={deco('balloon')} /></span>
+        <span class="sk sk-bln sk-b5" style="--c:#cdb9ff;--lo:#8a63e8"><Fragment set:html={deco('balloon')} /></span>
+        <span class="sk sk-bln sk-b6" style="--c:#ffc6a3;--lo:#f0773f"><Fragment set:html={deco('balloon')} /></span>
+      </div>
+
+      <!-- ───────── floating pill dock ───────── -->
+      <header class="dock-wrap">
+        <div class="dock" data-dock>
+          <a class="dock-brand" href="#hero" aria-label={`${profile.name} - back to top`}>
+            <span class="ak" aria-hidden="true">AK</span>
+            <span class="dock-name">{profile.name}</span>
+          </a>
+          <button class="dock-menu btn btn-mini btn-white" type="button" aria-expanded="false" aria-controls="site-nav" data-menu-btn>Menu</button>
+          <nav id="site-nav" class="dock-nav" aria-label="Sections" data-nav>
+            <ul>
+              {nav.map((n, i) => (
+                <li><a class={`dock-link t-${tone(i)}`} href={`#${n.id}`} data-nav-link={n.id}>{n.label}</a></li>
+              ))}
+              <li class="dock-resume"><a class="btn btn-mini btn-ink" href={withBase(profile.resume.href)} download data-pf-resume>Resume</a></li>
+            </ul>
+          </nav>
+        </div>
+      </header>
+
+      <main id="main">
+        <!-- ───────── HERO ───────── -->
+        <section class="hero" id="hero" data-pf-section="hero" data-hero>
+          <div class="hero-copy">
+            <p class="hero-tags rv">
+              <span class="tag t-lemon">{profile.role}</span>
+              <span class="tag t-mint">{profile.location}</span>
+            </p>
+            <h1 class="h1 rv"><span class="h1-a">{profile.firstName}</span> <span class="h1-b">{profile.name.replace(profile.firstName, '').trim()}</span></h1>
+            <div class="lead-card puff paper rv">
+              <p class="lead">{profile.tagline}</p>
+              <p class="lead-focus"><span class="tag t-pink">Focus</span> {profile.focus}</p>
+            </div>
+            <p class="cta rv">
+              <a class="btn btn-pink btn-xl" href={withBase(profile.resume.href)} data-pf-resume download>{profile.resume.label}</a>
+              <a class="btn btn-blue btn-xl" href="#contact">Say hello</a>
+              <a class="btn btn-white btn-xl" href="#case-studies">See the work</a>
+            </p>
+            <p class="hero-flavor rv"><b>{meta.flavor.kicker}.</b> {meta.flavor.tagline}</p>
+          </div>
+
+          <div class="stage" aria-hidden="false">
+            <span class="st st-cloud-a" aria-hidden="true" style="--c:#fff;--lo:#b9a6ff"><Fragment set:html={deco('cloud')} /></span>
+            <span class="st st-cloud-b" aria-hidden="true" style="--c:#fff;--lo:#ffb3d9"><Fragment set:html={deco('cloud')} /></span>
+            {hBike && (
+              <div class="fl fl-3"><Balloon p={hBike} tone="blue" class="bl-s" eager /></div>
+            )}
+            {hMain && (
+              <div class="fl fl-1"><Balloon p={hMain} tone="pink" class="bl-l" big eager /></div>
+            )}
+            {hSnow && (
+              <div class="fl fl-2"><Balloon p={hSnow} tone="lemon" class="bl-m" eager /></div>
+            )}
+            <span class="st st-star" aria-hidden="true" style="--c:#ffe97f;--lo:#e5a800"><Fragment set:html={deco('star')} /></span>
+            <span class="st st-heart" aria-hidden="true" style="--c:#ff7fbe;--lo:#c4126c"><Fragment set:html={deco('heart')} /></span>
+            <span class="st st-flower" aria-hidden="true" style="--c:#a6f3d4;--lo:#2fbf8f"><Fragment set:html={deco('flower')} /></span>
+            <span class="st st-sp1" aria-hidden="true"><Fragment set:html={deco('sparkle')} /></span>
+            <span class="st st-sp2" aria-hidden="true"><Fragment set:html={deco('sparkle')} /></span>
+            <span class="soap soap-1" aria-hidden="true"></span>
+            <span class="soap soap-2" aria-hidden="true"></span>
+            <span class="soap soap-3" aria-hidden="true"></span>
+          </div>
+        </section>
+
+        <!-- ───────── ABOUT ───────── -->
+        <section class="sec sec-about" id="about" data-pf-section="about" aria-labelledby="h-about">
+          <SecHead id="h-about" title="About" kicker="A little air about me" tone="blue" />
+          <div class="about-grid">
+            <div class="about-balloons" aria-hidden="false">
+              {aboutSnaps.map((s, i) => (
+                <div class={`fl fl-a${i + 1}`}><Balloon p={s.p!} tone={s.tone} class={`bl-about bl-about-${i + 1}`} /></div>
+              ))}
+            </div>
+            <div class="about-card puff paper knotted rv">
+              <p class="about-summary">{profile.summary}</p>
+              {profile.aboutPersonal.map((p) => <p class="about-p">{p}</p>)}
+              <ul class="chips-bubbly" aria-label="Interests">
+                {profile.interests.map((it, i) => <li class={`bead t-${tone(i)}`}>{it}</li>)}
+              </ul>
+            </div>
+          </div>
+          <ul class="stat-bubbles" aria-label="Numbers">
+            {profile.stats.map((s, i) => (
+              <li class={`bubble t-${tone(i)} b${i + 1} rv`}>
+                <strong class="bubble-val">{s.value}</strong>
+                <span class="bubble-label">{s.label}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <!-- ───────── EXPERIENCE ───────── -->
+        <section class="sec sec-exp" id="experience" data-pf-section="experience" aria-labelledby="h-exp">
+          <SecHead id="h-exp" title="Experience" kicker="Roles & wins" sub="Stacked like cushions, newest on top." tone="pink" />
+          <ol class="garland">
+            {profile.experience.map((e, i) => (
+              <li class={`stop t-${expTones[i % expTones.length]}`}>
+                <div class="stop-tie" aria-hidden="true">
+                  <span class="num-balloon"><b class="num">{pad(i + 1)}</b></span>
+                </div>
+                <article class="cushion puff knotted rv" data-job={e.id}>
+                  <header class="cushion-head">
+                    <div>
+                      <h3 class="co">{e.company}</h3>
+                      <p class="role">{e.title}</p>
+                    </div>
+                    <p class="when"><span class="chip">{e.start} &ndash; {e.end}</span><span class="chip">{e.place}</span></p>
+                  </header>
+                  <p class="blurb">{e.blurb}</p>
+                  <ul class="deeds">
+                    {e.bullets.map((b) => (
+                      <li class="deed"><h4>{b.head}</h4><p>{b.text}</p></li>
+                    ))}
+                  </ul>
+                </article>
+              </li>
+            ))}
+            <li class="stop t-lilac">
+              <div class="stop-tie" aria-hidden="true"><span class="num-balloon"><b class="num">&#9733;</b></span></div>
+              <article class="cushion cushion-edu puff knotted rv" data-pf-education-wrap>
+                <h3 class="co" id="education">Education</h3>
+                {profile.education.map((e) => (
+                  <p class="edu" data-pf-education><strong>{e.school}</strong><span>{e.degree}, {e.start} &ndash; {e.end}</span></p>
+                ))}
+              </article>
+            </li>
+          </ol>
+        </section>
+
+        <!-- ───────── CASE STUDIES ───────── -->
+        <section class="sec sec-cases" id="case-studies" data-pf-section="case-studies" aria-labelledby="h-cases">
+          <SecHead id="h-cases" title="Case studies" kicker="What hurt, what I did, what moved" sub="Bite-size write-ups, each one fully inflated." tone="violet" />
+          <ul class="tiles">
+            {orderedCases.map((c, i) => (
+              <li class="tile-wrap">
+                <article class={`tile puff knotted t-${caseTones[i % caseTones.length]} rv`} data-pf-case={c.id}>
+                  <header class="tile-top">
+                    <span class="tile-n" aria-hidden="true">{pad(i + 1)}</span>
+                    <p class="tile-meta">{c.org} &middot; {c.period}</p>
+                    <span class="tag t-white">{c.role}</span>
+                  </header>
+                  <h3 class="tile-title">{c.title}</h3>
+                  <p class="tile-kick">{c.kicker}</p>
+                  <div class="pocket">
+                    <p><b>Problem.</b> {c.problem}</p>
+                    <p><b>Approach.</b> {c.approach}</p>
+                  </div>
+                  <ul class="impact" aria-label="Impact">{c.impact.map((m) => <li>{m}</li>)}</ul>
+                  <ul class="tagrow" aria-label="Tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+                </article>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <!-- ───────── PROJECTS: name-only index ───────── -->
+        <section class="sec sec-proj" id="projects" data-pf-section="projects" aria-labelledby="h-proj">
+          <SecHead id="h-proj" title="Projects" kicker="From GitHub" tone="teal" />
+          <p class="sec-sub proj-sub"><span class="only-hover">Hover or focus a name to inflate its preview.</span><span class="only-touch">Public repos, from weekend builds to a terminal chat.</span></p>
+          <ol class="pj-list" data-pj-list style={`--n:${profile.projects.length}`}>
+            {profile.projects.map((p, i) => (
+              <li class={`pj t-${tone(i + 1)}${i === 0 ? ' is-active' : ''}`} data-pf-project={p.name} data-pj>
+                <h3 class="pj-name">
+                  <span class="pj-n" aria-hidden="true">{pad(i + 1)}</span>
+                  <a class="pj-link" href={p.repo} target="_blank" rel="noopener">{p.title}</a>
+                  <span class="pj-year">{p.year}</span>
+                </h3>
+                <div class="pj-preview">
+                  <span class="pj-glyph" aria-hidden="true">{p.title.trim().charAt(0)}</span>
+                  <p class="pj-blurb">{p.blurb}</p>
+                  <ul class="stack-chips" aria-label="Stack">{p.stack.map((s) => <li>{s}</li>)}</ul>
+                  <p class="pj-links">
+                    <a class="btn btn-mini btn-ink" href={p.repo} target="_blank" rel="noopener">Source on GitHub</a>
+                    {p.live && <a class="btn btn-mini btn-white" href={p.live} target="_blank" rel="noopener">Live site</a>}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <!-- ───────── SKILLS ───────── -->
+        <section class="sec sec-skills" id="skills" data-pf-section="skills" aria-labelledby="h-skills">
+          <SecHead id="h-skills" title="Skills" kicker="Tools in my balloon bag" sub="Solid bubbles are daily drivers; hollow ones are familiar territory." tone="blue" />
+          <div class="pods">
+            {profile.skills.map((g, i) => (
+              <article class={`pod puff t-${tone(i)} rv`}>
+                <h3 class="pod-title">{g.group}</h3>
+                <ul class="beads">
+                  {g.items.map((it, j) => <li class={`bead t-${beadTone(i, j)}`}>{it}</li>)}
+                  {((g as any).familiar ?? []).map((f: string) => <li class="bead bead-ghost">{f} <small>familiar</small></li>)}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <!-- ───────── SQUISHY LAB ───────── -->
+        <section class="sec sec-lab" id="lab" aria-labelledby="h-lab" data-lab>
+          <SecHead id="h-lab" title="Squishy Lab" kicker="Toys with keyboard hints" sub="Nothing here is load-bearing. Everything is squeezable." tone="violet" />
+          <div class="toys">
+            <article class="toy puff t-pink rv" data-toy="pump">
+              <h3 class="toy-title">Pump it up</h3>
+              <p class="hint"><kbd>Space</kbd> or <kbd>&uarr;</kbd> pump &middot; <kbd>&darr;</kbd> let air out &middot; don't go past 100%</p>
+              <div class="toy-stage" tabindex="0" role="group" aria-label="Balloon pump. Press space or up arrow to pump, down arrow to let air out." data-pump-stage>
+                <div class="pump-balloon" data-pump-balloon><i></i><b></b></div>
+                <div class="burst" data-burst aria-hidden="true"></div>
+              </div>
+              <div class="toy-bar">
+                <button type="button" class="btn btn-mini btn-ink" data-pump-up>Pump</button>
+                <button type="button" class="btn btn-mini btn-white" data-pump-down>Let air out</button>
+              </div>
+              <p class="toy-status" role="status" aria-live="polite" data-pump-status>Air: 0%</p>
+            </article>
+
+            <article class="toy puff t-blue rv" data-toy="squish">
+              <h3 class="toy-title">Squish pad</h3>
+              <p class="hint"><kbd>Enter</kbd> or <kbd>Space</kbd> squish &middot; or just smoosh it</p>
+              <div class="toy-stage toy-stage-center">
+                <button type="button" class="jelly" data-squish><span>Squish me</span></button>
+              </div>
+              <p class="toy-status" role="status" aria-live="polite" data-squish-status>Squishes: 0</p>
+            </article>
+
+            <article class="toy puff t-mint rv" data-toy="bubbles">
+              <h3 class="toy-title">Bubble blower</h3>
+              <p class="hint"><kbd>B</kbd> blow &middot; <kbd>P</kbd> pop all &middot; poke any bubble</p>
+              <div class="toy-stage bubble-stage" tabindex="0" role="group" aria-label="Bubble blower. Press B to blow bubbles, P to pop them all." data-bubble-stage>
+                <span class="wand" aria-hidden="true"></span>
+              </div>
+              <div class="toy-bar">
+                <button type="button" class="btn btn-mini btn-ink" data-bubble-blow>Blow</button>
+                <button type="button" class="btn btn-mini btn-white" data-bubble-pop>Pop all</button>
+              </div>
+              <p class="toy-status" role="status" aria-live="polite" data-bubble-status>Bubbles: 0</p>
+            </article>
+
+            <article class="toy puff t-lilac rv" data-toy="orb">
+              <h3 class="toy-title">Light orb</h3>
+              <p class="hint"><kbd>&larr;</kbd><kbd>&uarr;</kbd><kbd>&rarr;</kbd><kbd>&darr;</kbd> move the light &middot; <kbd>R</kbd> reset</p>
+              <div class="toy-stage toy-stage-center orb-stage" tabindex="0" role="group" aria-label="Light orb. Move the pointer, or use the arrow keys, to move the light." data-orb-stage>
+                <div class="orb" data-orb></div>
+              </div>
+              <p class="toy-status" role="status" aria-live="polite" data-orb-status>Light: top-left</p>
+            </article>
+          </div>
+        </section>
+
+        <!-- ───────── BEYOND CODE ───────── -->
+        <section class="sec sec-beyond" id="beyond-code" data-pf-section="beyond-code" aria-labelledby="h-beyond">
+          <SecHead id="h-beyond" title="Beyond code" kicker="Off duty, still inflated" sub="Rides, hills, friends and the odd cat. Tap any photo to see it bigger, then deflate it to see the original." tone="pink" />
+          {bigGroups.map((g, gi) => (
+            <article class={`pool puff paper t-${tone(gi)} rv`}>
+              <header class="pool-head">
+                <h3 class="pool-title">{g.title}</h3>
+                <p class="pool-blurb">{g.blurb}</p>
+              </header>
+              <ul class="frames">
+                {g.photos.map((p, i) => {
+                  frameN += 1;
+                  return (
+                    <li class={`frame f-${shapeOf(p, i)} t-${frameTone[(frameN + gi) % frameTone.length]}`} style={`--tilt:${tilt[frameN % tilt.length]}`}>
+                      <a class="frame-link" href={p.img.src} data-lb data-lb-src={p.img.src} data-lb-orig={p.original.src} data-lb-cap={p.caption ?? ''}>
+                        <span class="frame-skin"><img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} /></span>
+                      </a>
+                      {p.caption && <span class="frame-cap">{p.caption}</span>}
+                    </li>
+                  );
+                })}
+              </ul>
+            </article>
+          ))}
+          <div class="minis">
+            {miniGroups.map((g, gi) => (
+              <article class={`pool pool-mini puff paper t-${tone(gi + 2)} rv`}>
+                <header class="pool-head">
+                  <h3 class="pool-title">{g.title}</h3>
+                  <p class="pool-blurb">{g.blurb}</p>
+                </header>
+                <ul class="frames frames-mini">
+                  {g.photos.map((p, i) => {
+                    frameN += 1;
+                    return (
+                      <li class={`frame f-pillow t-${frameTone[(frameN + gi + 3) % frameTone.length]}`} style={`--tilt:${tilt[frameN % tilt.length]}`}>
+                        <a class="frame-link" href={p.img.src} data-lb data-lb-src={p.img.src} data-lb-orig={p.original.src} data-lb-cap={p.caption ?? ''}>
+                          <span class="frame-skin"><img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} /></span>
+                        </a>
+                        {p.caption && <span class="frame-cap">{p.caption}</span>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <!-- ───────── WRITING ───────── -->
+        <section class="sec sec-writing" id="writing" data-pf-section="writing" aria-labelledby="h-writing">
+          <SecHead id="h-writing" title="Writing" kicker="Not yet inflated" tone="teal" />
+          <div class="writing-card puff paper knotted rv">
+            <p class="writing-status">{profile.writing.status}</p>
+            {profile.writing.posts.length > 0 && (
+              <ul class="posts">{profile.writing.posts.map((po) => <li><a href={po.href}>{po.title}</a> <small>{po.date}</small> <span>{po.summary}</span></li>)}</ul>
+            )}
+            <p class="planned-label">On the pump list</p>
+            <ul class="unblown">
+              {profile.writing.planned.map((t, i) => (
+                <li class={`deflated d${i + 1}`}><span class="flat" aria-hidden="true"></span>{t}</li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        <!-- ───────── CONTACT ───────── -->
+        <section class="sec sec-contact" id="contact" data-pf-section="contact" aria-labelledby="h-contact">
+          <SecHead id="h-contact" title="Contact" kicker="Say hello" sub="Open to interesting problems in GenAI agents, workflow systems and backend infrastructure." tone="pink" />
+          <div class="contact-grid">
+            <div class="contact-links rv">
+              <ul class="link-list">
+                <li><Protected kind="email" class="btn btn-pink btn-xl btn-wide" /></li>
+                <li><Protected kind="phone" class="btn btn-blue btn-xl btn-wide" /></li>
+                <li><a class="btn btn-lemon btn-xl btn-wide" href={profile.contact.linkedin} target="_blank" rel="noopener me" data-pf-linkedin>LinkedIn <small>{stripUrl(profile.contact.linkedin).replace('www.linkedin.com/in/', 'in/')}</small></a></li>
+                <li><a class="btn btn-mint btn-xl btn-wide" href={profile.contact.github} target="_blank" rel="noopener me" data-pf-github>GitHub <small>{stripUrl(profile.contact.github).replace('github.com/', '')}</small></a></li>
+                <li><a class="btn btn-white btn-xl btn-wide" href={withBase(profile.resume.href)} download>{profile.resume.label}</a></li>
+              </ul>
+              <p class="copy-row"><button type="button" class="btn btn-mini btn-ink" data-copy-email>Copy email</button> <span class="copy-status" role="status" aria-live="polite" data-copy-status></span></p>
+            </div>
+            <div class="form-card puff paper knotted rv">
+              <h3 class="form-title">Or send a message</h3>
+              <ContactForm class="pf-inflated" submitLabel="Send it over" labels={{ name: 'Your name', email: 'Your email', message: 'What shall we build?' }} />
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="foot">
+        <div class="foot-in puff paper">
+          <p class="foot-line">{meta.flavor.footer}</p>
+          <p class="foot-small">&copy; {new Date().getFullYear()} {profile.name} &middot; {profile.location} &middot; <a href={withBase('gallery/')}>See the other 18 styles</a></p>
+        </div>
+      </footer>
+    </div>
+
+    <dialog class="lb" data-lb-dialog aria-label="Photo viewer">
+      <form method="dialog" class="lb-close"><button class="btn btn-mini btn-white" aria-label="Close photo viewer">Close</button></form>
+      <figure class="lb-fig">
+        <div class="lb-skin" data-lb-holder></div>
+        <figcaption data-lb-cap></figcaption>
+      </figure>
+      <p class="lb-bar"><button type="button" class="btn btn-mini btn-pink" data-lb-toggle aria-pressed="false">Deflate (see original)</button></p>
+    </dialog>
+
+    <UtilityBar style="inflated-3d" />
+    <script>
+      import './client.ts';
+    </script>
+  </body>
+</html>

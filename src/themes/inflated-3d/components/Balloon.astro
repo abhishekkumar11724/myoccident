@@ -1,0 +1,16 @@
+---
+/** A photo inside an egg-shaped balloon skin: translucent coloured plastic rim, glossy overlay, knot and curly string. */
+import type { Photo } from '@/lib/photos';
+interface Props { p: Photo; tone?: string; class?: string; eager?: boolean; big?: boolean; string?: boolean; style?: string }
+const { p, tone = 'pink', class: cls = '', eager = false, big = false, string = true, style = '' } = Astro.props;
+const v = big ? { src: p.img.src, w: p.img.width, h: p.img.height } : { src: p.img.thumb, w: p.img.thumbWidth, h: p.img.thumbHeight };
+---
+<figure class={`balloon t-${tone} ${cls}`} style={style}>
+  <div class="bl-skin">
+    <div class="bl-photo">
+      <img src={v.src} width={v.w} height={v.h} alt={p.alt} style={`object-position:${p.focus}`} decoding="async" {...(eager ? { fetchpriority: 'high' } : { loading: 'lazy' })} />
+    </div>
+  </div>
+  <span class="bl-knot" aria-hidden="true"></span>
+  {string && <svg class="bl-string" viewBox="0 0 40 130" aria-hidden="true" focusable="false"><path d="M20 0 C2 26 38 46 20 70 S6 108 22 130" /></svg>}
+</figure>

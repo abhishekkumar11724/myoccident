@@ -1,0 +1,10 @@
+---
+/** Section heading: a kicker bubble, a giant inflated h2 (Modak + SVG lighting) sitting on the sky, and a one-line subtitle. */
+interface Props { id: string; title: string; sub?: string; kicker?: string; tone?: 'pink' | 'blue' | 'violet' | 'teal'; align?: 'left' | 'center' }
+const { id, title, sub, kicker, tone = 'pink', align = 'left' } = Astro.props;
+---
+<header class={`sec-head sec-head-${align}`}>
+  {kicker && <p class="sec-kicker"><span class="sec-kicker-dot" aria-hidden="true"></span>{kicker}</p>}
+  <h2 class={`h2 tone-${tone}`} id={id}>{title}</h2>
+  {sub && <p class="sec-sub">{sub}</p>}
+</header>
