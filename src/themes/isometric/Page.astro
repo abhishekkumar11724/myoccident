@@ -1,0 +1,434 @@
+---
+/**
+ * Isometric theme: a tiny 30-degree world. The page is a tower of "levels"; every level has a diorama (procedural SVG,
+ * see iso.ts / scenes.ts) next to flat, readable HTML panels. Photos stand in folding screens (skewY(+-30deg) planes).
+ * Hooks kept from the baseline: data-pf-section, data-pf-resume, <Protected>, data-pf-linkedin/github, <ContactForm>,
+ * data-pf-education, <UtilityBar> last in <body>.
+ */
+import './theme.css';
+import { profile } from '@/content/profile';
+import { photoGroups, photos, heroPhotos } from '@/lib/photos';
+import { withBase } from '@/lib/urls';
+import ThemeHead from '@/components/ThemeHead.astro';
+import Protected from '@/components/Protected.astro';
+import ContactForm from '@/components/ContactForm.astro';
+import UtilityBar from '@/components/UtilityBar.astro';
+import SectionHead from './SectionHead.astro';
+import meta from './meta';
+import { PAL, cubeSvg } from './iso';
+import * as SC from './scenes';
+
+const STYLE = 'isometric';
+const all = photos(STYLE);
+const byId = (id: string) => all.find((p) => p.id === id);
+const heroes = heroPhotos(STYLE);
+const hero = byId('portraits/02-smile-jacket') ?? heroes[0] ?? all[0];
+const aboutPics = ['portraits/03-red-kurta-seated', 'adventure/04-hillside-smile', 'portraits/07-tree-dusk'].map((id) => byId(id)).filter(Boolean) as typeof all;
+const groups = photoGroups(STYLE);
+
+const art = SC.heroScene();
+const jobArt = SC.jobScenes();
+const caseArt = SC.caseScenes();
+const projArt = SC.projectScenes();
+const catArt = SC.categoryScenes();
+const stackArt = SC.stackScenes(profile.skills.map((g) => g.items.length + (('familiar' in g && g.familiar) ? g.familiar.length : 0)));
+const statsArt = SC.statsScene();
+const contactArt = SC.contactScene();
+const writingArt = SC.writingScene();
+const tumble = SC.tumbleUri();
+const towerArt = SC.towerSlabs();
+
+const NAV = [
+  { id: 'about', label: 'About', lv: '01', pal: 'blue' },
+  { id: 'experience', label: 'Experience', lv: '02', pal: 'teal' },
+  { id: 'case-studies', label: 'Case studies', lv: '03', pal: 'amber' },
+  { id: 'projects', label: 'Projects', lv: '04', pal: 'pink' },
+  { id: 'skills', label: 'Skills', lv: '05', pal: 'violet' },
+  { id: 'beyond-code', label: 'Beyond code', lv: '06', pal: 'teal' },
+  { id: 'writing', label: 'Writing', lv: '07', pal: 'blue' },
+  { id: 'contact', label: 'Contact', lv: '08', pal: 'amber' },
+];
+const featured = profile.caseStudies.filter((c) => c.featured);
+const supporting = profile.caseStudies.filter((c) => !c.featured);
+const STAT_PAL = ['blue', 'teal', 'amber', 'pink', 'violet', 'leaf'];
+const GROUP_PAL = ['blue', 'teal', 'amber', 'pink', 'violet', 'red'];
+const num = (i: number) => String(i + 1).padStart(2, '0');
+const cube = (pal: string, size = 18) => cubeSvg(PAL[pal] ?? PAL.blue, size);
+const familiar = (g: (typeof profile.skills)[number]) => (('familiar' in g && g.familiar ? g.familiar : []) as readonly string[]);
+/** balanced rows of at most `max` panels (e.g. 9 photos -> 5 + 4) so the last row is never a lonely panel */
+function rowsOf<T>(list: T[], max = 8): T[][] {
+  const n = Math.ceil(list.length / max), size = Math.ceil(list.length / n), out: T[][] = [];
+  for (let i = 0; i < list.length; i += size) out.push(list.slice(i, i + size));
+  return out;
+}
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <ThemeHead style={STYLE} themeColor="#eef3fb" />
+    <meta name="robots" content="index,follow" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+  </head>
+  <body class="iso-page" style={`--tumble:url("${tumble}")`}>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="top" id="top">
+      <a class="brand" href="#hero" aria-label={`${profile.name} - top of page`}>
+        <span class="brand-mark" set:html={SC.logoSvg()} /><span class="brand-name">{profile.name}</span>
+      </a>
+      <button class="menu-btn" type="button" aria-expanded="false" aria-controls="nav"><span class="menu-ico" aria-hidden="true"></span>Menu</button>
+      <nav class="nav" id="nav" aria-label="Sections">
+        {NAV.map((n) => <a href={`#${n.id}`} data-nav={n.id}><i class="px">{n.lv}</i>{n.label}</a>)}
+      </nav>
+      <a class="btn btn-amber btn-sm" href={withBase(profile.resume.href)} data-pf-resume download>Resume</a>
+    </header>
+
+    <!-- floor tower: a tiny stack of slabs, one per level (wide screens) -->
+    <nav class="tower" aria-hidden="true">
+      <a href="#hero" tabindex="-1" data-tw="hero"><span class="tw-label px">00 Lobby</span><span set:html={towerArt} /></a>
+      {NAV.map((n, i) => <a href={`#${n.id}`} tabindex="-1" data-tw={n.id}><span class="tw-label px">{n.lv} {n.label}</span><span set:html={towerArt} /></a>)}
+    </nav>
+
+    <main id="main" class="page">
+      <!-- ===================================================== HERO -->
+      <section class="hero" id="hero" data-pf-section="hero">
+        <div class="wrap hero-grid">
+          <div class="hero-copy">
+            <p class="px hero-tag"><span class="dot" aria-hidden="true"></span>Level 00 - the workstation</p>
+            <h1 class="name"><span>Abhishek</span> <span>Kumar</span></h1>
+            <p class="role">{profile.role}</p>
+            <p class="lead">{profile.tagline}</p>
+            <p class="flavor">{meta.flavor.kicker}</p>
+            <p class="cta">
+              <a class="btn btn-amber" href={withBase(profile.resume.href)} data-pf-resume download>{profile.resume.label}</a>
+              <a class="btn btn-ghost" href="#contact">Get in touch</a>
+            </p>
+            <ul class="now" aria-label="At a glance">
+              <li><span set:html={cube('amber', 20)} />Now at {profile.experience[0].company}</li>
+              <li><span set:html={cube('teal', 20)} />{profile.location}</li>
+              <li><span set:html={cube('pink', 20)} />{profile.focus}</li>
+            </ul>
+          </div>
+          <div class="hero-art" style={`--ar:${art.aspect.toFixed(4)}`} data-scene>
+            <div class="layer far" data-depth="-14" set:html={art.far.html} />
+            <div class="layer main" data-depth="8">
+              <div class="bob">
+                <Fragment set:html={art.main.html} />
+                {hero && <img class="wall-photo" src={hero.img.thumb} width={hero.img.thumbWidth} height={hero.img.thumbHeight} alt={hero.alt} fetchpriority="high" decoding="async" style={`left:${art.photo.left.toFixed(2)}%;top:${art.photo.top.toFixed(2)}%;width:${art.photo.w.toFixed(2)}%;height:${art.photo.h.toFixed(2)}%;object-position:${hero.focus}`} />}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================================================== ABOUT -->
+      <section class="sec" id="about" data-pf-section="about" aria-labelledby="h-about">
+        <div class="wrap">
+          <SectionHead lv="01" id="h-about" title="About" sub="A short tour of the person behind the pull requests." pal="blue" />
+          <div class="about-grid">
+            <div class="deck about-copy">
+              <p class="big">{profile.summary}</p>
+              {profile.aboutPersonal.map((p) => <p>{p}</p>)}
+              <ul class="chips" aria-label="Interests">
+                {profile.interests.map((i, k) => <li><span set:html={cube(GROUP_PAL[k % GROUP_PAL.length], 18)} />{i}</li>)}
+              </ul>
+            </div>
+            <ul class="fold fold-about" style="--n:3" aria-label="Photos of Abhishek">
+              {aboutPics.map((p, i) => (
+                <li class="pane">
+                  <div class="pane-btn">
+                    <span class="skew"><span class="plate"><img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} /></span></span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div class="stats-stage">
+            <div class="stats-art" data-scene set:html={statsArt} />
+            <ul class="stat-tiles">
+              {profile.stats.map((s, i) => (
+                <li class={`stat st-${STAT_PAL[i]}`} data-col={i}>
+                  <span class="stat-ico" set:html={cube(STAT_PAL[i], 22)} />
+                  <strong>{s.value}</strong>
+                  <span class="stat-l">{s.label}</span>
+                </li>
+              ))}
+            </ul>
+            <p class="stats-note px">Column heights are decorative, not to scale.</p>
+          </div>
+        </div>
+      </section>
+
+      <div class="tumble" aria-hidden="true"></div>
+
+      <!-- ===================================================== EXPERIENCE -->
+      <section class="sec" id="experience" data-pf-section="experience" aria-labelledby="h-exp">
+        <div class="wrap">
+          <SectionHead lv="02" id="h-exp" title="Experience" sub="Built upward, one floor at a time. Newest on top." pal="teal" />
+          <div class="tower-rows">
+            {profile.experience.map((e, i) => (
+              <article class="floor" id={e.id} data-job={e.id}>
+                <div class="floor-art">
+                  <p class="sign px">{e.company}</p>
+                  <div class="floor-scene" data-scene set:html={jobArt[e.id]} />
+                  <p class="floor-no px">Floor {String(profile.experience.length - i).padStart(2, '0')}</p>
+                </div>
+                <div class="deck floor-card">
+                  <header class="job-head">
+                    <div>
+                      <h3>{e.title}</h3>
+                      <p class="job-co">{e.company}</p>
+                    </div>
+                    <p class="job-when px">{e.start} - {e.end}<span>{e.place}</span></p>
+                  </header>
+                  <p class="job-blurb">{e.blurb}</p>
+                  <ol class="crates">
+                    {e.bullets.map((b, k) => (
+                      <li class="crate-item">
+                        <span class="crate-n px">{num(k)}</span>
+                        <h4>{b.head}</h4>
+                        <p>{b.text}</p>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              </article>
+            ))}
+            {profile.education.map((ed) => (
+              <article class="floor floor-edu" id="education" data-pf-education>
+                <div class="floor-art">
+                  <p class="sign px">{ed.short}</p>
+                  <div class="floor-scene" data-scene set:html={jobArt.education} />
+                  <p class="floor-no px">Foundation</p>
+                </div>
+                <div class="deck floor-card">
+                  <header class="job-head">
+                    <div>
+                      <h3>Education</h3>
+                      <p class="job-co">{ed.school}</p>
+                    </div>
+                    <p class="job-when px">{ed.start} - {ed.end}</p>
+                  </header>
+                  <p class="job-blurb">{ed.degree}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div class="tumble" aria-hidden="true"></div>
+
+      <!-- ===================================================== CASE STUDIES -->
+      <section class="sec" id="case-studies" data-pf-section="case-studies" aria-labelledby="h-cases">
+        <div class="wrap">
+          <SectionHead lv="03" id="h-cases" title="Case studies" sub="Each one comes with a tiny working model. Hover or focus a card to switch its machine on." pal="amber" />
+          <div class="cs-grid">
+            {featured.map((c, i) => (
+              <article class={`cs cs-${['blue', 'teal', 'amber', 'pink', 'violet', 'red'][i % 6]}`} data-pf-case={c.id} tabindex="0">
+                <div class="cs-stage" data-scene set:html={caseArt[c.id]} />
+                <div class="cs-body">
+                  <p class="cs-meta px"><span class="tag">{c.org}</span>{c.period}<span class="sep">/</span>{c.role}</p>
+                  <h3>{c.title}</h3>
+                  <p class="cs-kicker">{c.kicker}</p>
+                  <dl class="cs-brief">
+                    <div><dt class="px">Problem</dt><dd>{c.problem}</dd></div>
+                    <div><dt class="px">Approach</dt><dd>{c.approach}</dd></div>
+                  </dl>
+                  <ul class="cs-impact" aria-label="Impact">{c.impact.map((m) => <li>{m}</li>)}</ul>
+                  <ul class="cs-tags" aria-label="Tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+                </div>
+              </article>
+            ))}
+          </div>
+          {supporting.length > 0 && (
+            <>
+              <h3 class="sub-h px">More from the build log</h3>
+              <div class="cs-grid cs-grid-sm">
+                {supporting.map((c, i) => (
+                  <article class={`cs cs-sm cs-${['teal', 'pink'][i % 2]}`} data-pf-case={c.id} tabindex="0">
+                    <div class="cs-stage" data-scene set:html={caseArt[c.id]} />
+                    <div class="cs-body">
+                      <p class="cs-meta px"><span class="tag">{c.org}</span>{c.period}<span class="sep">/</span>{c.role}</p>
+                      <h3>{c.title}</h3>
+                      <p class="cs-kicker">{c.kicker}</p>
+                      <dl class="cs-brief">
+                        <div><dt class="px">Problem</dt><dd>{c.problem}</dd></div>
+                        <div><dt class="px">Approach</dt><dd>{c.approach}</dd></div>
+                      </dl>
+                      <ul class="cs-impact" aria-label="Impact">{c.impact.map((m) => <li>{m}</li>)}</ul>
+                      <ul class="cs-tags" aria-label="Tags">{c.tags.map((t) => <li>{t}</li>)}</ul>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+
+      <div class="tumble" aria-hidden="true"></div>
+
+      <!-- ===================================================== PROJECTS -->
+      <section class="sec" id="projects" data-pf-section="projects" aria-labelledby="h-proj">
+        <div class="wrap">
+          <SectionHead lv="04" id="h-proj" title="Projects" sub="Side builds on the display shelf, each on its own plinth." pal="pink" />
+          <div class="proj-grid">
+            {profile.projects.map((p, i) => (
+              <article class={`proj proj-${['blue', 'amber', 'teal', 'violet', 'pink', 'red'][i % 6]}`} data-pf-project={p.name} tabindex="0">
+                <div class="proj-stage" data-scene set:html={projArt[p.name]} />
+                <div class="proj-body">
+                  <p class="px proj-year">{p.year}</p>
+                  <h3>{p.title}</h3>
+                  <p class="proj-blurb">{p.blurb}</p>
+                  <ul class="cs-tags" aria-label="Stack">{p.stack.map((t) => <li>{t}</li>)}</ul>
+                  <p class="proj-links">
+                    <a class="lnk" href={p.repo} rel="noopener" target="_blank" aria-label={`Source on GitHub: ${p.title}`}>Source on GitHub</a>
+                    {p.live && <a class="lnk lnk-live" href={p.live} rel="noopener" target="_blank" aria-label={`Live site: ${p.title}`}>Live site</a>}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div class="tumble" aria-hidden="true"></div>
+
+      <!-- ===================================================== SKILLS -->
+      <section class="sec" id="skills" data-pf-section="skills" aria-labelledby="h-skills">
+        <div class="wrap">
+          <SectionHead lv="05" id="h-skills" title="Skills" sub="Stacked by group: every block is a tool I have used in anger." pal="violet" />
+          <div class="skill-grid">
+            {profile.skills.map((g, i) => (
+              <section class={`skill sk-${GROUP_PAL[i % GROUP_PAL.length]}`} aria-labelledby={`sk-${i}`}>
+                <div class="skill-art" set:html={stackArt[i]} />
+                <h3 id={`sk-${i}`}>{g.group}</h3>
+                <ul class="blocks">
+                  {g.items.map((it) => <li>{it}</li>)}
+                  {familiar(g).map((it) => <li class="fam">{it}<small> (familiar)</small></li>)}
+                </ul>
+              </section>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div class="tumble" aria-hidden="true"></div>
+
+      <!-- ===================================================== BEYOND CODE -->
+      <section class="sec" id="beyond-code" data-pf-section="beyond-code" aria-labelledby="h-beyond">
+        <div class="wrap">
+          <SectionHead lv="06" id="h-beyond" title="Beyond code" sub="The personal half: trips, rides, books and friends, hung in folding screens. Tap a panel for the whole picture." pal="teal" />
+          {groups.map((g) => (
+            <div class="gal" id={`gal-${g.category}`}>
+              <div class="gal-head">
+                <div class="gal-art" aria-hidden="true" set:html={catArt[g.category]} />
+                <div>
+                  <h3>{g.title}</h3>
+                  <p class="gal-blurb">{g.blurb}</p>
+                  <p class="px gal-count">{g.photos.length} {g.photos.length === 1 ? 'photo' : 'photos'}</p>
+                </div>
+              </div>
+              {rowsOf(g.photos).map((row) => (
+                <ul class="fold">
+                  {Array.from({ length: Math.floor((8 - row.length) / 2) }).map(() => <li class="pane spacer" aria-hidden="true"></li>)}
+                  {row.map((p) => (
+                    <li class="pane">
+                      <button type="button" class="pane-btn" data-lb data-src={p.img.src} data-w={p.img.width} data-h={p.img.height} data-alt={p.alt} data-cap={p.caption ?? ''}>
+                        <span class="skew"><span class="plate"><img src={p.img.thumb} width={p.img.thumbWidth} height={p.img.thumbHeight} alt={p.alt} loading="lazy" decoding="async" style={`object-position:${p.focus}`} /></span></span>
+                        {p.caption && <span class="pane-cap px" aria-hidden="true">{p.caption}</span>}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ))}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <div class="tumble" aria-hidden="true"></div>
+
+      <!-- ===================================================== WRITING -->
+      <section class="sec" id="writing" data-pf-section="writing" aria-labelledby="h-writing">
+        <div class="wrap">
+          <SectionHead lv="07" id="h-writing" title="Writing" sub="The parcels are packed; the first few are queued on the conveyor." pal="blue" />
+          <div class="writing-grid">
+            <div class="writing-art" data-scene set:html={writingArt} />
+            <div class="deck writing-card">
+              <p class="big">{profile.writing.status}</p>
+              {profile.writing.posts.length > 0 && (
+                <ul class="posts">{profile.writing.posts.map((p) => <li><a href={p.href}>{p.title}</a> <span class="px">{p.date}</span><br />{p.summary}</li>)}</ul>
+              )}
+              <p class="px queue-h">Planned - in the queue</p>
+              <ol class="queue">
+                {profile.writing.planned.map((t, i) => (
+                  <li><span class="parcel" set:html={cube(['amber', 'teal', 'pink', 'blue'][i % 4], 26)} /><span>{t}</span></li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="tumble" aria-hidden="true"></div>
+
+      <!-- ===================================================== CONTACT -->
+      <section class="sec sec-last" id="contact" data-pf-section="contact" aria-labelledby="h-contact">
+        <div class="wrap">
+          <SectionHead lv="08" id="h-contact" title="Contact" sub="Drop a letter in the box. It reaches me." pal="amber" />
+          <div class="contact-grid">
+            <div class="contact-art" data-scene set:html={contactArt} />
+            <div class="deck intake">
+              <p class="big">Open to interesting problems in GenAI agents, workflow systems and backend infrastructure.</p>
+              <ul class="parcels" aria-label="Ways to reach me">
+                <li><span class="k px">Email</span><Protected kind="email" class="v" /></li>
+                <li><span class="k px">Phone</span><Protected kind="phone" class="v" /></li>
+                <li><span class="k px">LinkedIn</span><a class="v" href={profile.contact.linkedin} rel="noopener me" target="_blank" data-pf-linkedin>linkedin.com/in/abhishek-kumar-ld</a></li>
+                <li><span class="k px">GitHub</span><a class="v" href={profile.contact.github} rel="noopener me" target="_blank" data-pf-github>github.com/{profile.handle}</a></li>
+                <li><span class="k px">Resume</span><a class="v" href={withBase(profile.resume.href)} download data-pf-resume>{profile.resume.label}</a></li>
+              </ul>
+              <fieldset class="topic">
+                <legend class="px">What is it about?</legend>
+                <div class="topic-chips" role="group" aria-label="Pick topics to pre-fill your message">
+                  <button type="button" class="topic-chip" aria-pressed="false" data-topic="a GenAI agent project">GenAI agents</button>
+                  <button type="button" class="topic-chip" aria-pressed="false" data-topic="a workflow or orchestration system">Workflow systems</button>
+                  <button type="button" class="topic-chip" aria-pressed="false" data-topic="backend / distributed infrastructure">Backend infrastructure</button>
+                  <button type="button" class="topic-chip" aria-pressed="false" data-topic="a role on your team">A role</button>
+                  <button type="button" class="topic-chip" aria-pressed="false" data-topic="saying hi">Just hi</button>
+                </div>
+              </fieldset>
+              <ContactForm class="iso-form" submitLabel="Post it" labels={{ name: 'Your name', email: 'Your email', message: 'Your message' }} />
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="tumble tumble-foot" aria-hidden="true"></div>
+      <div class="wrap foot-in">
+        <p>{meta.flavor.footer}</p>
+        <p class="foot-sm">&copy; {new Date().getFullYear()} {profile.name}. Built with Astro. A different art style every day - see the <a href={withBase('gallery/')}>gallery</a>.</p>
+      </div>
+    </footer>
+
+    <dialog class="lb" aria-label="Photo viewer">
+      <div class="lb-frame">
+        <div class="lb-img"></div>
+        <p class="lb-cap"></p>
+        <div class="lb-bar">
+          <button type="button" class="lb-prev" aria-label="Previous photo">&larr;</button>
+          <span class="lb-count px"></span>
+          <button type="button" class="lb-next" aria-label="Next photo">&rarr;</button>
+          <button type="button" class="lb-close" aria-label="Close viewer">Close</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script>import './client.ts';</script>
+    <UtilityBar style={STYLE} />
+  </body>
+</html>

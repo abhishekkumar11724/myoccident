@@ -1,0 +1,11 @@
+---
+import { PAL, cubeSvg } from './iso';
+interface Props { lv: string; title: string; sub?: string; pal?: string; id?: string }
+const { lv, title, sub, pal = 'blue', id } = Astro.props;
+const ico = cubeSvg(PAL[pal] ?? PAL.blue, 40);
+---
+<header class={`sh sh-${pal}`}>
+  <p class="sh-lv"><span class="sh-ico" set:html={ico} /><span class="px">LEVEL {lv}</span><span class="sh-rule" aria-hidden="true"></span></p>
+  <h2 id={id}>{title}</h2>
+  {sub && <p class="sh-sub">{sub}</p>}
+</header>
