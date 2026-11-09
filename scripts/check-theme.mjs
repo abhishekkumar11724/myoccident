@@ -213,8 +213,10 @@ await d.ctx.close();
 const m = await load({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }, 'mobile');
 await m.page.screenshot({ path: path.join(shots, 'mobile-fold.png') });
 const mt = await tiles(m.page, 'mobile', 10, 2400);
-const mw = await m.page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth));
-hard('no horizontal overflow (phone 390px)', mw <= 391, `content is ${mw}px wide in a 390px viewport`);
+// What users experience: can the page scroll sideways? (documentElement.scrollWidth vs the real 390px, then try to scroll.)
+// body.scrollWidth is ignored on purpose: decorations clipped with overflow-x:clip still inflate it but cannot be scrolled to.
+const mo = await m.page.evaluate(async () => { const w = document.documentElement.scrollWidth; window.scrollTo(120, 0); await new Promise((r) => setTimeout(r, 120)); const sx = window.scrollX; window.scrollTo(0, 0); return { w, sx }; });
+hard('no horizontal overflow (phone 390px)', mo.w <= 391 && mo.sx === 0, `page is ${mo.w}px wide in a 390px viewport (scrolled sideways by ${mo.sx}px)`);
 hard('phone: no console errors', m.log.console.length === 0 && m.log.pageErrors.length === 0, [...m.log.console, ...m.log.pageErrors].slice(0, 2).join(' || '));
 hard('phone: UtilityBar visible', await m.page.locator('[data-pf-bar]').first().isVisible());
 const small = await m.page.evaluate(() => { const bad = []; for (const e of document.querySelectorAll('a,button,input,textarea,select')) { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); if (r.width && r.height && cs.visibility !== 'hidden' && (r.width < 24 || r.height < 24) && !e.closest('[data-pf-bar]') && e.getAttribute('name') !== 'botcheck' && !(e.tagName === 'A' && e.closest('p,li,span') && cs.display === 'inline')) bad.push(`${e.tagName.toLowerCase()} ${Math.round(r.width)}x${Math.round(r.height)}`); } return bad; });
